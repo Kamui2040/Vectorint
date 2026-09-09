@@ -1,0 +1,1 @@
+First public development snapshot of Vectorint, including Available now, recurring income and expenses, categories, monthly overview, reminders, themes, and local backup.

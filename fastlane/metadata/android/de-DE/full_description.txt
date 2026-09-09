@@ -1,0 +1,18 @@
+Vectorint beantwortet eine praktische Frage: Wie viel kann ich gerade sicher ausgeben?
+
+Beginne mit deinem aktuellen Guthaben und erhalte sofort eine Antwort. Ergänze Einnahmen, Ausgaben und wiederkehrende Posten nach und nach. Geplante Ausgaben werden automatisch zurückgelegt. Erwartete Einnahmen zählen nur, wenn du sie einbeziehen möchtest.
+
+Funktionen:
+• ein gemeinsames, vorhersehbares Modell für Einnahmen und Ausgaben
+• Wiederholungen alle N Tage, Wochen, Monate oder Jahre
+• bestimmte Daten, Zeiträume oder ein beliebiger Zeitpunkt im Monat
+• optionale Enddaten, lokale Erinnerungen und manuelle Bestätigung
+• eindeutige Zuordnung zum Monat der Buchung oder zum Folgemonat
+• monatliche Ausgabenübersicht mit Kategorien und genauen Beträgen
+• Tags für deine eigene visuelle Organisation
+• Verlauf vom neuesten zum ältesten Eintrag mit Bearbeitung und Bestätigung
+• lokale Sicherung und Wiederherstellung als JSON-Datei
+• helle und dunkle Darstellung mit drei Farbpaletten
+• deutsche und englische Oberfläche
+
+Vectorint arbeitet lokal. Du brauchst kein Konto. Die App enthält keine Werbung, Analyse, Nachverfolgung oder Internetverbindung.
