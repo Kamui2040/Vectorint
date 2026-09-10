@@ -12,6 +12,10 @@ initial repository uses the following public build, runtime, and test components
 - AndroidX Preferences DataStore 1.2.1 — Android Open Source Project, Apache-2.0.
 - AndroidX Room runtime 2.8.4 — Android Open Source Project, Apache-2.0.
 - Kotlin Coroutines Android 1.11.0 — JetBrains and contributors, Apache-2.0.
+- Kotlin Serialization 1.7.3 — JetBrains and contributors, Apache-2.0.
+- Okio 3.9.1 — Square and contributors, Apache-2.0.
+- JetBrains Annotations 23.0.0, JSpecify 1.0.0, and Guava ListenableFuture
+  1.0 — supporting transitive libraries, Apache-2.0.
 - desugar_jdk_libs 2.1.5 — Android Open Source Project, GPL-2.0 with the
   Classpath Exception; used to support `java.time` on the minimum Android API.
 
@@ -30,5 +34,6 @@ initial repository uses the following public build, runtime, and test components
 - Jetpack Compose UI test libraries selected by BOM 2026.08.00 — Android Open
   Source Project, Apache-2.0.
 
-Versions are pinned in the Gradle build. Transitive dependency notices will be
-generated and reviewed before any distributable release.
+Versions are pinned in the Gradle build. The complete release runtime dependency
+graph was resolved and reviewed for the first production release; it contains no
+unexpected or non-free dependency families.

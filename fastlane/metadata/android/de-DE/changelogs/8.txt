@@ -1,1 +1,1 @@
-Erster öffentlicher Entwicklungsstand von Vectorint mit „Jetzt verfügbar“, wiederkehrenden Einnahmen und Ausgaben, Kategorien, Monatsübersicht, Erinnerungen, Designs und lokaler Sicherung.
+Erste stabile Veröffentlichung von Vectorint mit „Jetzt verfügbar“, wiederkehrenden Einnahmen und Ausgaben, Kategorien, Monatsübersicht, Erinnerungen, Designs und lokaler Sicherung.
