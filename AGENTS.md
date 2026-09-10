@@ -208,6 +208,10 @@ Treat every tracked file as suitable for public release.
   for GitHub and other compatible storefronts; do not configure F-Droid
   `Binaries`, per-build `binary`, or developer-binary signature copying unless a
   later explicit release-policy decision changes this model.
+- When testing proposed `fdroiddata` metadata locally, commit the metadata in the
+  validation checkout before running `fdroid build` and require its Git-derived
+  source timestamp to be non-empty. An uncommitted metadata file can give Gradle
+  an empty `SOURCE_DATE_EPOCH` and produce a misleading cache-journal failure.
 - Treat F-Droid-signed and developer-signed installs as separate update channels.
   Do not claim that Android can update in place between them without a verified
   platform-supported signing migration.

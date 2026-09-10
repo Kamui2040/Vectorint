@@ -46,6 +46,10 @@ Before an F-Droid contribution:
    unsigned APK bytes to match.
 4. Run the metadata recipe in the current F-Droid buildserver environment and
    verify the expected APK artifact, not only a successful command or pipeline.
+   Commit proposed metadata in the validation checkout first and verify that
+   `git log -n1 --pretty=%ct -- metadata/io.github.kamui2040.vectorint.yml`
+   returns a non-empty timestamp. This matches the real `fdroiddata` path and
+   prevents an empty `SOURCE_DATE_EPOCH` from corrupting Gradle's cache journal.
 5. Run `fdroid readmeta`, `fdroid rewritemeta`, `fdroid checkupdates`, `fdroid lint`,
    and the local source build required by the current contribution guide.
 6. Confirm the repository, metadata, screenshots, licences, and build inputs are
