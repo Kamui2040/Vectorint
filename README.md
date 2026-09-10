@@ -18,7 +18,7 @@ reserves planned expenses and includes expected income only when you choose to.
 - Stores a newest-first history and supports local JSON backup and restore.
 - Works without an account, ads, analytics, tracking, or an internet connection.
 
-Vectorint is in public development and has not had a production release yet.
+Vectorint's first production release is version 0.0.8.
 
 ## Build
 

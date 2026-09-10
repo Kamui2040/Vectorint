@@ -232,6 +232,8 @@ Treat every tracked file as suitable for public release.
   failure, isolate the exact hierarchy before parsing `uiautomator` output, use
   locale-neutral semantic assertions, and capability-check device shell commands
   before relying on them.
+- Immediately before coordinate-based UI input, verify that the intended package
+  is foreground and that the current hierarchy contains the target control.
 - Re-read the device hierarchy after any interaction that can reflow Compose
   content. Derive controls from the current bounds and assert the visible meaning;
   do not assume that status and date use separate semantic nodes.

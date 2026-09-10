@@ -2,11 +2,11 @@
 
 ## Status
 
-Vectorint is a public, pre-release Android application with an independent Git
-history. This repository begins with a clean source snapshot and does not include
-the earlier private development history. No prototype or third-party application
-source, assets, translations, or migrations were imported, and no production
-release has been published.
+Vectorint is a public Android application with an independent Git history. Version
+0.0.8 is its first production release. This repository begins with a clean source
+snapshot and does not include the earlier private development history. No
+prototype or third-party application source, assets, translations, or migrations
+were imported.
 
 The initial foundation is deliberately small:
 
@@ -241,8 +241,9 @@ from it.
 
 ## Release status
 
-Complete visual, accessibility, device, reproducibility, signing, and publication
-gates before any production release.
+Version 0.0.8 is the first production release. Complete visual, accessibility,
+device, reproducibility, signing, and publication gates before publishing any
+later production release.
 
 F-Droid is a separate update channel: it will build from the public release source
 and use its own repository-specific signature. Vectorint's permanent developer
