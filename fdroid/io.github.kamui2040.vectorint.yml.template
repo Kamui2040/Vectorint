@@ -1,0 +1,26 @@
+# Public contributor reference.
+# Production metadata in fdroid/fdroiddata is authoritative.
+
+Categories:
+  - Finance Manager
+License: GPL-3.0-only
+AuthorName: K2040
+AutoName: Vectorint
+Summary: Local-first budgeting companion for safe-to-spend guidance
+Description: |-
+  Vectorint helps answer one practical question: how much can I safely spend right now?
+
+  Start with current funds for an immediate answer. Add income, expenses, and recurring items gradually to make it more precise. Planned expenses are reserved automatically. Expected income is included only when the user chooses to include it.
+
+  Vectorint supports flexible recurring schedules, optional local reminders and manual confirmation, explicit budget-month assignment, a category-based monthly expense overview, tags, editable history, and local JSON backup and restore.
+
+  The app is local-first. It needs no account and contains no ads, analytics, tracking, or internet access.
+
+RepoType: git
+Repo: https://github.com/Kamui2040/Vectorint.git
+SourceCode: https://github.com/Kamui2040/Vectorint
+IssueTracker: https://github.com/Kamui2040/Vectorint/issues
+Changelog: https://github.com/Kamui2040/Vectorint/releases
+
+AutoUpdateMode: Version
+UpdateCheckMode: Tags

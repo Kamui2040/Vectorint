@@ -24,6 +24,14 @@ android {
         compose = true
     }
 
+    buildTypes {
+        release {
+            vcsInfo {
+                include = false
+            }
+        }
+    }
+
     androidResources {
         generateLocaleConfig = true
         localeFilters += listOf("en", "de")
