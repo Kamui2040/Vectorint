@@ -212,6 +212,10 @@ Treat every tracked file as suitable for public release.
   validation checkout before running `fdroid build` and require its Git-derived
   source timestamp to be non-empty. An uncommitted metadata file can give Gradle
   an empty `SOURCE_DATE_EPOCH` and produce a misleading cache-journal failure.
+- During an official `fdroid build`, the source scanner intentionally removes
+  `gradle/wrapper/gradle-wrapper.jar`, and post-build cleanup removes `gradlew`
+  and `gradlew.bat`. Treat only that exact deletion set as expected buildserver
+  mutation; any other tracked-source change fails the release gate.
 - Treat F-Droid-signed and developer-signed installs as separate update channels.
   Do not claim that Android can update in place between them without a verified
   platform-supported signing migration.
