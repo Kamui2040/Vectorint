@@ -244,5 +244,10 @@ from it.
 Complete visual, accessibility, device, reproducibility, signing, and publication
 gates before any production release.
 
+F-Droid is a separate update channel: it will build from the public release source
+and use its own repository-specific signature. Vectorint's permanent developer
+signature is reserved for GitHub and other compatible storefronts. The two channels
+are not treated as interchangeable Android update paths.
+
 Update this file only for material product, architecture, or open-work changes.
 Detailed validation and incident history belongs in issues or pull requests.

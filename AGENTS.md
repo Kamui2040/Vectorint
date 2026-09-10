@@ -200,6 +200,17 @@ Treat every tracked file as suitable for public release.
 ## Build and validation
 
 - Use the checked-in Gradle wrapper with JDK 21.
+- Keep release output independent of repository metadata. Disable AGP-generated
+  VCS metadata for release builds and require byte-identical unsigned APKs from
+  the same tracked source both with and without a `.git` directory.
+- F-Droid builds Vectorint from the public release source and signs it with its
+  own repository-specific key. Keep Vectorint's permanent developer signature
+  for GitHub and other compatible storefronts; do not configure F-Droid
+  `Binaries`, per-build `binary`, or developer-binary signature copying unless a
+  later explicit release-policy decision changes this model.
+- Treat F-Droid-signed and developer-signed installs as separate update channels.
+  Do not claim that Android can update in place between them without a verified
+  platform-supported signing migration.
 - Keep the application module's main manifest present; Android unit-test task
   graphs validate it before pure Kotlin tests run.
 - Preserve the repository line-ending rules, including CRLF for the generated
