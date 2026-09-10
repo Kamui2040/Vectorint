@@ -250,5 +250,9 @@ and use its own repository-specific signature. Vectorint's permanent developer
 signature is reserved for GitHub and other compatible storefronts. The two channels
 are not treated as interchangeable Android update paths.
 
+F-Droid inclusion is under review in
+[fdroiddata merge request !48451](https://gitlab.com/fdroid/fdroiddata/-/merge_requests/48451).
+The submission branch and merge-request pipelines pass for version 0.0.8.
+
 Update this file only for material product, architecture, or open-work changes.
 Detailed validation and incident history belongs in issues or pull requests.
