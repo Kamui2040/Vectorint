@@ -209,9 +209,11 @@ Treat every tracked file as suitable for public release.
   `Binaries`, per-build `binary`, or developer-binary signature copying unless a
   later explicit release-policy decision changes this model.
 - When testing proposed `fdroiddata` metadata locally, commit the metadata in the
-  validation checkout before running `fdroid build` and require its Git-derived
-  source timestamp to be non-empty. An uncommitted metadata file can give Gradle
-  an empty `SOURCE_DATE_EPOCH` and produce a misleading cache-journal failure.
+  validation checkout before running Git-state-dependent checks such as
+  `fdroid build` or `fdroid checkupdates`, and require its Git-derived source
+  timestamp to be non-empty. An uncommitted metadata file can give Gradle an
+  empty `SOURCE_DATE_EPOCH`, produce a misleading cache-journal failure, or make
+  `checkupdates` reject an otherwise valid candidate.
 - During an official `fdroid build`, the source scanner intentionally removes
   `gradle/wrapper/gradle-wrapper.jar`, and post-build cleanup removes `gradlew`
   and `gradlew.bat`. Treat only that exact deletion set as expected buildserver
