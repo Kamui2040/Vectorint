@@ -5,13 +5,14 @@ Vectorint keeps your budget data on your device.
 ## Data use
 
 - Vectorint does not create an account.
-- Vectorint does not collect, upload, sell, or share personal or financial data.
+- K2040 does not receive, upload, sell, or share your personal or financial data.
 - Vectorint contains no advertising, analytics, telemetry, or tracking.
 - Vectorint does not request Android's internet permission.
 
-Your current funds, entries, recurring items, categories, tags, and settings stay
-inside the app's private storage. If you export a backup, Android lets you choose
-where the readable JSON file is saved. Vectorint does not upload that file.
+Vectorint processes and stores your current funds, entries, recurring items,
+categories, tags, and settings only inside the app's private storage. If you
+export a backup, Android lets you choose where the readable JSON file is saved.
+Vectorint does not upload that file.
 
 ## Notifications
 
