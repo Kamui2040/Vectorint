@@ -297,4 +297,18 @@
     <string name="category_icon_gifts">Geschenke</string>
     <string name="category_icon_pets">Haustiere</string>
     <string name="category_icon_childcare">Kinderbetreuung</string>
+    <string name="widget_name">Jetzt verfügbar</string>
+    <string name="widget_description">Zeigt „Jetzt verfügbar“ für den aktuellen Monat.</string>
+    <string name="widget_current_month">Aktueller Monat</string>
+    <string name="widget_ready_details_expected_income_off">Reserviert: %1$s · Erwartete Einnahmen aus</string>
+    <string name="widget_ready_details_expected_income_on">Reserviert: %1$s · Erwartete Einnahmen: %2$s</string>
+    <string name="widget_setup_needed">Einrichtung nötig</string>
+    <string name="widget_set_current_funds">Öffne Vectorint und lege dein aktuelles Guthaben fest.</string>
+    <string name="widget_amount_unavailable">Betrag nicht verfügbar</string>
+    <string name="widget_review_data">Öffne Vectorint und prüfe deine Budgetdaten.</string>
+    <string name="widget_update_failed">Aktualisierung fehlgeschlagen</string>
+    <string name="widget_open_to_retry">Öffne Vectorint und versuche es erneut.</string>
+    <string name="widget_updating">Wird aktualisiert…</string>
+    <string name="widget_open_app">Tippe, um Vectorint zu öffnen.</string>
+    <string name="widget_content_description">%1$s. %2$s. %3$s. %4$s</string>
 </resources>

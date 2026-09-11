@@ -298,4 +298,19 @@
     <string name="category_icon_gifts">Gifts</string>
     <string name="category_icon_pets">Pets</string>
     <string name="category_icon_childcare">Childcare</string>
+    <string name="widget_name">Available now</string>
+    <string name="widget_description">See Available now for the current month.</string>
+    <string name="widget_current_month">Current month</string>
+    <string name="widget_empty_value" translatable="false">—</string>
+    <string name="widget_ready_details_expected_income_off">Reserved: %1$s · Expected income off</string>
+    <string name="widget_ready_details_expected_income_on">Reserved: %1$s · Expected income: %2$s</string>
+    <string name="widget_setup_needed">Setup needed</string>
+    <string name="widget_set_current_funds">Open Vectorint to set Current funds.</string>
+    <string name="widget_amount_unavailable">Amount unavailable</string>
+    <string name="widget_review_data">Open Vectorint to review your budget data.</string>
+    <string name="widget_update_failed">Couldn’t update</string>
+    <string name="widget_open_to_retry">Open Vectorint to try again.</string>
+    <string name="widget_updating">Updating…</string>
+    <string name="widget_open_app">Tap to open Vectorint.</string>
+    <string name="widget_content_description">%1$s. %2$s. %3$s. %4$s</string>
 </resources>
