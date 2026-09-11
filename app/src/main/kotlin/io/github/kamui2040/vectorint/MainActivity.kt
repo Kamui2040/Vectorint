@@ -239,6 +239,7 @@ class MainActivity : AppCompatActivity() {
                             CurrentFundsRoute(
                                 editor = currentFundsEditor,
                                 onSaved = {
+                                    vectorintApplication.refreshWidgets()
                                     reloadKey++
                                     destination = AppDestination.HOME
                                 },
@@ -250,6 +251,7 @@ class MainActivity : AppCompatActivity() {
                                 editor = oneOffActivityEditor,
                                 categoryManager = categoryManager,
                                 onSaved = {
+                                    vectorintApplication.refreshWidgets()
                                     reloadKey++
                                     destination = activityReturnDestination
                                 },
@@ -276,6 +278,7 @@ class MainActivity : AppCompatActivity() {
                                 categoryManager = categoryManager,
                                 activityId = ActivityId(checkNotNull(selectedActivityId)),
                                 onChanged = {
+                                    vectorintApplication.refreshWidgets()
                                     reloadKey++
                                     destination = AppDestination.ACTIVITY_HISTORY
                                 },
@@ -309,6 +312,7 @@ class MainActivity : AppCompatActivity() {
                                 onOpenNotificationSettings = ::openNotificationSettings,
                                 onChanged = {
                                     vectorintApplication.refreshReminders()
+                                    vectorintApplication.refreshWidgets()
                                     reloadKey++
                                     destination = AppDestination.RECURRING_ITEMS
                                 },
@@ -331,10 +335,17 @@ class MainActivity : AppCompatActivity() {
                         editor = settingsEditor,
                         backupDocumentService = backupDocumentService,
                         language = currentAppLanguage(),
-                        onLanguageChange = ::applyAppLanguage,
-                        onSaved = { reloadKey++ },
+                        onLanguageChange = { language ->
+                            applyAppLanguage(language)
+                            vectorintApplication.refreshWidgets()
+                        },
+                        onSaved = {
+                            vectorintApplication.refreshWidgets()
+                            reloadKey++
+                        },
                         onRestored = {
                             vectorintApplication.refreshReminders()
+                            vectorintApplication.refreshWidgets()
                             reloadKey++
                             selectedHomeMonthOffset = 0
                             selectedOverviewMonthOffset = 0
@@ -367,6 +378,7 @@ class MainActivity : AppCompatActivity() {
         val vectorintApplication = application as VectorintApplication
         notificationsAvailable = vectorintApplication.notificationsAllowed()
         vectorintApplication.refreshReminders()
+        vectorintApplication.refreshWidgets()
     }
 
     private fun enableNotifications() {

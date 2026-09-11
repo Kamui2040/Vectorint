@@ -10,6 +10,7 @@ reserves planned expenses and includes expected income only when you choose to.
 ## What it does
 
 - Shows **Available now** for the selected month.
+- Offers a home-screen widget for the current month's **Available now** amount.
 - Uses the same predictable model for income and expenses.
 - Supports one-off and recurring entries, flexible intervals, optional end dates,
   reminders, and assignment to the occurrence month or following month.

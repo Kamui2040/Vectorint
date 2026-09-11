@@ -4,7 +4,8 @@ All notable user-facing changes will be recorded here.
 
 ## Unreleased
 
-No changes yet.
+- Add a home-screen widget for the current month's Available now amount, including
+  safe setup, unavailable, and retry states.
 
 ## 0.0.8 - 2026-09-10
 
