@@ -6,6 +6,7 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
@@ -41,7 +42,7 @@ class HomeScreenTest {
     }
 
     @Test
-    fun `ready state gives Available now visual priority and shows the breakdown`() {
+    fun `ready state gives Available now and Add activity priority before the collapsed breakdown`() {
         compose.setContent {
             VectorintTheme {
                 HomeScreen(
@@ -61,12 +62,17 @@ class HomeScreenTest {
         compose.onNodeWithText("Available now").assertIsDisplayed()
         compose.onNodeWithText("€650.00").assertIsDisplayed()
         compose.onNodeWithText("September 2026").assertIsDisplayed()
+        compose.onNodeWithText("Add activity").assertIsDisplayed()
+        compose.onNodeWithText("Current funds").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Show This month details").performClick()
         compose.onNodeWithText("Current funds").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("€900.00").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Reserved expenses").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("€250.00").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Expected income").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Not included").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithContentDescription("Hide This month details").performScrollTo().performClick()
+        compose.onNodeWithText("Current funds").assertDoesNotExist()
         compose.onNodeWithText("Try again").assertDoesNotExist()
     }
 
@@ -88,6 +94,7 @@ class HomeScreenTest {
             }
         }
 
+        compose.onNodeWithContentDescription("Show This month details").performClick()
         compose.onNodeWithText("Expected income").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("€100.00").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Included").performScrollTo().assertIsDisplayed()
@@ -230,7 +237,7 @@ class HomeScreenTest {
             }
         }
 
-        compose.onNodeWithText("Add activity").performScrollTo().performClick()
+        compose.onNodeWithText("Add activity").assertIsDisplayed().performClick()
         compose.onNodeWithText("Recurring items").performScrollTo().performClick()
         compose.onNodeWithText("Edit Current funds").performScrollTo().performClick()
         compose.runOnIdle {

@@ -217,6 +217,17 @@ class SettingsScreensTest {
         compose.onNodeWithText("Export backup").performClick()
         compose.onNodeWithText("Restore backup").performClick()
         compose.onNodeWithText("Automatic backup").performScrollTo().assertIsDisplayed()
+        val autoBackupHelp =
+            "Save readable JSON backups to a folder you choose. Vectorint uses Android’s folder access " +
+                "and never connects to a backup service. The newest 10 automatic backups are kept " +
+                "when the folder allows cleanup."
+        compose.onNodeWithText(autoBackupHelp).assertDoesNotExist()
+        compose
+            .onNodeWithContentDescription("More about Automatic backup")
+            .performScrollTo()
+            .performClick()
+        compose.onNodeWithText(autoBackupHelp).assertIsDisplayed()
+        compose.onNodeWithText("Close").performClick()
         compose.onNodeWithText("Choose backup folder").performScrollTo().performClick()
         compose.runOnIdle {
             assertEquals(1, exports)
@@ -268,6 +279,16 @@ class SettingsScreensTest {
             .performScrollTo()
             .performClick()
         compose.onNodeWithText("Daily").performScrollTo().performClick()
+        val timingHelp =
+            "Android may delay background work. A background backup is not guaranteed after force-stop, " +
+                "a crash, or sudden process termination."
+        compose.onNodeWithText(timingHelp).assertDoesNotExist()
+        compose
+            .onNodeWithContentDescription("More about Timed backup")
+            .performScrollTo()
+            .performClick()
+        compose.onNodeWithText(timingHelp).assertIsDisplayed()
+        compose.onNodeWithText("Close").performClick()
         compose.runOnIdle {
             assertEquals(true, configuration.afterChanges)
             assertEquals(true, configuration.onAppStart)
