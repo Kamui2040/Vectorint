@@ -16,8 +16,8 @@ The initial foundation is deliberately small:
   tests;
 - a suspending application repository that keeps blocking database work off the
   Android main thread;
-- a Preferences DataStore repository for the expected-income choice, theme mode,
-  and color palette;
+- Preferences DataStore repositories for portable user settings and separate
+  device-local automatic-backup configuration and status;
 - OS-regional date and money presentation plus strict locale-aware amount input;
 - complete plain-language English and informal-`du` German UI resources with
   automatic Android app-language discovery, while money and date formatting
@@ -58,7 +58,8 @@ The initial foundation is deliberately small:
 - a branded About card opened from the raven or Settings, with the K2040 creator
   logo, app version, short purpose, changelog, licences, sources, and the privacy
   summary at the bottom;
-- a user-selected local JSON backup and fail-closed whole-data restore flow;
+- user-selected manual and automatic local JSON backups plus a fail-closed
+  whole-data restore flow;
 - idempotent current-month occurrence generation that stores one planned Activity
   row per economic occurrence and preserves an existing recorded occurrence;
 - browsable past and future month summaries that preview recurring flows without
@@ -138,6 +139,19 @@ Room and DataStore on failure, and verifies the final state. Android permissions
 reminder-delivery acknowledgements, and other device-local runtime state are not
 portable data; reminders are reconciled from the restored definitions instead.
 Platform cloud backup and device transfer remain disabled.
+
+Automatic backup reuses the same bounded, readable version-6 JSON snapshot. The
+user grants one folder through Android's Storage Access Framework and can choose
+backups after saved portable-data changes, when the app starts, when it moves to
+the background, daily, or weekly. Change-triggered work is coalesced, scheduled
+work is intentionally inexact, and app-background delivery is not promised after
+force-stop, crashes, or abrupt process termination. Every file is read back and
+verified before success; the newest ten matching automatic backups are retained
+where the selected document provider supports cleanup. Folder access, trigger
+choices, and last-run status stay in a separate device-local DataStore and are
+not restored from portable backups. Work is scheduled with Android's platform
+JobScheduler; Vectorint still has no internet permission, proprietary scheduling
+dependency, or service integration.
 
 Presentation adapters resolve Android's current format locale for each operation,
 independently of app language. Amount input accepts localized digits and the

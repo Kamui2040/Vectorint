@@ -103,6 +103,20 @@ class DataStoreSettingsRepositoryTest {
         }
 
     @Test
+    fun `change callback runs only after a stored setting actually changes`() =
+        runBlocking {
+            var changes = 0
+            repository = DataStoreSettingsRepository(dataStore) { changes++ }
+
+            repository.save(UserSettings())
+            repository.setIncludeExpectedIncome(true)
+            repository.setIncludeExpectedIncome(true)
+            repository.save(UserSettings(includeExpectedIncome = true, themeMode = ThemeMode.DARK))
+
+            assertEquals(2, changes)
+        }
+
+    @Test
     fun `updating expected income preserves unrelated preferences`() =
         runBlocking {
             val futurePreference = intPreferencesKey("future_test_preference")

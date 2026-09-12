@@ -118,6 +118,20 @@ class RoomBudgetRepositoryTest {
         }
 
     @Test
+    fun `change callback follows successful mutations and ignores missing updates`() =
+        runBlocking {
+            var changes = 0
+            repository = RoomBudgetRepository(database, onDataChanged = { changes++ })
+
+            assertFalse(repository.updateActivity(plannedExpense("missing", 1_000)))
+            repository.saveCurrentFunds(currentFunds(100_000, "2026-09-01T10:00:00Z"))
+            repository.createActivity(plannedExpense("groceries", 8_000))
+            assertTrue(repository.updateActivity(plannedExpense("groceries", 9_000)))
+
+            assertEquals(3, changes)
+        }
+
+    @Test
     fun `custom category deletion keeps financial records and moves them to Other`() =
         runBlocking {
             val category =

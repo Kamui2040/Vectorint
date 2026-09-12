@@ -155,6 +155,21 @@ Treat every tracked file as suitable for public release.
 - Manual backups use a versioned, size-bounded UTF-8 JSON contract selected by
   the user through Android's document picker. Keep platform cloud backup and
   device transfer disabled unless the product policy explicitly changes.
+- Automatic backups reuse the manual backup contract and write only through a
+  persistable Android Storage Access Framework tree selected by the user. Keep
+  the destination grant, trigger choices, and last-run state in a separate
+  device-local settings store; never import or export them as portable data.
+- Supported automatic triggers are successful portable-data changes, app start,
+  app background, and an inexact daily or weekly schedule. Never describe app
+  background as guaranteed app closure: force-stop, crashes, and abrupt process
+  termination can prevent lifecycle work.
+- Verify each automatic backup by exact bounded readback before reporting
+  success. Only after that verification may retention delete older files whose
+  names exactly match Vectorint's automatic-backup pattern; retain the newest ten
+  and never delete unrelated documents.
+- Missing or temporarily unavailable background-work infrastructure must not
+  crash application startup, including host-side test startup; a later app start
+  or settings change may retry synchronization.
 - Back up user-authored budget data, including custom categories and category
   assignments, plus calculation settings. Do not back up Android permissions,
   notification delivery acknowledgements, navigation state, caches, or other
