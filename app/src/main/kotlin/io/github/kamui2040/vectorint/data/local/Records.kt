@@ -3,6 +3,8 @@ package io.github.kamui2040.vectorint.data.local
 import androidx.room.Embedded
 import androidx.room.Junction
 import androidx.room.Relation
+import io.github.kamui2040.vectorint.core.Account
+import io.github.kamui2040.vectorint.core.AccountId
 import io.github.kamui2040.vectorint.core.ActivityEntry
 import io.github.kamui2040.vectorint.core.ActivityId
 import io.github.kamui2040.vectorint.core.ActivitySource
@@ -79,20 +81,28 @@ internal data class RecurringItemRecord(
     val tags: List<TagEntity>,
 )
 
-internal fun CurrentFunds.toEntity(): CurrentFundsEntity =
-    CurrentFundsEntity(
-        minorUnits = amount.minorUnits,
-        currencyCode = amount.currency.value,
-        capturedAtEpochSecond = capturedAt.epochSecond,
-        capturedAtNano = capturedAt.nano,
+internal fun Account.toEntity(): AccountEntity =
+    AccountEntity(
+        id = id.value,
+        name = name,
+        minorUnits = currentFunds.amount.minorUnits,
+        currencyCode = currentFunds.amount.currency.value,
+        capturedAtEpochSecond = currentFunds.capturedAt.epochSecond,
+        capturedAtNano = currentFunds.capturedAt.nano,
+        includeInAvailableNow = includeInAvailableNow,
     )
 
-internal fun CurrentFundsEntity.toDomain(): CurrentFunds {
-    require(singletonId == CURRENT_FUNDS_SINGLETON_ID) { "Unknown Current funds row" }
+internal fun AccountEntity.toDomain(): Account {
     require(capturedAtNano in 0..999_999_999) { "Stored nanoseconds are out of range" }
-    return CurrentFunds(
-        amount = Money(minorUnits, CurrencyCode.of(currencyCode)),
-        capturedAt = Instant.ofEpochSecond(capturedAtEpochSecond, capturedAtNano.toLong()),
+    return Account(
+        id = AccountId(id),
+        name = name,
+        currentFunds =
+            CurrentFunds(
+                amount = Money(minorUnits, CurrencyCode.of(currencyCode)),
+                capturedAt = Instant.ofEpochSecond(capturedAtEpochSecond, capturedAtNano.toLong()),
+            ),
+        includeInAvailableNow = includeInAvailableNow,
     )
 }
 
@@ -103,6 +113,7 @@ internal fun ActivityEntry.toRecord(): ActivityRecord {
             ActivityEntity(
                 id = id.value,
                 name = name,
+                accountId = accountId.value,
                 direction = direction.toStoredValue(),
                 minorUnits = amount.minorUnits,
                 currencyCode = amount.currency.value,
@@ -143,6 +154,7 @@ internal fun ActivityRecord.toDomain(): ActivityEntry {
     return ActivityEntry(
         id = ActivityId(activity.id),
         name = activity.name,
+        accountId = AccountId(activity.accountId),
         direction = activity.direction.toDirection(),
         amount = Money(activity.minorUnits, CurrencyCode.of(activity.currencyCode)),
         state = activity.state.toActivityState(),
@@ -161,6 +173,7 @@ internal fun RecurringItem.toRecord(): RecurringItemRecord =
             RecurringItemEntity(
                 id = id.value,
                 name = name,
+                accountId = accountId.value,
                 direction = direction.toStoredValue(),
                 minorUnits = amount.minorUnits,
                 currencyCode = amount.currency.value,
@@ -190,6 +203,7 @@ internal fun RecurringItemRecord.toDomain(): RecurringItem {
     return RecurringItem(
         id = RecurringItemId(item.id),
         name = item.name,
+        accountId = AccountId(item.accountId),
         direction = item.direction.toDirection(),
         amount = Money(item.minorUnits, CurrencyCode.of(item.currencyCode)),
         schedule =

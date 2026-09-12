@@ -33,7 +33,7 @@ internal class RecurringOccurrenceCoordinator(
         val occurrences =
             repository.loadRecurringItems().flatMap { item ->
                 require(item.amount.currency == currency) {
-                    "Recurring activity currency must match Current funds"
+                    "Recurring activity currency must match the account currency"
                 }
                 RecurringOccurrenceGenerator.generate(
                     item = item,

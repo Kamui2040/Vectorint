@@ -128,6 +128,7 @@ internal class BackupCoordinator(
 
 private fun BackupData.normalized(): BackupData =
     copy(
+        accounts = accounts.sortedBy { it.id.value },
         activities = activities.sortedBy { it.id.value },
         recurringItems = recurringItems.sortedBy { it.id.value },
         customCategories = customCategories.sortedBy { it.id.value },

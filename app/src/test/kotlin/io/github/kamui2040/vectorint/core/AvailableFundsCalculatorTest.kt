@@ -23,6 +23,87 @@ class AvailableFundsCalculatorTest {
     }
 
     @Test
+    fun `excluded accounts and their entries do not affect Available now`() {
+        val bank = account("bank", "Bank", 100_000, included = true)
+        val savings = account("savings", "Savings", 500_000, included = false)
+        val bankExpense =
+            planned("bank-expense", Direction.EXPENSE, 10_000)
+                .copy(accountId = bank.id)
+                .confirm(baselineInstant.plusSeconds(1))
+        val savingsExpense =
+            planned("savings-expense", Direction.EXPENSE, 40_000)
+                .copy(accountId = savings.id)
+
+        val result = available(listOf(bank, savings), bankExpense, savingsExpense)
+
+        assertEquals(Money(90_000, eur), result.confirmedFunds)
+        assertEquals(Money.zero(eur), result.reservedExpenses)
+        assertEquals(Money(90_000, eur), result.availableNow)
+    }
+
+    @Test
+    fun `all accounts may be excluded explicitly`() {
+        val savings = account("savings", "Savings", 500_000, included = false)
+
+        val result = available(listOf(savings))
+
+        assertEquals(Money.zero(eur), result.confirmedFunds)
+        assertEquals(Money.zero(eur), result.availableNow)
+    }
+
+    @Test
+    fun `each account uses its own balance capture time`() {
+        val bank = account("bank", "Bank", 100_000, capturedAt = baselineInstant)
+        val cash =
+            account(
+                "cash",
+                "Cash",
+                20_000,
+                capturedAt = baselineInstant.minusSeconds(100),
+            )
+        val bookingTime = baselineInstant.minusSeconds(50)
+        val bankExpense =
+            planned("bank-expense", Direction.EXPENSE, 10_000)
+                .copy(accountId = bank.id)
+                .confirm(bookingTime)
+        val cashExpense =
+            planned("cash-expense", Direction.EXPENSE, 5_000)
+                .copy(accountId = cash.id)
+                .confirm(bookingTime)
+
+        val result = available(listOf(bank, cash), bankExpense, cashExpense)
+
+        assertEquals(Money(115_000, eur), result.confirmedFunds)
+        assertEquals(Money(115_000, eur), result.availableNow)
+    }
+
+    @Test
+    fun `unknown account assignment fails closed`() {
+        val bank = account("bank", "Bank", 100_000)
+        val activity = planned("purchase", Direction.EXPENSE, 2_000)
+
+        val result = AvailableFundsCalculator.calculate(listOf(bank), month, listOf(activity))
+
+        assertEquals(
+            AvailableFundsResult.Unsafe(eur, setOf(UnsafeReason.UNKNOWN_ACCOUNT_ASSIGNMENT)),
+            result,
+        )
+    }
+
+    @Test
+    fun `duplicate account names fail closed without changing case sensitivity`() {
+        val first = account("bank", "Bank", 100_000)
+        val duplicateName = account("cash", "bank", 20_000)
+
+        val result = AvailableFundsCalculator.calculate(listOf(first, duplicateName), month, emptyList())
+
+        assertEquals(
+            AvailableFundsResult.Unsafe(eur, setOf(UnsafeReason.DUPLICATE_ACCOUNT_NAME)),
+            result,
+        )
+    }
+
+    @Test
     fun `planned expense is reserved once`() {
         val result = available(planned("rent", Direction.EXPENSE, 40_000))
 
@@ -252,6 +333,29 @@ class AvailableFundsCalculatorTest {
         assertTrue("Expected a safe Available now result but got $result", result is AvailableFundsResult.Available)
         return result as AvailableFundsResult.Available
     }
+
+    private fun available(
+        accounts: List<Account>,
+        vararg activity: ActivityEntry,
+    ): AvailableFundsResult.Available {
+        val result = AvailableFundsCalculator.calculate(accounts, month, activity.toList())
+        assertTrue("Expected a safe Available now result but got $result", result is AvailableFundsResult.Available)
+        return result as AvailableFundsResult.Available
+    }
+
+    private fun account(
+        id: String,
+        name: String,
+        minorUnits: Long,
+        included: Boolean = true,
+        capturedAt: Instant = baselineInstant,
+    ): Account =
+        Account(
+            id = AccountId(id),
+            name = name,
+            currentFunds = CurrentFunds(Money(minorUnits, eur), capturedAt),
+            includeInAvailableNow = included,
+        )
 
     private fun planned(
         id: String,

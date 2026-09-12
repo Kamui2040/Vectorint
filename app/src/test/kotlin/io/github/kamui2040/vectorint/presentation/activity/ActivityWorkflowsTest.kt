@@ -327,7 +327,7 @@ class ActivityWorkflowsTest {
         val snapshot = requireNotNull(repository.loadSnapshot())
         val result =
             AvailableFundsCalculator.calculate(
-                currentFunds = snapshot.currentFunds,
+                accounts = snapshot.accounts,
                 month = september,
                 activity = snapshot.activities,
             )
@@ -345,7 +345,11 @@ private class FakeActivityDisplayFormatter : ActivityDisplayFormatter {
 }
 
 private class FakeActivityRepository(
-    var currentFunds: CurrentFunds? = null,
+    var currentFunds: CurrentFunds? =
+        CurrentFunds(
+            Money(0, CurrencyCode.of("EUR")),
+            Instant.EPOCH,
+        ),
     val activities: MutableList<ActivityEntry> = mutableListOf(),
     private val failLoads: Boolean = false,
     private val failMutations: Boolean = false,
@@ -355,14 +359,6 @@ private class FakeActivityRepository(
     fun loadSnapshot(): BudgetSnapshot? = currentFunds?.let { BudgetSnapshot(it, activities.toList()) }
 
     override suspend fun loadBudgetSnapshot(): BudgetSnapshot? = loadSnapshot()
-
-    override suspend fun saveCurrentFunds(currentFunds: CurrentFunds) {
-        this.currentFunds = currentFunds
-    }
-
-    override suspend fun clearCurrentFunds() {
-        currentFunds = null
-    }
 
     override suspend fun loadActivities(): List<ActivityEntry> {
         if (cancelLoads) throw CancellationException("synthetic cancellation")

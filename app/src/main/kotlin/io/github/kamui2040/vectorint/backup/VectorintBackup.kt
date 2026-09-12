@@ -13,11 +13,12 @@ internal data class VectorintBackup(
 
 internal object VectorintBackupContract {
     const val FORMAT = "io.github.kamui2040.vectorint.backup"
-    const val VERSION = 6
+    const val VERSION = 7
     const val MIN_SUPPORTED_VERSION = 1
     const val MAX_BYTES = 5 * 1024 * 1024
     const val MAX_ACTIVITIES = 10_000
     const val MAX_RECURRING_ITEMS = 2_000
+    const val MAX_ACCOUNTS = 100
     const val MAX_CUSTOM_CATEGORIES = 500
     const val MAX_TAGS_PER_RECORD = 100
     const val MAX_TEXT_CHARS = 2_048

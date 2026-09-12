@@ -7,8 +7,10 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -81,11 +83,12 @@ class ActivityScreensTest {
         compose.onNodeWithText("Groceries").assertIsDisplayed()
         compose.onNodeWithText("Expense").assertIsDisplayed()
         compose.onNodeWithText("Planned for Sep 18, 2026").assertIsDisplayed()
+        compose.onAllNodesWithText("Account: Main").assertCountEquals(2)
         compose.onNodeWithText("Groceries").assertIsDisplayed()
         compose.onNodeWithText("Tags: household, shared").assertIsDisplayed()
+        compose.onNodeWithText("Add activity").performClick()
         compose.onNodeWithText("Confirmed on Sep 17, 2026").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("€25.00").performClick()
-        compose.onNodeWithText("Add activity").performScrollTo().performClick()
         compose.runOnIdle {
             assertEquals(firstId, selected)
             assertEquals(1, adds)

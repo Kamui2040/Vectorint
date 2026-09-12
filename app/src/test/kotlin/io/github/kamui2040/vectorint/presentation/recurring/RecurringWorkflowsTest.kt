@@ -318,10 +318,6 @@ private class FakeRecurringBudgetRepository(
 ) : BudgetRepository {
     override suspend fun loadBudgetSnapshot(): BudgetSnapshot? = currentFunds?.let { BudgetSnapshot(it, emptyList()) }
 
-    override suspend fun saveCurrentFunds(currentFunds: CurrentFunds) = error("Not used")
-
-    override suspend fun clearCurrentFunds() = error("Not used")
-
     override suspend fun loadActivities(): List<ActivityEntry> = error("Not used")
 
     override suspend fun loadActivity(activityId: ActivityId): ActivityEntry? = error("Not used")

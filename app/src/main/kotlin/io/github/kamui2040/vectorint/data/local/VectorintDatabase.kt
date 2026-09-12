@@ -9,7 +9,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [
-        CurrentFundsEntity::class,
+        AccountEntity::class,
         ActivityEntity::class,
         RecurringItemEntity::class,
         TagEntity::class,
@@ -17,11 +17,11 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         RecurringItemTagCrossRef::class,
         CustomCategoryEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = true,
 )
 internal abstract class VectorintDatabase : RoomDatabase() {
-    abstract fun currentFundsDao(): CurrentFundsDao
+    abstract fun accountDao(): AccountDao
 
     abstract fun activityDao(): ActivityDao
 
@@ -42,7 +42,7 @@ internal abstract class VectorintDatabase : RoomDatabase() {
                     context.applicationContext,
                     VectorintDatabase::class.java,
                     DATABASE_NAME,
-                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                ).addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                 .build()
 
         internal val MIGRATION_1_2 =
@@ -131,6 +131,58 @@ internal abstract class VectorintDatabase : RoomDatabase() {
                         )
                         """.trimIndent(),
                     )
+                }
+            }
+
+        internal val MIGRATION_5_6 =
+            object : Migration(5, 6) {
+                override fun migrate(db: SupportSQLiteDatabase) {
+                    db.execSQL(
+                        """
+                        CREATE TABLE IF NOT EXISTS accounts (
+                            id TEXT NOT NULL PRIMARY KEY,
+                            name TEXT COLLATE NOCASE NOT NULL,
+                            minor_units INTEGER NOT NULL,
+                            currency_code TEXT NOT NULL,
+                            captured_at_epoch_second INTEGER NOT NULL,
+                            captured_at_nano INTEGER NOT NULL,
+                            include_in_available_now INTEGER NOT NULL DEFAULT 1
+                        )
+                        """.trimIndent(),
+                    )
+                    db.execSQL(
+                        """
+                        INSERT INTO accounts (
+                            id,
+                            name,
+                            minor_units,
+                            currency_code,
+                            captured_at_epoch_second,
+                            captured_at_nano,
+                            include_in_available_now
+                        )
+                        SELECT
+                            'legacy-main',
+                            'Main',
+                            minor_units,
+                            currency_code,
+                            captured_at_epoch_second,
+                            captured_at_nano,
+                            1
+                        FROM current_funds
+                        WHERE singleton_id = 1
+                        """.trimIndent(),
+                    )
+                    db.execSQL("CREATE UNIQUE INDEX index_accounts_name ON accounts (name)")
+                    db.execSQL(
+                        "ALTER TABLE activities ADD COLUMN account_id TEXT NOT NULL DEFAULT 'legacy-main'",
+                    )
+                    db.execSQL("CREATE INDEX index_activities_account_id ON activities (account_id)")
+                    db.execSQL(
+                        "ALTER TABLE recurring_items ADD COLUMN account_id TEXT NOT NULL DEFAULT 'legacy-main'",
+                    )
+                    db.execSQL("CREATE INDEX index_recurring_items_account_id ON recurring_items (account_id)")
+                    db.execSQL("DROP TABLE current_funds")
                 }
             }
     }

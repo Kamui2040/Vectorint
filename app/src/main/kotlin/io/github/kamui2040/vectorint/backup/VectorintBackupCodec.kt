@@ -3,6 +3,8 @@ package io.github.kamui2040.vectorint.backup
 import android.util.JsonReader
 import android.util.JsonToken
 import android.util.JsonWriter
+import io.github.kamui2040.vectorint.core.Account
+import io.github.kamui2040.vectorint.core.AccountId
 import io.github.kamui2040.vectorint.core.ActivityEntry
 import io.github.kamui2040.vectorint.core.ActivityId
 import io.github.kamui2040.vectorint.core.ActivitySource
@@ -25,6 +27,7 @@ import io.github.kamui2040.vectorint.core.RecurringSchedule
 import io.github.kamui2040.vectorint.core.ReminderLead
 import io.github.kamui2040.vectorint.core.ReminderSettings
 import io.github.kamui2040.vectorint.core.Tag
+import io.github.kamui2040.vectorint.core.asLegacyDefaultAccount
 import io.github.kamui2040.vectorint.data.BackupData
 import io.github.kamui2040.vectorint.data.ColorPalette
 import io.github.kamui2040.vectorint.data.ThemeMode
@@ -52,8 +55,11 @@ internal class VectorintBackupCodec {
             writer.writeInstant(backup.createdAt)
             writer.name("settings")
             writer.writeSettings(backup.settings)
-            writer.name("currentFunds")
-            backup.data.currentFunds?.let(writer::writeCurrentFunds) ?: writer.nullValue()
+            writer.name("accounts").beginArray()
+            backup.data.accounts
+                .sortedBy { it.id.value }
+                .forEach(writer::writeAccount)
+            writer.endArray()
             writer.name("customCategories").beginArray()
             backup.data.customCategories
                 .sortedBy { it.id.value }
@@ -136,6 +142,16 @@ private fun JsonWriter.writeCurrentFunds(currentFunds: CurrentFunds) {
     endObject()
 }
 
+private fun JsonWriter.writeAccount(account: Account) {
+    beginObject()
+    name("id").value(account.id.value)
+    name("name").value(account.name)
+    name("currentFunds")
+    writeCurrentFunds(account.currentFunds)
+    name("includeInAvailableNow").value(account.includeInAvailableNow)
+    endObject()
+}
+
 private fun JsonWriter.writeMoney(money: Money) {
     beginObject()
     name("minorUnits").value(money.minorUnits)
@@ -154,6 +170,7 @@ private fun JsonWriter.writeActivity(activity: ActivityEntry) {
     beginObject()
     name("id").value(activity.id.value)
     name("name").value(activity.name)
+    name("accountId").value(activity.accountId.value)
     name("direction").value(activity.direction.storedValue())
     name("amount")
     writeMoney(activity.amount)
@@ -189,6 +206,7 @@ private fun JsonWriter.writeRecurringItem(item: RecurringItem) {
     beginObject()
     name("id").value(item.id.value)
     name("name").value(item.name)
+    name("accountId").value(item.accountId.value)
     name("direction").value(item.direction.storedValue())
     name("amount")
     writeMoney(item.amount)
@@ -271,6 +289,7 @@ private fun JsonReader.readBackupVersion(): Int {
                 "createdAt",
                 "settings",
                 "currentFunds",
+                "accounts",
                 "activities",
                 "recurringItems",
                 "customCategories",
@@ -286,7 +305,8 @@ private fun JsonReader.readBackupVersion(): Int {
     }
     fields.requireExactly(
         buildSet {
-            addAll(setOf("format", "version", "createdAt", "settings", "currentFunds", "activities", "recurringItems"))
+            addAll(setOf("format", "version", "createdAt", "settings", "activities", "recurringItems"))
+            if (parsedVersion >= 7) add("accounts") else add("currentFunds")
             if (parsedVersion >= 5) add("customCategories")
         },
     )
@@ -299,6 +319,7 @@ private fun JsonReader.readBackup(versionToRead: Int): VectorintBackup {
     var createdAt: Instant? = null
     var settings: UserSettings? = null
     var currentFunds: CurrentFunds? = null
+    var accounts: List<Account>? = null
     var activities: List<ActivityEntry>? = null
     var recurringItems: List<RecurringItem>? = null
     var customCategories: List<CustomCategory>? = null
@@ -310,6 +331,7 @@ private fun JsonReader.readBackup(versionToRead: Int): VectorintBackup {
                 "createdAt" -> createdAt = readInstant()
                 "settings" -> settings = readSettings(versionToRead)
                 "currentFunds" -> currentFunds = readNullable { readCurrentFunds() }
+                "accounts" -> accounts = readAccounts()
                 "activities" -> activities = readActivities(versionToRead)
                 "recurringItems" -> recurringItems = readRecurringItems(versionToRead)
                 "customCategories" -> customCategories = readCustomCategories()
@@ -318,7 +340,8 @@ private fun JsonReader.readBackup(versionToRead: Int): VectorintBackup {
         }
     fields.requireExactly(
         buildSet {
-            addAll(setOf("format", "version", "createdAt", "settings", "currentFunds", "activities", "recurringItems"))
+            addAll(setOf("format", "version", "createdAt", "settings", "activities", "recurringItems"))
+            if (versionToRead >= 7) add("accounts") else add("currentFunds")
             if (versionToRead >= 5) add("customCategories")
         },
     )
@@ -328,7 +351,12 @@ private fun JsonReader.readBackup(versionToRead: Int): VectorintBackup {
         createdAt = requireNotNull(createdAt),
         data =
             BackupData(
-                currentFunds = currentFunds,
+                accounts =
+                    if (versionToRead >= 7) {
+                        requireNotNull(accounts)
+                    } else {
+                        currentFunds?.let { listOf(it.asLegacyDefaultAccount()) }.orEmpty()
+                    },
                 activities = requireNotNull(activities),
                 recurringItems = requireNotNull(recurringItems),
                 customCategories = customCategories.orEmpty(),
@@ -408,6 +436,31 @@ private fun JsonReader.readCurrentFunds(): CurrentFunds {
     return CurrentFunds(requireNotNull(amount), requireNotNull(capturedAt))
 }
 
+private fun JsonReader.readAccounts(): List<Account> =
+    readArray(VectorintBackupContract.MAX_ACCOUNTS, "accounts") {
+        var id: AccountId? = null
+        var name: String? = null
+        var currentFunds: CurrentFunds? = null
+        var includeInAvailableNow: Boolean? = null
+        val fields =
+            readObject { field ->
+                when (field) {
+                    "id" -> id = AccountId(readStringValue())
+                    "name" -> name = readStringValue()
+                    "currentFunds" -> currentFunds = readCurrentFunds()
+                    "includeInAvailableNow" -> includeInAvailableNow = readBooleanValue()
+                    else -> invalid("Unknown account field: $field")
+                }
+            }
+        fields.requireExactly(setOf("id", "name", "currentFunds", "includeInAvailableNow"))
+        Account(
+            id = requireNotNull(id),
+            name = requireNotNull(name),
+            currentFunds = requireNotNull(currentFunds),
+            includeInAvailableNow = requireNotNull(includeInAvailableNow),
+        )
+    }
+
 private fun JsonReader.readMoney(): Money {
     var minorUnits: Long? = null
     var currency: CurrencyCode? = null
@@ -446,6 +499,7 @@ private fun JsonReader.readActivities(version: Int): List<ActivityEntry> =
 private fun JsonReader.readActivity(version: Int): ActivityEntry {
     var id: ActivityId? = null
     var name = ""
+    var accountId: AccountId? = null
     var direction: Direction? = null
     var amount: Money? = null
     var state: ActivityState? = null
@@ -460,6 +514,7 @@ private fun JsonReader.readActivity(version: Int): ActivityEntry {
             when (field) {
                 "id" -> id = ActivityId(readStringValue())
                 "name" -> name = readStringValue()
+                "accountId" -> accountId = AccountId(readStringValue())
                 "direction" -> direction = readDirection()
                 "amount" -> amount = readMoney()
                 "state" -> state = readActivityState()
@@ -477,11 +532,13 @@ private fun JsonReader.readActivity(version: Int): ActivityEntry {
             addAll(setOf("id", "direction", "amount", "state", "budgetMonth", "expectedOn", "bookedAt", "source", "tags"))
             if (version >= 5) add("categoryId")
             if (version >= 6) add("name")
+            if (version >= 7) add("accountId")
         },
     )
     return ActivityEntry(
         id = requireNotNull(id),
         name = name,
+        accountId = accountId ?: io.github.kamui2040.vectorint.core.LEGACY_DEFAULT_ACCOUNT_ID,
         direction = requireNotNull(direction),
         amount = requireNotNull(amount),
         state = requireNotNull(state),
@@ -532,6 +589,7 @@ private fun JsonReader.readRecurringItem(version: Int): RecurringItem =
         3,
         4,
         5,
+        6,
         VectorintBackupContract.VERSION,
         -> readCurrentRecurringItem(version)
 
@@ -541,6 +599,7 @@ private fun JsonReader.readRecurringItem(version: Int): RecurringItem =
 private fun JsonReader.readCurrentRecurringItem(version: Int): RecurringItem {
     var id: RecurringItemId? = null
     var name: String? = null
+    var accountId: AccountId? = null
     var direction: Direction? = null
     var amount: Money? = null
     var schedule: RecurringSchedule? = null
@@ -552,6 +611,7 @@ private fun JsonReader.readCurrentRecurringItem(version: Int): RecurringItem {
             when (field) {
                 "id" -> id = RecurringItemId(readStringValue())
                 "name" -> name = readStringValue()
+                "accountId" -> accountId = AccountId(readStringValue())
                 "direction" -> direction = readDirection()
                 "amount" -> amount = readMoney()
                 "schedule" -> schedule = readSchedule(version)
@@ -565,11 +625,13 @@ private fun JsonReader.readCurrentRecurringItem(version: Int): RecurringItem {
         buildSet {
             addAll(setOf("id", "name", "direction", "amount", "schedule", "reminders", "tags"))
             if (version >= 5) add("categoryId")
+            if (version >= 7) add("accountId")
         },
     )
     return RecurringItem(
         id = requireNotNull(id),
         name = requireNotNull(name),
+        accountId = accountId ?: io.github.kamui2040.vectorint.core.LEGACY_DEFAULT_ACCOUNT_ID,
         direction = requireNotNull(direction),
         amount = requireNotNull(amount),
         schedule = requireNotNull(schedule),

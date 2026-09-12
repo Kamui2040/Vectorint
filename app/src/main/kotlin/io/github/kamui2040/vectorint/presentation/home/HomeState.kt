@@ -6,6 +6,7 @@ import io.github.kamui2040.vectorint.core.ActivitySource
 import io.github.kamui2040.vectorint.core.AvailableFundsCalculator
 import io.github.kamui2040.vectorint.core.AvailableFundsResult
 import io.github.kamui2040.vectorint.core.BudgetMonth
+import io.github.kamui2040.vectorint.core.CurrencyCode
 import io.github.kamui2040.vectorint.core.Money
 import io.github.kamui2040.vectorint.core.MonthlyFlowCalculator
 import io.github.kamui2040.vectorint.core.MonthlyFlowResult
@@ -113,15 +114,21 @@ internal class HomeStateLoader(
         val initialSnapshot =
             budgetRepository.loadBudgetSnapshot()
                 ?: return HomeUiState.NeedsCurrentFunds(monthLabel)
+        if (initialSnapshot.accounts.isEmpty()) return HomeUiState.LoadFailed(monthLabel)
+        val accountCurrencies = initialSnapshot.accounts.map { it.currentFunds.amount.currency }.distinct()
+        if (accountCurrencies.size != 1) {
+            return HomeUiState.Unsafe(monthLabel, setOf(UnsafeReason.CURRENCY_MISMATCH))
+        }
+        val currency = accountCurrencies.single()
         if (!isCurrentMonth) {
             return loadMonthOverview(
                 month = month,
                 monthLabel = monthLabel,
                 storedActivity = initialSnapshot.activities,
-                currentFunds = initialSnapshot.currentFunds.amount,
+                currency = currency,
             )
         }
-        val recurringOccurrences = occurrenceUpdater.refresh(month, initialSnapshot.currentFunds.amount.currency)
+        val recurringOccurrences = occurrenceUpdater.refresh(month, currency)
         val snapshot =
             initialSnapshot.copy(
                 activities =
@@ -133,7 +140,7 @@ internal class HomeStateLoader(
         return when (
             val result =
                 AvailableFundsCalculator.calculate(
-                    currentFunds = snapshot.currentFunds,
+                    accounts = snapshot.accounts,
                     month = month,
                     activity = snapshot.activities,
                     policy = currentSettings.calculationPolicy,
@@ -165,7 +172,7 @@ internal class HomeStateLoader(
         month: BudgetMonth,
         monthLabel: String,
         storedActivity: List<ActivityEntry>,
-        currentFunds: Money,
+        currency: CurrencyCode,
     ): HomeUiState {
         val storedRecurringKeys = storedActivity.mapNotNull(ActivityEntry::recurringKey).toSet()
         val previewOccurrences =
@@ -183,7 +190,7 @@ internal class HomeStateLoader(
         return when (
             val result =
                 MonthlyFlowCalculator.calculate(
-                    currency = currentFunds.currency,
+                    currency = currency,
                     month = month,
                     activity = storedActivity + previewOccurrences,
                 )

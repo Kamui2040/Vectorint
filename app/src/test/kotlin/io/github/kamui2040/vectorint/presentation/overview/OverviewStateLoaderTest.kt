@@ -305,10 +305,6 @@ private class FakeOverviewBudgetRepository(
         return snapshot
     }
 
-    override suspend fun saveCurrentFunds(currentFunds: CurrentFunds) = error("Not used by Overview")
-
-    override suspend fun clearCurrentFunds() = error("Not used by Overview")
-
     override suspend fun loadActivities(): List<ActivityEntry> = error("Not used by Overview")
 
     override suspend fun loadActivity(activityId: ActivityId): ActivityEntry? = error("Not used by Overview")

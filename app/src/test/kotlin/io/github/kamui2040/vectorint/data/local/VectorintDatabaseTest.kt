@@ -24,6 +24,7 @@ import io.github.kamui2040.vectorint.core.RecurringSchedule
 import io.github.kamui2040.vectorint.core.ReminderLead
 import io.github.kamui2040.vectorint.core.ReminderSettings
 import io.github.kamui2040.vectorint.core.Tag
+import io.github.kamui2040.vectorint.core.asLegacyDefaultAccount
 import io.github.kamui2040.vectorint.data.BudgetSnapshot
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -62,7 +63,7 @@ class VectorintDatabaseTest {
     }
 
     @Test
-    fun `Current funds is replaced as one exact baseline row`() {
+    fun `account balance is replaced as one exact baseline row`() {
         val first =
             CurrentFunds(
                 amount = Money(100_000, eur),
@@ -74,16 +75,21 @@ class VectorintDatabaseTest {
                 capturedAt = Instant.parse("2026-09-05T12:30:00.999999999Z"),
             )
 
-        database.currentFundsDao().save(first)
-        database.currentFundsDao().save(replacement)
+        database.accountDao().create(first.asLegacyDefaultAccount())
+        database.accountDao().update(replacement.asLegacyDefaultAccount())
 
-        assertEquals(replacement, database.currentFundsDao().load())
+        assertEquals(
+            replacement,
+            database
+                .accountDao()
+                .loadAll()
+                .single()
+                .currentFunds,
+        )
     }
 
     @Test
-    fun `budget snapshot stays unavailable until a Current funds baseline exists`() {
-        database.activityDao().save(oneOffActivity("purchase"))
-
+    fun `empty database has no budget snapshot`() {
         assertNull(database.budgetSnapshotDao().load())
     }
 
@@ -95,7 +101,7 @@ class VectorintDatabaseTest {
                 capturedAt = Instant.parse("2026-09-01T10:00:00.000000001Z"),
             )
         val activity = oneOffActivity("purchase")
-        database.currentFundsDao().save(funds)
+        database.accountDao().create(funds.asLegacyDefaultAccount())
         database.activityDao().save(activity)
 
         assertEquals(
@@ -434,6 +440,85 @@ class VectorintDatabaseTest {
                 cursor.moveToNext()
                 assertEquals("recurring", cursor.getString(0))
                 assertEquals("Rent", cursor.getString(1))
+            }
+        }
+    }
+
+    @Test
+    fun `version five balance and assignments migrate to one included Main account`() {
+        val helper =
+            FrameworkSQLiteOpenHelperFactory().create(
+                SupportSQLiteOpenHelper.Configuration
+                    .builder(RuntimeEnvironment.getApplication())
+                    .name(null)
+                    .callback(
+                        object : SupportSQLiteOpenHelper.Callback(5) {
+                            override fun onCreate(db: SupportSQLiteDatabase) {
+                                db.execSQL(
+                                    """
+                                    CREATE TABLE current_funds (
+                                        minor_units INTEGER NOT NULL,
+                                        currency_code TEXT NOT NULL,
+                                        captured_at_epoch_second INTEGER NOT NULL,
+                                        captured_at_nano INTEGER NOT NULL,
+                                        singleton_id INTEGER NOT NULL PRIMARY KEY
+                                    )
+                                    """.trimIndent(),
+                                )
+                                db.execSQL("CREATE TABLE activities (id TEXT NOT NULL PRIMARY KEY)")
+                                db.execSQL("CREATE TABLE recurring_items (id TEXT NOT NULL PRIMARY KEY)")
+                            }
+
+                            override fun onUpgrade(
+                                db: SupportSQLiteDatabase,
+                                oldVersion: Int,
+                                newVersion: Int,
+                            ) = Unit
+                        },
+                    ).build(),
+            )
+        helper.use {
+            val db = helper.writableDatabase
+            db.execSQL(
+                """
+                INSERT INTO current_funds (
+                    minor_units, currency_code, captured_at_epoch_second, captured_at_nano, singleton_id
+                ) VALUES (123456, 'EUR', 1770000000, 987654321, 1)
+                """.trimIndent(),
+            )
+            db.execSQL("INSERT INTO activities (id) VALUES ('purchase')")
+            db.execSQL("INSERT INTO recurring_items (id) VALUES ('rent')")
+
+            VectorintDatabase.MIGRATION_5_6.migrate(db)
+
+            db
+                .query(
+                    """
+                    SELECT id, name, minor_units, currency_code,
+                           captured_at_epoch_second, captured_at_nano, include_in_available_now
+                    FROM accounts
+                    """.trimIndent(),
+                ).use { cursor ->
+                    cursor.moveToFirst()
+                    assertEquals("legacy-main", cursor.getString(0))
+                    assertEquals("Main", cursor.getString(1))
+                    assertEquals(123_456, cursor.getLong(2))
+                    assertEquals("EUR", cursor.getString(3))
+                    assertEquals(1_770_000_000, cursor.getLong(4))
+                    assertEquals(987_654_321, cursor.getInt(5))
+                    assertEquals(1, cursor.getInt(6))
+                }
+            db.query("SELECT account_id FROM activities").use { cursor ->
+                cursor.moveToFirst()
+                assertEquals("legacy-main", cursor.getString(0))
+            }
+            db.query("SELECT account_id FROM recurring_items").use { cursor ->
+                cursor.moveToFirst()
+                assertEquals("legacy-main", cursor.getString(0))
+            }
+            db.query("SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'current_funds'").use { cursor ->
+                cursor.moveToFirst()
+                assertEquals(0, cursor.getInt(0))
             }
         }
     }

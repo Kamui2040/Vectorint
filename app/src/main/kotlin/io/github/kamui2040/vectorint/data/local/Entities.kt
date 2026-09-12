@@ -6,22 +6,25 @@ import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
 
-internal const val CURRENT_FUNDS_SINGLETON_ID = 1
-
-@Entity(tableName = "current_funds")
-internal data class CurrentFundsEntity(
+@Entity(
+    tableName = "accounts",
+    indices = [Index(value = ["name"], unique = true, name = "index_accounts_name")],
+)
+internal data class AccountEntity(
+    @PrimaryKey val id: String,
+    @ColumnInfo(collate = ColumnInfo.NOCASE) val name: String,
     @ColumnInfo(name = "minor_units") val minorUnits: Long,
     @ColumnInfo(name = "currency_code") val currencyCode: String,
     @ColumnInfo(name = "captured_at_epoch_second") val capturedAtEpochSecond: Long,
     @ColumnInfo(name = "captured_at_nano") val capturedAtNano: Int,
-    @PrimaryKey
-    @ColumnInfo(name = "singleton_id")
-    val singletonId: Int = CURRENT_FUNDS_SINGLETON_ID,
+    @ColumnInfo(name = "include_in_available_now", defaultValue = "1")
+    val includeInAvailableNow: Boolean = true,
 )
 
 @Entity(
     tableName = "activities",
     indices = [
+        Index(value = ["account_id"], name = "index_activities_account_id"),
         Index(
             value = ["recurring_item_id", "recurring_occurrence_key"],
             unique = true,
@@ -32,6 +35,7 @@ internal data class CurrentFundsEntity(
 internal data class ActivityEntity(
     @PrimaryKey val id: String,
     @ColumnInfo(defaultValue = "''") val name: String = "",
+    @ColumnInfo(name = "account_id", defaultValue = "'legacy-main'") val accountId: String = "legacy-main",
     val direction: String,
     @ColumnInfo(name = "minor_units") val minorUnits: Long,
     @ColumnInfo(name = "currency_code") val currencyCode: String,
@@ -46,10 +50,14 @@ internal data class ActivityEntity(
     @ColumnInfo(name = "category_id") val categoryId: String? = null,
 )
 
-@Entity(tableName = "recurring_items")
+@Entity(
+    tableName = "recurring_items",
+    indices = [Index(value = ["account_id"], name = "index_recurring_items_account_id")],
+)
 internal data class RecurringItemEntity(
     @PrimaryKey val id: String,
     val name: String,
+    @ColumnInfo(name = "account_id", defaultValue = "'legacy-main'") val accountId: String = "legacy-main",
     val direction: String,
     @ColumnInfo(name = "minor_units") val minorUnits: Long,
     @ColumnInfo(name = "currency_code") val currencyCode: String,

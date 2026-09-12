@@ -98,7 +98,7 @@ class SettingsScreensTest {
         compose.onNodeWithText("Calculation").performClick()
         val help =
             "When on, planned income for this month increases Available now. " +
-                "When off, only money already in Current funds counts."
+                "When off, only confirmed money in included accounts counts."
         compose.onNodeWithText(help).assertDoesNotExist()
         compose.onNodeWithContentDescription("More about Calculation").performClick()
         compose.onNodeWithText(help).assertIsDisplayed()

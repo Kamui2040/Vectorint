@@ -21,6 +21,7 @@ import io.github.kamui2040.vectorint.core.PredefinedCategory
 import io.github.kamui2040.vectorint.core.RecurringItem
 import io.github.kamui2040.vectorint.core.RecurringItemId
 import io.github.kamui2040.vectorint.core.Tag
+import io.github.kamui2040.vectorint.core.asLegacyDefaultAccount
 import io.github.kamui2040.vectorint.data.BackupData
 import io.github.kamui2040.vectorint.data.BudgetSnapshot
 import io.github.kamui2040.vectorint.data.RecurringOccurrenceActivityIdFactory
@@ -66,6 +67,9 @@ class RoomBudgetRepositoryTest {
                     VectorintDatabase::class.java,
                 ).build()
         repository = RoomBudgetRepository(database)
+        runBlocking {
+            repository.saveCurrentFunds(currentFunds(100_000, "2026-09-01T10:00:00Z"))
+        }
     }
 
     @After
@@ -78,7 +82,7 @@ class RoomBudgetRepositoryTest {
         val funds = currentFunds(100_000, "2026-09-01T10:00:00Z")
 
         assertThrows(IllegalStateException::class.java) {
-            database.currentFundsDao().save(funds)
+            database.accountDao().create(funds.asLegacyDefaultAccount())
         }
 
         runBlocking {
@@ -521,7 +525,7 @@ class RoomBudgetRepositoryTest {
     ) {
         val result =
             AvailableFundsCalculator.calculate(
-                currentFunds = snapshot.currentFunds,
+                accounts = snapshot.accounts,
                 month = month,
                 activity = snapshot.activities,
             )
@@ -573,3 +577,20 @@ class RoomBudgetRepositoryTest {
             firstOccurrence = LocalDate.of(2026, 1, 1),
         )
 }
+
+private suspend fun RoomBudgetRepository.saveCurrentFunds(currentFunds: CurrentFunds) {
+    val account = currentFunds.asLegacyDefaultAccount()
+    if (loadAccounts().any { it.id == account.id }) {
+        check(updateAccount(account))
+    } else {
+        createAccount(account)
+    }
+}
+
+private suspend fun RoomBudgetRepository.clearCurrentFunds() {
+    val account = currentFundsAccountOrNull() ?: return
+    check(deleteAccount(account.id))
+}
+
+private suspend fun RoomBudgetRepository.currentFundsAccountOrNull() =
+    loadAccounts().singleOrNull { it.id == io.github.kamui2040.vectorint.core.LEGACY_DEFAULT_ACCOUNT_ID }

@@ -7,12 +7,13 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import androidx.room.Upsert
+import io.github.kamui2040.vectorint.core.Account
+import io.github.kamui2040.vectorint.core.AccountId
 import io.github.kamui2040.vectorint.core.ActivityEntry
 import io.github.kamui2040.vectorint.core.ActivityId
 import io.github.kamui2040.vectorint.core.ActivitySource
 import io.github.kamui2040.vectorint.core.ActivityState
 import io.github.kamui2040.vectorint.core.CategoryId
-import io.github.kamui2040.vectorint.core.CurrentFunds
 import io.github.kamui2040.vectorint.core.CustomCategory
 import io.github.kamui2040.vectorint.core.Direction
 import io.github.kamui2040.vectorint.core.Money
@@ -23,19 +24,49 @@ import io.github.kamui2040.vectorint.data.BudgetSnapshot
 import java.time.Instant
 
 @Dao
-internal abstract class CurrentFundsDao {
-    @Upsert
-    abstract fun upsertEntity(entity: CurrentFundsEntity)
+internal abstract class AccountDao {
+    @Insert(onConflict = OnConflictStrategy.ABORT)
+    abstract fun insertEntity(entity: AccountEntity)
 
-    @Query("SELECT * FROM current_funds WHERE singleton_id = $CURRENT_FUNDS_SINGLETON_ID")
-    abstract fun loadEntity(): CurrentFundsEntity?
+    @Update
+    abstract fun updateEntity(entity: AccountEntity): Int
 
-    @Query("DELETE FROM current_funds")
+    @Query("SELECT * FROM accounts ORDER BY name COLLATE NOCASE, name, id")
+    abstract fun loadEntities(): List<AccountEntity>
+
+    @Query("SELECT * FROM accounts WHERE id = :accountId")
+    abstract fun loadEntity(accountId: String): AccountEntity?
+
+    @Query("SELECT EXISTS(SELECT 1 FROM accounts WHERE id = :accountId)")
+    abstract fun entityExists(accountId: String): Boolean
+
+    @Query("SELECT COUNT(*) FROM activities WHERE account_id = :accountId")
+    abstract fun activityReferenceCount(accountId: String): Int
+
+    @Query("SELECT COUNT(*) FROM recurring_items WHERE account_id = :accountId")
+    abstract fun recurringReferenceCount(accountId: String): Int
+
+    @Query("DELETE FROM accounts WHERE id = :accountId")
+    abstract fun deleteEntity(accountId: String): Int
+
+    @Query("DELETE FROM accounts")
     abstract fun clear()
 
-    fun save(currentFunds: CurrentFunds) = upsertEntity(currentFunds.toEntity())
+    fun create(account: Account) = insertEntity(account.toEntity())
 
-    fun load(): CurrentFunds? = loadEntity()?.toDomain()
+    fun loadAll(): List<Account> = loadEntities().map(AccountEntity::toDomain)
+
+    fun load(accountId: AccountId): Account? = loadEntity(accountId.value)?.toDomain()
+
+    fun update(account: Account): Boolean = updateEntity(account.toEntity()) == 1
+
+    @Transaction
+    open fun delete(accountId: AccountId): Boolean {
+        if (activityReferenceCount(accountId.value) != 0 || recurringReferenceCount(accountId.value) != 0) {
+            return false
+        }
+        return deleteEntity(accountId.value) == 1
+    }
 }
 
 @Dao
@@ -339,8 +370,8 @@ internal abstract class CustomCategoryDao {
 
 @Dao
 internal abstract class BudgetSnapshotDao {
-    @Query("SELECT * FROM current_funds WHERE singleton_id = $CURRENT_FUNDS_SINGLETON_ID")
-    abstract fun loadCurrentFundsEntity(): CurrentFundsEntity?
+    @Query("SELECT * FROM accounts ORDER BY name COLLATE NOCASE, name, id")
+    abstract fun loadAccountEntities(): List<AccountEntity>
 
     @Transaction
     @Query("SELECT * FROM activities ORDER BY id")
@@ -348,10 +379,12 @@ internal abstract class BudgetSnapshotDao {
 
     @Transaction
     open fun load(): BudgetSnapshot? {
-        val currentFunds = loadCurrentFundsEntity()?.toDomain() ?: return null
+        val accounts = loadAccountEntities().map(AccountEntity::toDomain)
+        val activities = loadActivityRecords().map(ActivityRecord::toDomain)
+        if (accounts.isEmpty() && activities.isEmpty()) return null
         return BudgetSnapshot(
-            currentFunds = currentFunds,
-            activities = loadActivityRecords().map(ActivityRecord::toDomain),
+            accounts = accounts,
+            activities = activities,
         )
     }
 }

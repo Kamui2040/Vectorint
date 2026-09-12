@@ -40,6 +40,7 @@ internal data class ActivityHistoryItemUi(
     val direction: Direction,
     val amount: String,
     val timing: ActivityTimingUi,
+    val accountName: String = "Main",
     val categoryId: CategoryId? = null,
     val tags: List<String> = emptyList(),
 )
@@ -86,19 +87,24 @@ internal class ActivityHistoryLoader(
     suspend fun load(): ActivityHistoryUiState =
         try {
             val zoneId = zoneIdProvider()
+            val snapshot = budgetRepository.loadBudgetSnapshot()
+            val accounts = snapshot?.accounts.orEmpty()
+            val currencies = accounts.map { it.currentFunds.amount.currency }.distinct()
+            require(currencies.size <= 1) { "Account currencies must match" }
             val generatedOccurrences =
-                budgetRepository
-                    .loadBudgetSnapshot()
-                    ?.currentFunds
-                    ?.let { currentFunds ->
+                currencies
+                    .singleOrNull()
+                    ?.let { currency ->
                         occurrenceUpdater.refresh(
                             month = BudgetMonth(YearMonth.now(clock)),
-                            currency = currentFunds.amount.currency,
+                            currency = currency,
                         )
                     }.orEmpty()
             val activities =
                 (generatedOccurrences + budgetRepository.loadActivities())
                     .distinctBy { it.id }
+            val accountNames = accounts.associate { it.id to it.name }
+            require(activities.all { it.accountId in accountNames }) { "Activity account assignment is unknown" }
             if (activities.isEmpty()) {
                 ActivityHistoryUiState.Empty
             } else {
@@ -116,6 +122,7 @@ internal class ActivityHistoryLoader(
                                     direction = activity.direction,
                                     amount = formatter.formatMoney(activity.amount),
                                     timing = activity.toTimingUi(formatter, zoneId),
+                                    accountName = checkNotNull(accountNames[activity.accountId]),
                                     categoryId = activity.categoryId,
                                     tags = activity.tags.toSortedLabels(),
                                 )

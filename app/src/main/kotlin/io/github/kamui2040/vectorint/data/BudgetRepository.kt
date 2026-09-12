@@ -1,5 +1,7 @@
 package io.github.kamui2040.vectorint.data
 
+import io.github.kamui2040.vectorint.core.Account
+import io.github.kamui2040.vectorint.core.AccountId
 import io.github.kamui2040.vectorint.core.ActivityEntry
 import io.github.kamui2040.vectorint.core.ActivityId
 import io.github.kamui2040.vectorint.core.CategoryId
@@ -10,19 +12,27 @@ import io.github.kamui2040.vectorint.core.Money
 import io.github.kamui2040.vectorint.core.RecurringItem
 import io.github.kamui2040.vectorint.core.RecurringItemId
 import io.github.kamui2040.vectorint.core.Tag
+import io.github.kamui2040.vectorint.core.asLegacyDefaultAccount
 import java.time.Instant
 
 internal data class BudgetSnapshot(
-    val currentFunds: CurrentFunds,
+    val accounts: List<Account>,
     val activities: List<ActivityEntry>,
-)
+) {
+    constructor(currentFunds: CurrentFunds, activities: List<ActivityEntry>) :
+        this(accounts = listOf(currentFunds.asLegacyDefaultAccount()), activities = activities)
+}
 
 internal interface BudgetRepository {
     suspend fun loadBudgetSnapshot(): BudgetSnapshot?
 
-    suspend fun saveCurrentFunds(currentFunds: CurrentFunds)
+    suspend fun loadAccounts(): List<Account> = loadBudgetSnapshot()?.accounts.orEmpty()
 
-    suspend fun clearCurrentFunds()
+    suspend fun createAccount(account: Account): Unit = error("Account creation is not implemented")
+
+    suspend fun updateAccount(account: Account): Boolean = error("Account updates are not implemented")
+
+    suspend fun deleteAccount(accountId: AccountId): Boolean = error("Account deletion is not implemented")
 
     suspend fun loadActivities(): List<ActivityEntry>
 

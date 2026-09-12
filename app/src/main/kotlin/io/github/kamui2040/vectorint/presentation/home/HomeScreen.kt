@@ -94,7 +94,7 @@ internal fun HomeScreen(
                 is HomeUiState.Ready ->
                     ReadyContent(
                         state = state,
-                        onEditCurrentFunds = onEditCurrentFunds,
+                        onManageAccounts = onEditCurrentFunds,
                         onAddActivity = onAddActivity,
                         onViewRecurringItems = onViewRecurringItems,
                     )
@@ -129,7 +129,7 @@ private fun LoadingContent() {
 }
 
 @Composable
-private fun NeedsCurrentFundsContent(onSetCurrentFunds: () -> Unit) {
+private fun NeedsCurrentFundsContent(onSetAccounts: () -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
         shape = MaterialTheme.shapes.extraLarge,
@@ -160,7 +160,7 @@ private fun NeedsCurrentFundsContent(onSetCurrentFunds: () -> Unit) {
                 style = MaterialTheme.typography.bodyLarge,
             )
             Button(
-                onClick = onSetCurrentFunds,
+                onClick = onSetAccounts,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.home_set_current_funds))
@@ -301,7 +301,7 @@ private fun MessageCard(
 @Composable
 private fun ReadyContent(
     state: HomeUiState.Ready,
-    onEditCurrentFunds: () -> Unit,
+    onManageAccounts: () -> Unit,
     onAddActivity: () -> Unit,
     onViewRecurringItems: () -> Unit,
 ) {
@@ -435,7 +435,7 @@ private fun ReadyContent(
                 Text(stringResource(R.string.home_recurring_items))
             }
             OutlinedButton(
-                onClick = onEditCurrentFunds,
+                onClick = onManageAccounts,
                 modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(stringResource(R.string.home_edit_current_funds))

@@ -1,5 +1,7 @@
 package io.github.kamui2040.vectorint.presentation.entry
 
+import io.github.kamui2040.vectorint.core.Account
+import io.github.kamui2040.vectorint.core.AccountId
 import io.github.kamui2040.vectorint.core.ActivityEntry
 import io.github.kamui2040.vectorint.core.ActivityId
 import io.github.kamui2040.vectorint.core.ActivitySource
@@ -7,7 +9,6 @@ import io.github.kamui2040.vectorint.core.ActivityState
 import io.github.kamui2040.vectorint.core.BudgetMonth
 import io.github.kamui2040.vectorint.core.CategoryId
 import io.github.kamui2040.vectorint.core.CurrencyCode
-import io.github.kamui2040.vectorint.core.CurrentFunds
 import io.github.kamui2040.vectorint.core.Direction
 import io.github.kamui2040.vectorint.core.Money
 import io.github.kamui2040.vectorint.core.Tag
@@ -63,20 +64,6 @@ internal class RegionalEntryMoneyAdapter(
     ): MoneyInputResult = parser.parse(input, currencyCode, signPolicy)
 }
 
-internal data class CurrentFundsFormSeed(
-    val amountInput: String,
-    val currencyCodeInput: String,
-    val isEditing: Boolean,
-)
-
-internal sealed interface CurrentFundsLoadResult {
-    data class Ready(
-        val seed: CurrentFundsFormSeed,
-    ) : CurrentFundsLoadResult
-
-    data object Failed : CurrentFundsLoadResult
-}
-
 internal sealed interface EntrySaveResult {
     data object Saved : EntrySaveResult
 
@@ -91,59 +78,10 @@ internal sealed interface EntrySaveResult {
     data object StorageFailed : EntrySaveResult
 }
 
-internal class CurrentFundsEditor(
-    private val budgetRepository: BudgetRepository,
-    private val moneyAdapter: EntryMoneyAdapter,
-    private val clock: Clock = Clock.systemDefaultZone(),
-) {
-    suspend fun load(): CurrentFundsLoadResult =
-        try {
-            val funds = budgetRepository.loadBudgetSnapshot()?.currentFunds
-            CurrentFundsLoadResult.Ready(
-                if (funds == null) {
-                    CurrentFundsFormSeed(
-                        amountInput = "",
-                        currencyCodeInput = moneyAdapter.defaultCurrencyCode()?.value.orEmpty(),
-                        isEditing = false,
-                    )
-                } else {
-                    CurrentFundsFormSeed(
-                        amountInput = moneyAdapter.formatInput(funds.amount),
-                        currencyCodeInput = funds.amount.currency.value,
-                        isEditing = true,
-                    )
-                },
-            )
-        } catch (cancellation: CancellationException) {
-            throw cancellation
-        } catch (_: Exception) {
-            CurrentFundsLoadResult.Failed
-        }
-
-    suspend fun save(
-        amountInput: String,
-        currencyCodeInput: String,
-    ): EntrySaveResult {
-        val currency = currencyCodeOrNull(currencyCodeInput) ?: return EntrySaveResult.InvalidCurrency
-        val money =
-            when (val parsed = moneyAdapter.parse(amountInput, currency, AmountSignPolicy.SIGNED)) {
-                is MoneyInputResult.Accepted -> parsed.money
-                is MoneyInputResult.Rejected -> return EntrySaveResult.InvalidAmount
-            }
-
-        return persist {
-            budgetRepository.saveCurrentFunds(
-                CurrentFunds(
-                    amount = money,
-                    capturedAt = clock.instant(),
-                ),
-            )
-        }
-    }
-}
-
 internal data class OneOffActivityFormSeed(
     val currencyCode: CurrencyCode,
+    val accounts: List<Account> = emptyList(),
+    val selectedAccountId: AccountId = io.github.kamui2040.vectorint.core.LEGACY_DEFAULT_ACCOUNT_ID,
 )
 
 internal sealed interface OneOffActivityLoadResult {
@@ -168,10 +106,17 @@ internal class OneOffActivityEditor(
 ) {
     suspend fun load(): OneOffActivityLoadResult =
         try {
-            val funds =
-                budgetRepository.loadBudgetSnapshot()?.currentFunds
-                    ?: return OneOffActivityLoadResult.NeedsCurrentFunds
-            OneOffActivityLoadResult.Ready(OneOffActivityFormSeed(funds.amount.currency))
+            val accounts = budgetRepository.loadAccounts()
+            if (accounts.isEmpty()) return OneOffActivityLoadResult.NeedsCurrentFunds
+            val currencies = accounts.map { it.currentFunds.amount.currency }.distinct()
+            require(currencies.size == 1) { "Account currencies must match" }
+            OneOffActivityLoadResult.Ready(
+                OneOffActivityFormSeed(
+                    accounts = accounts,
+                    selectedAccountId = accounts.firstOrNull(Account::includeInAvailableNow)?.id ?: accounts.first().id,
+                    currencyCode = currencies.single(),
+                ),
+            )
         } catch (cancellation: CancellationException) {
             throw cancellation
         } catch (_: Exception) {
@@ -186,6 +131,7 @@ internal class OneOffActivityEditor(
         state: ActivityState,
         tags: Set<Tag> = emptySet(),
         categoryId: CategoryId? = null,
+        accountId: AccountId = io.github.kamui2040.vectorint.core.LEGACY_DEFAULT_ACCOUNT_ID,
     ): EntrySaveResult {
         val name = nameInput.trim()
         if (name.isEmpty()) return EntrySaveResult.InvalidName
@@ -201,6 +147,7 @@ internal class OneOffActivityEditor(
             ActivityEntry(
                 id = idFactory.create(),
                 name = name,
+                accountId = accountId,
                 direction = direction,
                 amount = money,
                 state = state,
@@ -214,13 +161,6 @@ internal class OneOffActivityEditor(
         return persist { budgetRepository.createActivity(activity) }
     }
 }
-
-private fun currencyCodeOrNull(input: String): CurrencyCode? =
-    try {
-        CurrencyCode.of(input)
-    } catch (_: IllegalArgumentException) {
-        null
-    }
 
 private suspend fun persist(block: suspend () -> Unit): EntrySaveResult =
     try {

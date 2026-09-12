@@ -252,6 +252,7 @@ data class ReminderSettings(
 data class RecurringItem(
     val id: RecurringItemId,
     val name: String,
+    val accountId: AccountId = LEGACY_DEFAULT_ACCOUNT_ID,
     val direction: Direction,
     val amount: Money,
     val schedule: RecurringSchedule,
@@ -275,6 +276,7 @@ data class RecurringItem(
             RecurringItem(
                 id = id,
                 name = name,
+                accountId = LEGACY_DEFAULT_ACCOUNT_ID,
                 direction = direction,
                 amount = amount,
                 schedule = RecurringSchedule(firstOccurrence = firstOccurrence),
