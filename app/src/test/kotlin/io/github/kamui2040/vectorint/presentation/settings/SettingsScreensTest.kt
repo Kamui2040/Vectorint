@@ -16,6 +16,9 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import io.github.kamui2040.vectorint.backup.AutoBackupConfiguration
+import io.github.kamui2040.vectorint.backup.AutoBackupInterval
+import io.github.kamui2040.vectorint.backup.AutoBackupLastResult
 import io.github.kamui2040.vectorint.data.ColorPalette
 import io.github.kamui2040.vectorint.data.ThemeMode
 import io.github.kamui2040.vectorint.presentation.theme.VectorintTheme
@@ -183,6 +186,7 @@ class SettingsScreensTest {
         var page by mutableStateOf(SettingsPage.ROOT)
         var exports = 0
         var restores = 0
+        var folderChoices = 0
         compose.setContent {
             VectorintTheme {
                 SettingsScreen(
@@ -195,6 +199,7 @@ class SettingsScreensTest {
                     onSave = {},
                     onExportBackup = { exports++ },
                     onRestoreBackup = { restores++ },
+                    onChooseAutoBackupFolder = { folderChoices++ },
                 )
             }
         }
@@ -211,10 +216,67 @@ class SettingsScreensTest {
         compose.onNodeWithText("Close").performClick()
         compose.onNodeWithText("Export backup").performClick()
         compose.onNodeWithText("Restore backup").performClick()
+        compose.onNodeWithText("Automatic backup").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Choose backup folder").performScrollTo().performClick()
         compose.runOnIdle {
             assertEquals(1, exports)
             assertEquals(1, restores)
+            assertEquals(1, folderChoices)
         }
+    }
+
+    @Test
+    fun `configured automatic backup exposes explicit triggers and timing`() {
+        var page by mutableStateOf(SettingsPage.DATA)
+        var configuration by
+            mutableStateOf(
+                AutoBackupConfiguration(destinationTreeUri = "content://documents/tree/backups"),
+            )
+        var forgotten = 0
+        compose.setContent {
+            VectorintTheme {
+                SettingsScreen(
+                    includeExpectedIncome = false,
+                    page = page,
+                    saving = false,
+                    saveFailed = false,
+                    autoBackupConfiguration = configuration,
+                    autoBackupLastResult = AutoBackupLastResult.SUCCEEDED,
+                    onPageChange = { page = it },
+                    onIncludeExpectedIncomeChange = {},
+                    onSave = {},
+                    onForgetAutoBackupFolder = { forgotten++ },
+                    onAutoBackupAfterChangesChange = { configuration = configuration.copy(afterChanges = it) },
+                    onAutoBackupAppStartChange = { configuration = configuration.copy(onAppStart = it) },
+                    onAutoBackupAppBackgroundChange = {
+                        configuration = configuration.copy(onAppBackground = it)
+                    },
+                    onAutoBackupIntervalChange = { configuration = configuration.copy(interval = it) },
+                )
+            }
+        }
+
+        compose.onNodeWithText("Backup folder selected").performScrollTo().assertIsDisplayed()
+        compose
+            .onNodeWithText("After saved changes")
+            .performScrollTo()
+            .assertIsOff()
+            .performClick()
+        compose.onNodeWithText("When Vectorint starts").performScrollTo().performClick()
+        compose
+            .onNodeWithText("When Vectorint moves to the background")
+            .performScrollTo()
+            .performClick()
+        compose.onNodeWithText("Daily").performScrollTo().performClick()
+        compose.runOnIdle {
+            assertEquals(true, configuration.afterChanges)
+            assertEquals(true, configuration.onAppStart)
+            assertEquals(true, configuration.onAppBackground)
+            assertEquals(AutoBackupInterval.DAILY, configuration.interval)
+        }
+        compose.onNodeWithText("Last automatic backup succeeded.").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Forget backup folder").performScrollTo().performClick()
+        compose.runOnIdle { assertEquals(1, forgotten) }
     }
 
     @Test

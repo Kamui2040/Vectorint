@@ -10,9 +10,12 @@ Vectorint keeps your budget data on your device.
 - Vectorint does not request Android's internet permission.
 
 Vectorint processes and stores your current funds, entries, recurring items,
-categories, tags, and settings only inside the app's private storage. If you
-export a backup, Android lets you choose where the readable JSON file is saved.
-Vectorint does not upload that file.
+categories, tags, and settings only inside the app's private storage. For manual
+or automatic backups, Android lets you choose where the readable JSON files are
+saved. Vectorint retains access only to the automatic-backup folder you select
+and does not upload those files or connect to a backup service. A folder supplied
+by another installed app remains subject to that app's own behavior and privacy
+policy.
 
 ## Notifications
 
@@ -29,4 +32,4 @@ be removed separately.
 Questions and privacy reports can be opened in the public Vectorint issue tracker:
 <https://github.com/Kamui2040/Vectorint/issues>
 
-Last updated: 9 September 2026.
+Last updated: 12 September 2026.

@@ -26,6 +26,7 @@ internal val Context.vectorintSettingsDataStore: DataStore<Preferences> by prefe
 
 internal class DataStoreSettingsRepository(
     private val dataStore: DataStore<Preferences>,
+    private val onSettingsChanged: suspend () -> Unit = {},
 ) : SettingsRepository {
     override val settings: Flow<UserSettings> =
         dataStore.data
@@ -38,17 +39,26 @@ internal class DataStoreSettingsRepository(
             }.distinctUntilChanged()
 
     override suspend fun setIncludeExpectedIncome(include: Boolean) {
+        var changed = false
         dataStore.edit { preferences ->
+            changed = (preferences[INCLUDE_EXPECTED_INCOME] ?: false) != include
             preferences[INCLUDE_EXPECTED_INCOME] = include
         }
+        if (changed) onSettingsChanged()
     }
 
     override suspend fun save(settings: UserSettings) {
+        var changed = false
         dataStore.edit { preferences ->
+            changed =
+                (preferences[INCLUDE_EXPECTED_INCOME] ?: false) != settings.includeExpectedIncome ||
+                preferences[THEME_MODE].toThemeMode() != settings.themeMode ||
+                preferences[COLOR_PALETTE].toColorPalette() != settings.colorPalette
             preferences[INCLUDE_EXPECTED_INCOME] = settings.includeExpectedIncome
             preferences[THEME_MODE] = settings.themeMode.name
             preferences[COLOR_PALETTE] = settings.colorPalette.name
         }
+        if (changed) onSettingsChanged()
     }
 }
 

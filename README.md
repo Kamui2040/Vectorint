@@ -17,7 +17,9 @@ reserves planned expenses and includes expected income only when you choose to.
   reminders, and assignment to the occurrence month or following month.
 - Groups expenses by category in a monthly overview.
 - Keeps tags as visual organization only.
-- Stores a newest-first history and supports local JSON backup and restore.
+- Stores a newest-first history and supports manual or automatic local JSON
+  backups plus restore. Automatic backups can run after saved changes, at app
+  start or background, or daily/weekly in a user-selected folder.
 - Works without an account, ads, analytics, tracking, or an internet connection.
 
 Vectorint's first production release is version 0.0.8.

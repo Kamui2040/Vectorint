@@ -1,5 +1,7 @@
 package io.github.kamui2040.vectorint.presentation.settings
 
+import android.content.Intent
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -21,6 +23,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
@@ -40,6 +43,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.Role
@@ -52,6 +56,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import io.github.kamui2040.vectorint.R
+import io.github.kamui2040.vectorint.backup.AutoBackupConfiguration
+import io.github.kamui2040.vectorint.backup.AutoBackupInterval
+import io.github.kamui2040.vectorint.backup.AutoBackupLastResult
 import io.github.kamui2040.vectorint.backup.BackupDocumentService
 import io.github.kamui2040.vectorint.backup.BackupExportResult
 import io.github.kamui2040.vectorint.backup.BackupRestoreResult
@@ -72,6 +79,7 @@ internal enum class SettingsPage {
 @Composable
 internal fun SettingsRoute(
     editor: SettingsEditor,
+    autoBackupEditor: AutoBackupSettingsEditor,
     backupDocumentService: BackupDocumentService,
     language: AppLanguage,
     onLanguageChange: (AppLanguage) -> Unit,
@@ -100,6 +108,7 @@ internal fun SettingsRoute(
             key(current.settings) {
                 SettingsReadyRoute(
                     editor = editor,
+                    autoBackupEditor = autoBackupEditor,
                     backupDocumentService = backupDocumentService,
                     settings = current.settings,
                     language = language,
@@ -116,6 +125,7 @@ internal fun SettingsRoute(
 @Composable
 private fun SettingsReadyRoute(
     editor: SettingsEditor,
+    autoBackupEditor: AutoBackupSettingsEditor,
     backupDocumentService: BackupDocumentService,
     settings: UserSettings,
     language: AppLanguage,
@@ -132,9 +142,21 @@ private fun SettingsReadyRoute(
     var saving by remember { mutableStateOf(false) }
     var saveFailed by remember { mutableStateOf(false) }
     var backupState by rememberSaveable { mutableStateOf(BackupUiState.IDLE) }
+    var autoBackupLoadKey by remember { mutableIntStateOf(0) }
+    val autoBackupLoadResult by
+        produceState<AutoBackupSettingsLoadResult?>(initialValue = null, key1 = autoBackupLoadKey) {
+            value = autoBackupEditor.load()
+        }
+    var autoBackupUiState by remember { mutableStateOf(AutoBackupUiState.IDLE) }
     var confirmRestore by rememberSaveable { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val backupBusy = backupState == BackupUiState.WORKING
+    val autoBackupState =
+        (autoBackupLoadResult as? AutoBackupSettingsLoadResult.Ready)?.state
+    val autoBackupConfiguration = autoBackupState?.configuration ?: AutoBackupConfiguration()
+    val persistableUriFlags =
+        Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION
     val exportLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
             if (uri != null) {
@@ -166,6 +188,81 @@ private fun SettingsReadyRoute(
                 }
             }
         }
+    val autoBackupFolderLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
+            if (uri != null) {
+                val previousDestination = autoBackupConfiguration.destinationTreeUri
+                autoBackupUiState = AutoBackupUiState.WORKING
+                try {
+                    context.contentResolver.takePersistableUriPermission(uri, persistableUriFlags)
+                    scope.launch {
+                        when (
+                            autoBackupEditor.selectDestination(
+                                current = autoBackupConfiguration,
+                                treeUri = uri.toString(),
+                            )
+                        ) {
+                            AutoBackupSettingsSaveResult.Saved -> {
+                                if (previousDestination != null && previousDestination != uri.toString()) {
+                                    releasePersistedFolderPermission(
+                                        context.contentResolver,
+                                        previousDestination,
+                                        persistableUriFlags,
+                                    )
+                                }
+                                autoBackupUiState = AutoBackupUiState.FOLDER_SELECTED
+                                autoBackupLoadKey++
+                            }
+
+                            AutoBackupSettingsSaveResult.SavedSchedulingFailed -> {
+                                if (previousDestination != null && previousDestination != uri.toString()) {
+                                    releasePersistedFolderPermission(
+                                        context.contentResolver,
+                                        previousDestination,
+                                        persistableUriFlags,
+                                    )
+                                }
+                                autoBackupUiState = AutoBackupUiState.SCHEDULE_FAILED
+                                autoBackupLoadKey++
+                            }
+
+                            AutoBackupSettingsSaveResult.Failed -> {
+                                if (previousDestination != uri.toString()) {
+                                    releasePersistedFolderPermission(
+                                        context.contentResolver,
+                                        uri.toString(),
+                                        persistableUriFlags,
+                                    )
+                                }
+                                autoBackupUiState = AutoBackupUiState.FAILED
+                            }
+                        }
+                    }
+                } catch (_: Exception) {
+                    autoBackupUiState = AutoBackupUiState.FAILED
+                }
+            }
+        }
+
+    fun saveAutoBackupConfiguration(configuration: AutoBackupConfiguration) {
+        autoBackupUiState = AutoBackupUiState.WORKING
+        scope.launch {
+            autoBackupUiState =
+                when (autoBackupEditor.save(configuration)) {
+                    AutoBackupSettingsSaveResult.Saved -> {
+                        autoBackupLoadKey++
+                        AutoBackupUiState.SAVED
+                    }
+
+                    AutoBackupSettingsSaveResult.SavedSchedulingFailed -> {
+                        autoBackupLoadKey++
+                        AutoBackupUiState.SCHEDULE_FAILED
+                    }
+
+                    AutoBackupSettingsSaveResult.Failed -> AutoBackupUiState.FAILED
+                }
+        }
+    }
 
     SettingsScreen(
         includeExpectedIncome = includeExpectedIncome,
@@ -176,6 +273,11 @@ private fun SettingsReadyRoute(
         saving = saving,
         saveFailed = saveFailed,
         backupState = backupState,
+        autoBackupConfiguration = autoBackupConfiguration,
+        autoBackupLastResult = autoBackupState?.lastResult ?: AutoBackupLastResult.NONE,
+        autoBackupLoading = autoBackupLoadResult == null,
+        autoBackupLoadFailed = autoBackupLoadResult == AutoBackupSettingsLoadResult.Failed,
+        autoBackupUiState = autoBackupUiState,
         onPageChange = {
             page = it
             saveFailed = false
@@ -227,6 +329,55 @@ private fun SettingsReadyRoute(
             backupState = BackupUiState.IDLE
             confirmRestore = true
         },
+        onChooseAutoBackupFolder = {
+            autoBackupUiState = AutoBackupUiState.IDLE
+            autoBackupFolderLauncher.launch(null)
+        },
+        onForgetAutoBackupFolder = {
+            val previousDestination = autoBackupConfiguration.destinationTreeUri
+            autoBackupUiState = AutoBackupUiState.WORKING
+            scope.launch {
+                when (autoBackupEditor.clearDestination(autoBackupConfiguration)) {
+                    AutoBackupSettingsSaveResult.Saved -> {
+                        if (previousDestination != null) {
+                            releasePersistedFolderPermission(
+                                context.contentResolver,
+                                previousDestination,
+                                persistableUriFlags,
+                            )
+                        }
+                        autoBackupUiState = AutoBackupUiState.SAVED
+                        autoBackupLoadKey++
+                    }
+
+                    AutoBackupSettingsSaveResult.SavedSchedulingFailed -> {
+                        if (previousDestination != null) {
+                            releasePersistedFolderPermission(
+                                context.contentResolver,
+                                previousDestination,
+                                persistableUriFlags,
+                            )
+                        }
+                        autoBackupUiState = AutoBackupUiState.SCHEDULE_FAILED
+                        autoBackupLoadKey++
+                    }
+
+                    AutoBackupSettingsSaveResult.Failed -> autoBackupUiState = AutoBackupUiState.FAILED
+                }
+            }
+        },
+        onAutoBackupAfterChangesChange = {
+            saveAutoBackupConfiguration(autoBackupConfiguration.copy(afterChanges = it))
+        },
+        onAutoBackupAppStartChange = {
+            saveAutoBackupConfiguration(autoBackupConfiguration.copy(onAppStart = it))
+        },
+        onAutoBackupAppBackgroundChange = {
+            saveAutoBackupConfiguration(autoBackupConfiguration.copy(onAppBackground = it))
+        },
+        onAutoBackupIntervalChange = {
+            saveAutoBackupConfiguration(autoBackupConfiguration.copy(interval = it))
+        },
         onOpenAbout = onOpenAbout,
         onDismiss = onBack,
     )
@@ -265,6 +416,11 @@ internal fun SettingsScreen(
     saving: Boolean,
     saveFailed: Boolean,
     backupState: BackupUiState = BackupUiState.IDLE,
+    autoBackupConfiguration: AutoBackupConfiguration = AutoBackupConfiguration(),
+    autoBackupLastResult: AutoBackupLastResult = AutoBackupLastResult.NONE,
+    autoBackupLoading: Boolean = false,
+    autoBackupLoadFailed: Boolean = false,
+    autoBackupUiState: AutoBackupUiState = AutoBackupUiState.IDLE,
     onPageChange: (SettingsPage) -> Unit = {},
     onIncludeExpectedIncomeChange: (Boolean) -> Unit,
     onThemeModeChange: (ThemeMode) -> Unit = {},
@@ -273,11 +429,18 @@ internal fun SettingsScreen(
     onSave: () -> Unit,
     onExportBackup: () -> Unit = {},
     onRestoreBackup: () -> Unit = {},
+    onChooseAutoBackupFolder: () -> Unit = {},
+    onForgetAutoBackupFolder: () -> Unit = {},
+    onAutoBackupAfterChangesChange: (Boolean) -> Unit = {},
+    onAutoBackupAppStartChange: (Boolean) -> Unit = {},
+    onAutoBackupAppBackgroundChange: (Boolean) -> Unit = {},
+    onAutoBackupIntervalChange: (AutoBackupInterval) -> Unit = {},
     onOpenAbout: () -> Unit = {},
     onDismiss: () -> Unit = {},
 ) {
     val backupBusy = backupState == BackupUiState.WORKING
-    val busy = saving || backupBusy
+    val autoBackupBusy = autoBackupUiState == AutoBackupUiState.WORKING
+    val busy = saving || backupBusy || autoBackupBusy
     val screenTitle = stringResource(R.string.settings_title)
     val pageTitle =
         when (page) {
@@ -395,8 +558,19 @@ internal fun SettingsScreen(
                             SettingsDataPage(
                                 enabled = !busy,
                                 backupState = backupState,
+                                autoBackupConfiguration = autoBackupConfiguration,
+                                autoBackupLastResult = autoBackupLastResult,
+                                autoBackupLoading = autoBackupLoading,
+                                autoBackupLoadFailed = autoBackupLoadFailed,
+                                autoBackupUiState = autoBackupUiState,
                                 onExportBackup = onExportBackup,
                                 onRestoreBackup = onRestoreBackup,
+                                onChooseAutoBackupFolder = onChooseAutoBackupFolder,
+                                onForgetAutoBackupFolder = onForgetAutoBackupFolder,
+                                onAutoBackupAfterChangesChange = onAutoBackupAfterChangesChange,
+                                onAutoBackupAppStartChange = onAutoBackupAppStartChange,
+                                onAutoBackupAppBackgroundChange = onAutoBackupAppBackgroundChange,
+                                onAutoBackupIntervalChange = onAutoBackupIntervalChange,
                             )
                     }
                     if (saveFailed) {
@@ -550,9 +724,21 @@ private fun SettingsCalculationPage(
 private fun SettingsDataPage(
     enabled: Boolean,
     backupState: BackupUiState,
+    autoBackupConfiguration: AutoBackupConfiguration,
+    autoBackupLastResult: AutoBackupLastResult,
+    autoBackupLoading: Boolean,
+    autoBackupLoadFailed: Boolean,
+    autoBackupUiState: AutoBackupUiState,
     onExportBackup: () -> Unit,
     onRestoreBackup: () -> Unit,
+    onChooseAutoBackupFolder: () -> Unit,
+    onForgetAutoBackupFolder: () -> Unit,
+    onAutoBackupAfterChangesChange: (Boolean) -> Unit,
+    onAutoBackupAppStartChange: (Boolean) -> Unit,
+    onAutoBackupAppBackgroundChange: (Boolean) -> Unit,
+    onAutoBackupIntervalChange: (AutoBackupInterval) -> Unit,
 ) {
+    SettingsSectionTitle(stringResource(R.string.settings_manual_backup))
     Button(
         onClick = onExportBackup,
         modifier = Modifier.fillMaxWidth(),
@@ -579,6 +765,148 @@ private fun SettingsDataPage(
                 },
             style = MaterialTheme.typography.bodyMedium,
         )
+    }
+    HorizontalDivider()
+    SettingsSectionTitle(stringResource(R.string.settings_auto_backup))
+    Text(
+        text = stringResource(R.string.settings_auto_backup_body),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        style = MaterialTheme.typography.bodyMedium,
+    )
+    when {
+        autoBackupLoading -> {
+            CircularProgressIndicator()
+        }
+
+        autoBackupLoadFailed -> {
+            Text(
+                text = stringResource(R.string.settings_auto_backup_load_failed),
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
+
+        else -> {
+            Button(
+                onClick = onChooseAutoBackupFolder,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = enabled,
+            ) {
+                Text(
+                    stringResource(
+                        if (autoBackupConfiguration.hasDestination) {
+                            R.string.settings_auto_backup_change_folder
+                        } else {
+                            R.string.settings_auto_backup_choose_folder
+                        },
+                    ),
+                )
+            }
+            if (autoBackupConfiguration.hasDestination) {
+                Text(
+                    text = stringResource(R.string.settings_auto_backup_folder_selected),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+                OutlinedButton(
+                    onClick = onForgetAutoBackupFolder,
+                    modifier = Modifier.fillMaxWidth(),
+                    enabled = enabled,
+                ) {
+                    Text(stringResource(R.string.settings_auto_backup_forget_folder))
+                }
+                SettingsChoiceCard {
+                    SettingsSwitchRow(
+                        label = stringResource(R.string.settings_auto_backup_after_changes),
+                        checked = autoBackupConfiguration.afterChanges,
+                        enabled = enabled,
+                        onCheckedChange = onAutoBackupAfterChangesChange,
+                    )
+                    SettingsSwitchRow(
+                        label = stringResource(R.string.settings_auto_backup_on_start),
+                        checked = autoBackupConfiguration.onAppStart,
+                        enabled = enabled,
+                        onCheckedChange = onAutoBackupAppStartChange,
+                    )
+                    SettingsSwitchRow(
+                        label = stringResource(R.string.settings_auto_backup_on_background),
+                        checked = autoBackupConfiguration.onAppBackground,
+                        enabled = enabled,
+                        onCheckedChange = onAutoBackupAppBackgroundChange,
+                    )
+                }
+                SettingsSectionTitle(stringResource(R.string.settings_auto_backup_timed))
+                SettingsChoiceCard {
+                    AutoBackupInterval.entries.forEach { interval ->
+                        SettingsChoiceRow(
+                            label = stringResource(interval.labelResource()),
+                            selected = autoBackupConfiguration.interval == interval,
+                            enabled = enabled,
+                            onClick = { onAutoBackupIntervalChange(interval) },
+                        )
+                    }
+                }
+                Text(
+                    text = stringResource(R.string.settings_auto_backup_timing_note),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                autoBackupLastResult.messageResource()?.let { messageResource ->
+                    Text(
+                        text = stringResource(messageResource),
+                        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                        color =
+                            if (autoBackupLastResult == AutoBackupLastResult.FAILED) {
+                                MaterialTheme.colorScheme.error
+                            } else {
+                                MaterialTheme.colorScheme.onSurfaceVariant
+                            },
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
+            autoBackupUiState.messageResource()?.let { messageResource ->
+                Text(
+                    text = stringResource(messageResource),
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                    color =
+                        if (autoBackupUiState == AutoBackupUiState.FAILED ||
+                            autoBackupUiState == AutoBackupUiState.SCHEDULE_FAILED
+                        ) {
+                            MaterialTheme.colorScheme.error
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun SettingsSwitchRow(
+    label: String,
+    checked: Boolean,
+    enabled: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .toggleable(
+                    value = checked,
+                    enabled = enabled,
+                    role = Role.Switch,
+                    onValueChange = onCheckedChange,
+                ).padding(horizontal = 16.dp, vertical = 10.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(text = label, modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodyLarge)
+        Switch(checked = checked, onCheckedChange = null, enabled = enabled)
     }
 }
 
@@ -700,6 +1028,13 @@ private fun ColorPalette.labelResource(): Int =
         ColorPalette.NEBULA -> R.string.settings_palette_nebula
     }
 
+private fun AutoBackupInterval.labelResource(): Int =
+    when (this) {
+        AutoBackupInterval.NEVER -> R.string.settings_auto_backup_timed_off
+        AutoBackupInterval.DAILY -> R.string.settings_auto_backup_timed_daily
+        AutoBackupInterval.WEEKLY -> R.string.settings_auto_backup_timed_weekly
+    }
+
 internal enum class BackupUiState {
     IDLE,
     WORKING,
@@ -710,6 +1045,34 @@ internal enum class BackupUiState {
     RESTORE_FAILED,
     RECOVERY_FAILED,
 }
+
+internal enum class AutoBackupUiState {
+    IDLE,
+    WORKING,
+    SAVED,
+    FOLDER_SELECTED,
+    SCHEDULE_FAILED,
+    FAILED,
+}
+
+private fun AutoBackupUiState.messageResource(): Int? =
+    when (this) {
+        AutoBackupUiState.IDLE,
+        AutoBackupUiState.WORKING,
+        -> null
+
+        AutoBackupUiState.SAVED -> R.string.settings_auto_backup_settings_saved
+        AutoBackupUiState.FOLDER_SELECTED -> R.string.settings_auto_backup_folder_ready
+        AutoBackupUiState.SCHEDULE_FAILED -> R.string.settings_auto_backup_schedule_failed
+        AutoBackupUiState.FAILED -> R.string.settings_auto_backup_save_failed
+    }
+
+private fun AutoBackupLastResult.messageResource(): Int? =
+    when (this) {
+        AutoBackupLastResult.NONE -> null
+        AutoBackupLastResult.SUCCEEDED -> R.string.settings_auto_backup_last_success
+        AutoBackupLastResult.FAILED -> R.string.settings_auto_backup_last_failed
+    }
 
 private fun BackupUiState.messageResource(): Int? =
     when (this) {
@@ -734,6 +1097,14 @@ private fun BackupUiState.isError(): Boolean =
 
 private const val BACKUP_FILE_NAME = "vectorint-backup-v1.json"
 private val BACKUP_MIME_TYPES = arrayOf("application/json", "text/json", "application/octet-stream")
+
+private fun releasePersistedFolderPermission(
+    contentResolver: android.content.ContentResolver,
+    uri: String,
+    flags: Int,
+) {
+    runCatching { contentResolver.releasePersistableUriPermission(Uri.parse(uri), flags) }
+}
 
 @Composable
 private fun SettingsMessageDialog(

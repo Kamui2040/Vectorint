@@ -21,6 +21,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import io.github.kamui2040.vectorint.backup.AndroidBackupDocumentGateway
+import io.github.kamui2040.vectorint.backup.AutoBackupTrigger
 import io.github.kamui2040.vectorint.backup.BackupCoordinator
 import io.github.kamui2040.vectorint.backup.BackupDocumentService
 import io.github.kamui2040.vectorint.core.ActivityId
@@ -56,6 +57,7 @@ import io.github.kamui2040.vectorint.presentation.recurring.RecurringListLoader
 import io.github.kamui2040.vectorint.presentation.recurring.RecurringListRoute
 import io.github.kamui2040.vectorint.presentation.recurring.RegionalRecurringMoneyFormatter
 import io.github.kamui2040.vectorint.presentation.recurring.RegionalRecurringScheduleInputAdapter
+import io.github.kamui2040.vectorint.presentation.settings.AutoBackupSettingsEditor
 import io.github.kamui2040.vectorint.presentation.settings.SettingsEditor
 import io.github.kamui2040.vectorint.presentation.settings.SettingsRoute
 import io.github.kamui2040.vectorint.presentation.settings.applyAppLanguage
@@ -137,6 +139,11 @@ class MainActivity : AppCompatActivity() {
                 scheduleAdapter = recurringScheduleAdapter,
             )
         val settingsEditor = SettingsEditor(vectorintApplication.settingsRepository)
+        val autoBackupSettingsEditor =
+            AutoBackupSettingsEditor(
+                repository = vectorintApplication.autoBackupSettingsRepository,
+                scheduler = vectorintApplication.autoBackupScheduler,
+            )
         val backupDocumentService =
             BackupDocumentService(
                 coordinator =
@@ -347,6 +354,7 @@ class MainActivity : AppCompatActivity() {
                 if (showSettings) {
                     SettingsRoute(
                         editor = settingsEditor,
+                        autoBackupEditor = autoBackupSettingsEditor,
                         backupDocumentService = backupDocumentService,
                         language = currentAppLanguage(),
                         onLanguageChange = { language ->
@@ -378,6 +386,7 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         }
+        vectorintApplication.requestAutomaticBackup(AutoBackupTrigger.APP_START)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -394,6 +403,13 @@ class MainActivity : AppCompatActivity() {
         notificationsAvailable = vectorintApplication.notificationsAllowed()
         vectorintApplication.refreshReminders()
         vectorintApplication.refreshWidgets()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (!isChangingConfigurations) {
+            (application as VectorintApplication).requestAutomaticBackup(AutoBackupTrigger.APP_BACKGROUND)
+        }
     }
 
     private fun enableNotifications() {

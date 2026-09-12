@@ -4,6 +4,9 @@ All notable user-facing changes will be recorded here.
 
 ## Unreleased
 
+- Add local automatic JSON backups to a user-selected folder, with optional
+  after-change, app-start, app-background, daily, and weekly triggers, verified
+  writes, and ten-file retention.
 - Add detailed and compact home-screen widgets for the current month's Available
   now amount, including safe setup, unavailable, and retry states. Tapping the
   compact widget opens one-off entry creation.
