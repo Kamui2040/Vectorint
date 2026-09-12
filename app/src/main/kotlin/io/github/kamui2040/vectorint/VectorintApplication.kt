@@ -14,6 +14,7 @@ import io.github.kamui2040.vectorint.reminder.AndroidNotificationPermissionGatew
 import io.github.kamui2040.vectorint.reminder.AndroidReminderAlarmGateway
 import io.github.kamui2040.vectorint.reminder.AndroidReminderNotificationGateway
 import io.github.kamui2040.vectorint.widget.AvailableNowWidgetProvider
+import io.github.kamui2040.vectorint.widget.QuickAddAvailableNowWidgetProvider
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -62,6 +63,7 @@ class VectorintApplication : Application() {
 
     internal fun refreshWidgets() {
         AvailableNowWidgetProvider.requestUpdate(this)
+        QuickAddAvailableNowWidgetProvider.requestUpdate(this)
     }
 
     internal fun refreshReminders(onComplete: (() -> Unit)? = null) {
