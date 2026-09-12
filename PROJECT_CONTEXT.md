@@ -24,8 +24,9 @@ The initial foundation is deliberately small:
   continue to follow the OS region;
 - a data-backed Compose Home screen with explicit loading, setup, ready, unsafe,
   and retryable failure states;
-- a local home-screen widget for the current month's Available now result, with
-  fail-closed setup, unsafe-data, and load-failure states;
+- a detailed home-screen widget for the current month's Available now result plus
+  a compact value-only alternative that opens one-off entry creation when tapped;
+  both use fail-closed setup, unsafe-data, and load-failure states;
 - Current funds setup and editing that records a new exact-time cash baseline;
 - named one-off income and expense creation for confirmed-now or
   planned-current-month activity;

@@ -63,10 +63,12 @@ import io.github.kamui2040.vectorint.presentation.settings.currentAppLanguage
 import io.github.kamui2040.vectorint.presentation.theme.VectorintTheme
 import io.github.kamui2040.vectorint.reminder.REMINDER_INTENT_ACTION
 import io.github.kamui2040.vectorint.reminder.REMINDER_ITEM_ID_EXTRA
+import io.github.kamui2040.vectorint.widget.QUICK_ADD_INTENT_ACTION
 
 class MainActivity : AppCompatActivity() {
     private var notificationsAvailable by mutableStateOf(false)
     private var pendingReminderItemId by mutableStateOf<String?>(null)
+    private var pendingQuickAddRequest by mutableStateOf(false)
     private var resumeGeneration by mutableIntStateOf(0)
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) {
@@ -82,6 +84,7 @@ class MainActivity : AppCompatActivity() {
         val categoryManager = CategoryManager(vectorintApplication.budgetRepository)
         notificationsAvailable = vectorintApplication.notificationsAllowed()
         pendingReminderItemId = reminderItemIdFrom(intent)
+        pendingQuickAddRequest = consumeQuickAddRequestFrom(intent)
         val recurringOccurrenceCoordinator =
             RecurringOccurrenceCoordinator(vectorintApplication.budgetRepository)
         val homeStateLoader =
@@ -157,6 +160,17 @@ class MainActivity : AppCompatActivity() {
             var selectedRecurringItemId by rememberSaveable { mutableStateOf<String?>(null) }
             var showSettings by rememberSaveable { mutableStateOf(false) }
             var showAbout by rememberSaveable { mutableStateOf(false) }
+
+            LaunchedEffect(pendingQuickAddRequest) {
+                if (pendingQuickAddRequest) {
+                    selectedHomeMonthOffset = 0
+                    activityReturnDestination = AppDestination.HOME
+                    destination = AppDestination.ADD_ACTIVITY
+                    showSettings = false
+                    showAbout = false
+                    pendingQuickAddRequest = false
+                }
+            }
 
             LaunchedEffect(pendingReminderItemId) {
                 pendingReminderItemId?.let { reminderItemId ->
@@ -370,6 +384,7 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         pendingReminderItemId = reminderItemIdFrom(intent)
+        pendingQuickAddRequest = consumeQuickAddRequestFrom(intent)
     }
 
     override fun onResume() {
@@ -409,6 +424,14 @@ internal fun reminderItemIdFrom(intent: Intent?): String? =
         ?.getStringExtra(REMINDER_ITEM_ID_EXTRA)
         ?.trim()
         ?.takeIf(String::isNotEmpty)
+
+internal fun quickAddRequestedFrom(intent: Intent?): Boolean = intent?.action == QUICK_ADD_INTENT_ACTION
+
+internal fun consumeQuickAddRequestFrom(intent: Intent?): Boolean {
+    if (!quickAddRequestedFrom(intent)) return false
+    intent?.action = null
+    return true
+}
 
 private enum class AppDestination {
     HOME,

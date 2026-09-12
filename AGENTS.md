@@ -74,6 +74,10 @@ Treat every tracked file as suitable for public release.
 - Home may show an Available now amount only from a successful domain calculation.
   Represent loading, missing Current funds, unsafe data, and load failure as
   distinct screen states, and reload the complete snapshot when retrying.
+- Keep both home-screen widget choices: the detailed current-month summary and a
+  compact quick-add option. The compact widget shows only the Available now label
+  and calculated value, or a safe placeholder, and tapping it opens one-off
+  activity creation. Both widgets must fail closed.
 - Keep user-facing text in Android resources and preserve headings, readable
   wrapping, and minimum touch targets in Compose semantics and layout.
 - Write copy around the user's task in plain language. German uses informal

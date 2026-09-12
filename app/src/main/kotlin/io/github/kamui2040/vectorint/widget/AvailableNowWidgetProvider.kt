@@ -47,38 +47,57 @@ class AvailableNowWidgetProvider : AppWidgetProvider() {
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray,
     ) {
-        val application = context.applicationContext as VectorintApplication
-        val state =
-            HomeStateLoader(
-                budgetRepository = application.budgetRepository,
-                settingsRepository = application.settingsRepository,
-                formatter = RegionalHomeValueFormatter(),
-                occurrenceUpdater = RecurringOccurrenceCoordinator(application.budgetRepository),
-            ).load()
-        val textContext = context.widgetTextContext()
-        val content = AvailableNowWidgetContent.from(state, textContext)
+        val snapshot = loadAvailableNowWidgetSnapshot(context)
+        val content = AvailableNowWidgetContent.from(snapshot.state, snapshot.textContext)
         appWidgetIds.forEach { appWidgetId ->
             appWidgetManager.updateAppWidget(
                 appWidgetId,
-                content.toRemoteViews(textContext, appWidgetId),
+                content.toRemoteViews(snapshot.textContext, appWidgetId),
             )
         }
     }
 
     companion object {
         fun requestUpdate(context: Context) {
-            val appWidgetManager = AppWidgetManager.getInstance(context)
-            val componentName = ComponentName(context, AvailableNowWidgetProvider::class.java)
-            val appWidgetIds = appWidgetManager.getAppWidgetIds(componentName)
-            if (appWidgetIds.isEmpty()) return
-            context.sendBroadcast(
-                Intent(context, AvailableNowWidgetProvider::class.java).apply {
-                    action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
-                    putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds)
-                },
-            )
+            requestWidgetUpdate(context, AvailableNowWidgetProvider::class.java)
         }
     }
+}
+
+internal data class AvailableNowWidgetSnapshot(
+    val state: HomeUiState,
+    val textContext: Context,
+)
+
+internal suspend fun loadAvailableNowWidgetSnapshot(context: Context): AvailableNowWidgetSnapshot {
+    val application = context.applicationContext as VectorintApplication
+    val state =
+        HomeStateLoader(
+            budgetRepository = application.budgetRepository,
+            settingsRepository = application.settingsRepository,
+            formatter = RegionalHomeValueFormatter(),
+            occurrenceUpdater = RecurringOccurrenceCoordinator(application.budgetRepository),
+        ).load()
+    return AvailableNowWidgetSnapshot(
+        state = state,
+        textContext = context.widgetTextContext(),
+    )
+}
+
+internal fun requestWidgetUpdate(
+    context: Context,
+    providerClass: Class<out AppWidgetProvider>,
+) {
+    val appWidgetManager = AppWidgetManager.getInstance(context)
+    val componentName = ComponentName(context, providerClass)
+    val appWidgetIds = appWidgetManager.getAppWidgetIds(componentName)
+    if (appWidgetIds.isEmpty()) return
+    context.sendBroadcast(
+        Intent(context, providerClass).apply {
+            action = AppWidgetManager.ACTION_APPWIDGET_UPDATE
+            putExtra(AppWidgetManager.EXTRA_APPWIDGET_IDS, appWidgetIds)
+        },
+    )
 }
 
 internal data class AvailableNowWidgetContent(
@@ -209,7 +228,7 @@ private fun openAppIntent(
     )
 
 @SuppressLint("AppBundleLocaleChanges")
-private fun Context.widgetTextContext(): Context {
+internal fun Context.widgetTextContext(): Context {
     val languageTag = currentAppLanguage().languageTag ?: return this
     val configuration = Configuration(resources.configuration)
     configuration.setLocale(Locale.forLanguageTag(languageTag))

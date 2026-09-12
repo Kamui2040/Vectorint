@@ -4,8 +4,9 @@ All notable user-facing changes will be recorded here.
 
 ## Unreleased
 
-- Add a home-screen widget for the current month's Available now amount, including
-  safe setup, unavailable, and retry states.
+- Add detailed and compact home-screen widgets for the current month's Available
+  now amount, including safe setup, unavailable, and retry states. Tapping the
+  compact widget opens one-off entry creation.
 
 ## 0.0.8 - 2026-09-10
 

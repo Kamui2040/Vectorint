@@ -313,4 +313,8 @@
     <string name="widget_updating">Updating…</string>
     <string name="widget_open_app">Tap to open Vectorint.</string>
     <string name="widget_content_description">%1$s. %2$s. %3$s. %4$s</string>
+    <string name="widget_quick_add_name">Available now · Quick add</string>
+    <string name="widget_quick_add_description">See Available now and tap to add an entry.</string>
+    <string name="widget_quick_add_tap_hint">Tap to add an entry.</string>
+    <string name="widget_quick_add_content_description">%1$s. %2$s. Tap to add an entry.</string>
 </resources>

@@ -311,4 +311,8 @@
     <string name="widget_updating">Wird aktualisiert…</string>
     <string name="widget_open_app">Tippe, um Vectorint zu öffnen.</string>
     <string name="widget_content_description">%1$s. %2$s. %3$s. %4$s</string>
+    <string name="widget_quick_add_name">Jetzt verfügbar · Schnelleingabe</string>
+    <string name="widget_quick_add_description">Zeigt „Jetzt verfügbar“. Tippe, um einen Eintrag hinzuzufügen.</string>
+    <string name="widget_quick_add_tap_hint">Tippe, um einen Eintrag hinzuzufügen.</string>
+    <string name="widget_quick_add_content_description">%1$s. %2$s. Tippe, um einen Eintrag hinzuzufügen.</string>
 </resources>
