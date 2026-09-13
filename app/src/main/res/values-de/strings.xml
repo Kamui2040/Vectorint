@@ -123,7 +123,7 @@
     <string name="about_purpose">Sieh, wie viel du jetzt sicher ausgeben kannst.</string>
     <string name="about_privacy">Lokal · Offline-First · keine Anmeldung · keine Werbung · keine Analyse · kein Tracking</string>
     <string name="about_changelog">Änderungen</string>
-    <string name="about_changelog_body">Diese geschlossene Betaversion ergänzt getrennte Konten mit optionaler Einbeziehung in „Jetzt verfügbar“, kompakte und ausführliche Widgets sowie automatische lokale Sicherungen.</string>
+    <string name="about_changelog_body">Dieses Update ergänzt getrennte Konten mit optionaler Einbeziehung in „Jetzt verfügbar“, kompakte und ausführliche Widgets sowie automatische lokale Sicherungen.</string>
     <string name="about_license">Lizenz &amp; Nutzung</string>
     <string name="about_license_body">Der Vectorint-Quellcode steht unter GPL-3.0-only. Der Vectorint-Rabe ist Copyright 2026 K2040 und steht unter CC BY 4.0. Das Bild wurde mit OpenAI nach den Vorgaben von K2040 erzeugt und von K2040 beigesteuert. Das K2040-Logo ist Copyright 2026 K2040 und wird nur im Über-Dialog verwendet.</string>
     <string name="about_sources">Quellen</string>

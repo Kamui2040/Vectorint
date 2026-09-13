@@ -1,8 +1,10 @@
 Vectorint helps you answer one practical question: how much can I safely spend right now?
 
-Start with your current funds for an immediate answer. Add income, expenses, and recurring items gradually to make it more precise. Planned expenses are reserved automatically. Expected income is included only when you choose to include it.
+Set up one or more local accounts with their current funds for an immediate answer. Add income, expenses, and recurring items gradually to make it more precise. Planned expenses are reserved automatically. Expected income is included only when you choose to include it.
 
 Features:
+• separate local accounts for bank, PayPal, cash, savings, and other same-currency money sources
+• an explicit choice to include each account in Available now
 • one shared, predictable model for income and expenses
 • recurring entries every N days, weeks, months, or years
 • specific dates, date ranges, or anytime-within-the-month timing
@@ -11,8 +13,9 @@ Features:
 • monthly expense overview with categories and exact amounts
 • tags for your own visual organization
 • newest-first history with editing and confirmation
-• local JSON backup and restore
+• detailed and compact home-screen widgets, including quick entry creation
+• manual and verified automatic local JSON backup plus restore
 • light and dark themes with three color palettes
 • English and German interface
 
-Vectorint is local-first. It needs no account and contains no ads, analytics, tracking, or internet access.
+Vectorint is local-first. It needs no online sign-in and contains no ads, analytics, tracking, or internet access.

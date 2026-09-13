@@ -1,0 +1,1 @@
+Neu: getrennte lokale Konten mit optionaler Einbeziehung in „Jetzt verfügbar“ und einfacher Kontoauswahl bei neuen Einträgen. Dazu kommen geprüfte automatische lokale Sicherungen, ausführliche und kompakte Widgets mit Schnelleintrag sowie eine übersichtlichere Startseite mit einklappbaren Monatsdetails und kompakter Sicherungshilfe.
