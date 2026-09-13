@@ -140,7 +140,7 @@ class BackupCoordinatorTest {
             val versionThreeBytes =
                 newBackupBytes()
                     .toString(Charsets.UTF_8)
-                    .replace("\"version\":${VectorintBackupContract.VERSION}", "\"version\":3")
+                    .asLegacyVersion(3)
                     .replace(",\"name\":\"Rent\"", "")
                     .replace(",\"customCategories\":[]", "")
                     .replace(",\"categoryId\":null", "")
@@ -150,6 +150,20 @@ class BackupCoordinatorTest {
             assertEquals(BackupRestoreResult.Restored, coordinator(data, settings).restore(versionThreeBytes))
             assertEquals(currentSettings.copy(includeExpectedIncome = true), settings.value)
         }
+
+    private fun String.asLegacyVersion(version: Int): String {
+        val accountsStart = indexOf("\"accounts\":[")
+        val categoriesStart = indexOf(",\"customCategories\":", startIndex = accountsStart)
+        check(accountsStart >= 0 && categoriesStart > accountsStart)
+        val accountsJson = substring(accountsStart, categoriesStart)
+        val currentFundsStart = accountsJson.indexOf("\"currentFunds\":") + "\"currentFunds\":".length
+        val currentFundsEnd = accountsJson.indexOf(",\"includeInAvailableNow\":", startIndex = currentFundsStart)
+        check(currentFundsStart >= 0 && currentFundsEnd > currentFundsStart)
+        val currentFundsJson = accountsJson.substring(currentFundsStart, currentFundsEnd)
+        return replaceRange(accountsStart, categoriesStart, "\"currentFunds\":$currentFundsJson")
+            .replace("\"version\":${VectorintBackupContract.VERSION}", "\"version\":$version")
+            .replace(",\"accountId\":\"legacy-main\"", "")
+    }
 
     @Test
     fun `settings failure restores and verifies the previous state`() =
@@ -207,7 +221,7 @@ class BackupCoordinatorTest {
             val restored = data.data
             val result =
                 AvailableFundsCalculator.calculate(
-                    currentFunds = requireNotNull(restored.currentFunds),
+                    accounts = restored.accounts,
                     month = BudgetMonth(YearMonth.of(2026, 9)),
                     activity = restored.activities,
                 ) as AvailableFundsResult.Available

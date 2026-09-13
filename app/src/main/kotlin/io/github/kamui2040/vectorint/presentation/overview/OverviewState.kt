@@ -113,10 +113,16 @@ internal class OverviewStateLoader(
         val initialSnapshot =
             budgetRepository.loadBudgetSnapshot()
                 ?: return OverviewUiState.NeedsCurrentFunds(monthLabel)
+        if (initialSnapshot.accounts.isEmpty()) return OverviewUiState.LoadFailed(monthLabel)
+        val accountCurrencies = initialSnapshot.accounts.map { it.currentFunds.amount.currency }.distinct()
+        if (accountCurrencies.size != 1) {
+            return OverviewUiState.Unsafe(monthLabel, setOf(UnsafeReason.CURRENCY_MISMATCH))
+        }
+        val currency = accountCurrencies.single()
         val customCategories = budgetRepository.loadCustomCategories()
         val activities =
             if (month == currentMonth()) {
-                val refreshed = occurrenceUpdater.refresh(month, initialSnapshot.currentFunds.amount.currency)
+                val refreshed = occurrenceUpdater.refresh(month, currency)
                 (refreshed + initialSnapshot.activities).distinctBy(ActivityEntry::id)
             } else {
                 initialSnapshot.activities + previewMissingOccurrences(month, initialSnapshot.activities)
@@ -128,7 +134,7 @@ internal class OverviewStateLoader(
         return when (
             val result =
                 ExpenseBreakdownCalculator.calculate(
-                    currency = initialSnapshot.currentFunds.amount.currency,
+                    currency = currency,
                     month = month,
                     activity = activities,
                     knownCategoryIds = knownCategoryIds,

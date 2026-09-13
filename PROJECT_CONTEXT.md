@@ -12,7 +12,7 @@ The initial foundation is deliberately small:
 
 - one Android application module using Kotlin and Jetpack Compose;
 - a plain-Kotlin accounting domain with pure unit tests;
-- a version-5 Room persistence layer with exported schemas and host-side database
+- a version-6 Room persistence layer with exported schemas and host-side database
   tests;
 - a suspending application repository that keeps blocking database work off the
   Android main thread;
@@ -27,7 +27,8 @@ The initial foundation is deliberately small:
 - a detailed home-screen widget for the current month's Available now result plus
   a compact value-only alternative that opens one-off entry creation when tapped;
   both use fail-closed setup, unsafe-data, and load-failure states;
-- Current funds setup and editing that records a new exact-time cash baseline;
+- local account setup and editing with a name, exact-time Current funds baseline,
+  and an Available now inclusion choice;
 - named one-off income and expense creation for confirmed-now or
   planned-current-month activity;
 - a permanent app header with the tappable raven, centered Vectorint title, and
@@ -67,20 +68,23 @@ The initial foundation is deliberately small:
 - the selected full-colour Vectorint Raven artwork used by the adaptive launcher
   icon and permanent app header, with the original source image preserved
   unchanged and licensed separately under CC BY 4.0;
-- no network, account, analytics, advertising, or cloud integration;
+- no network, online sign-in, analytics, advertising, or cloud integration;
 - no iOS, desktop, web, or Kotlin Multiplatform targets;
 - no GitHub Actions.
 
 ## Product direction
 
-Vectorint answers how much the user can safely spend now from one pooled Current
-funds baseline. Budgeting uses explicit calendar months. Income and expense share
+Vectorint answers how much the user can safely spend now across explicitly included
+local accounts. Bank, PayPal, cash, savings, and other same-currency money sources
+stay separate. Budgeting uses explicit calendar months. Income and expense share
 the same activity and recurring-item concepts, with direction supplying the sign.
 
-The initial calculation treats Current funds as a captured balance. Confirmed
-activity after that capture changes the balance once; earlier confirmed activity is
-already represented by the baseline and is not replayed. Planned current-month
-expenses are always reserved, while expected income is an explicit opt-in.
+The calculation treats each account's Current funds as a captured balance.
+Confirmed activity after its assigned account's capture changes that balance once;
+earlier confirmed activity is already represented by the baseline and is not
+replayed. An excluded account's balance and assigned activity do not affect
+Available now. Planned current-month expenses in included accounts are always
+reserved, while expected income is an explicit opt-in.
 Confirmation changes the state of the same occurrence so the planned reservation
 and actual cash movement never overlap.
 
@@ -105,15 +109,19 @@ Money stays separated by currency and uses integer minor units. Unsafe or
 ambiguous input suppresses the Available now result. Formatting is an Android UI
 boundary driven by OS regional settings rather than app language.
 
-The local database stores one Current funds baseline, activities, recurring items,
-reusable tag relationships, and user-created category definitions. Recurring occurrence identity is unique in the
-schema, confirmation updates the same row, and persisted timestamps retain
-nanosecond precision. A single application-scoped repository provides background
-access and keeps confirmation atomic. Room schema version 4 adds nullable category
+The local database stores account baselines, explicit account assignments for
+activities and recurring items, reusable tag relationships, and user-created
+category definitions. Recurring occurrence identity is unique in the schema,
+confirmation updates the same row, and persisted timestamps retain nanosecond
+precision. Account deletion is blocked while records reference it. A single
+application-scoped repository provides background access and keeps confirmation
+atomic. Room schema version 4 adds nullable category
 assignments and custom categories on top of the version-3 occurrence-timing model.
 Version 5 adds persisted activity names and recovers names for existing recurring
 occurrences where their definition is still present. Existing unnamed one-off
-records remain readable and use a localized History fallback.
+records remain readable and use a localized History fallback. Version 6 replaces
+the pooled balance row with account rows and migrates every existing record to the
+included `Main` account.
 
 Settings use a title-only card menu reached from the permanent top-right controls
 action. They contain one calculation choice—whether expected income contributes
@@ -126,11 +134,12 @@ appearance settings are exposed as an immutable Flow and saved atomically.
 Storage failures remain visible rather than silently changing calculation or
 appearance.
 
-Manual backup exports Current funds, Activity, recurring items, categories, tags, and saved
-settings to a versioned, bounded JSON file chosen by the user. Backup format
-version 6 adds persisted activity names on top of version 5 custom categories and
-category assignments. It continues to import version-1 through version-5 files
-through deterministic conversions; an older backup
+Manual backup exports accounts, Activity, recurring items, categories, tags, and
+saved settings to a versioned, bounded JSON file chosen by the user. Backup format
+version 7 adds account balances, inclusion choices, and record assignments on top
+of version 6 persisted activity names. It continues to import version-1 through
+version-6 files through deterministic conversion into one included `Main` account;
+an older backup
 changes its saved calculation choice without replacing appearance information it
 did not contain.
 The file is readable and never uploaded by Vectorint. Restore validates the whole
@@ -162,9 +171,9 @@ domain and persistence models.
 
 Home loads one budget snapshot and the current calculation setting, delegates all
 accounting to the domain calculator, and formats only a successful result. It
-presents Available now as the primary value with Current funds, reserved expenses,
-and expected-income inclusion underneath. Missing Current funds, unsafe data, and
-read failures never display a calculated amount.
+presents Available now as the primary value with included account funds, reserved
+expenses, and expected-income inclusion underneath. Missing account setup, unsafe
+data, and read failures never display a calculated amount.
 
 The Home month label opens lightweight previous/next navigation. The current month
 alone presents Available now. Past selections are month summaries and future
@@ -185,28 +194,31 @@ direction remains visually distinct: income uses the shared green semantic color
 and expenses use red in lists, editors, and month summaries. Vectorint provides
 Orbit, Nova, and Nebula Material color palettes in both light and dark appearance.
 
-First run asks only for Current funds so Available now can provide immediate value.
-Recurring items remain an optional refinement, and their empty state explains that
-the user can add known commitments gradually rather than complete a forced setup.
+First run asks only for one named account and its Current funds so Available now can
+provide immediate value. Additional accounts and recurring items remain optional
+refinements rather than forced setup.
 
-Current funds setup defaults to the OS region's supported currency. After setup,
-the currency remains fixed so editing the balance cannot silently create mixed-
-currency data. Each save captures a new baseline instant; confirmed activity before
-that instant is not replayed. One-off activity uses the baseline currency and can be
-confirmed immediately or planned for the current calendar month. New activity is
-insert-only, so an identity collision fails instead of overwriting an existing
-economic event.
+The first account defaults to the OS region's supported currency. Every later
+account uses that same currency. Changing an account balance captures a new baseline
+instant; renaming it or changing its inclusion choice preserves the instant.
+Confirmed activity before its assigned account's baseline is not replayed. One-off
+activity uses the account currency and can be confirmed immediately or planned for
+the current calendar month. With one account, it is selected automatically and no
+chooser is shown. With multiple accounts, direct chips assign each new entry.
+New activity is insert-only, so an identity collision fails instead of overwriting
+an existing economic event.
 
 Activity history orders entries from newest to oldest by their confirmed or
 planned timing, displays the persisted name, and keeps month-only timing imprecise
-in presentation. Detail editing changes name, amount, direction, category, and
+in presentation. History and recurring lists show the assigned account. Detail
+editing changes name, amount, direction, category, and
 optional tags on the current stored row. Confirmation can include
 those edits in the same database transaction, preserves the activity identity,
 and cannot overlap a planned reservation with a second confirmed event. Tags are
 display metadata only and never alter the accounting result. Deletion is an
 explicit confirmed action.
 
-Recurring items use the Current funds currency and default First occurrence to the
+Recurring items use the account currency and default First occurrence to the
 creation date. The editor first asks when each occurrence happens: on a specific
 date, during a date range, or anytime within a month. It then accepts every N days,
 weeks, months, or years, an optional inclusive `Ends on`, and an explicit
@@ -238,7 +250,7 @@ in one month; monthly and yearly identities remain stable by occurrence month.
 Home and History refresh atomically insert missing current-month occurrences and
 promote due planned rows in place before displaying financial state. App resume
 refreshes Home, so crossing a due date does not leave its result stale. A repeated
-refresh, manual confirmation, or later Current funds baseline preserves the same
+refresh, manual confirmation, or later assigned-account baseline preserves the same
 occurrence row, so it cannot be double counted or replayed. Deleting a recurring
 definition stops future generation without deleting Activity already recorded
 from it.

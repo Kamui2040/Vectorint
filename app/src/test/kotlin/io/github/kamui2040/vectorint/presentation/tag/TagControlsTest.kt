@@ -49,8 +49,8 @@ class TagControlsTest {
         }
 
         val help =
-            "Use tags to organize entries, for example by bank or account. " +
-                "They never change your totals. Tap a tag to remove it."
+            "Use tags for extra organization. They never change your totals. " +
+                "Tap a tag to remove it."
         compose.onNodeWithText(help).assertDoesNotExist()
         compose.onNodeWithContentDescription("More about Tags").performClick()
         compose.onNodeWithText(help).assertIsDisplayed()

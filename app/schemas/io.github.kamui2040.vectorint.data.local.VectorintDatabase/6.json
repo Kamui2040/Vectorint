@@ -1,0 +1,536 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 6,
+    "identityHash": "b521ea4218ef9e0f72d369d6f8192824",
+    "entities": [
+      {
+        "tableName": "accounts",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL COLLATE NOCASE, `minor_units` INTEGER NOT NULL, `currency_code` TEXT NOT NULL, `captured_at_epoch_second` INTEGER NOT NULL, `captured_at_nano` INTEGER NOT NULL, `include_in_available_now` INTEGER NOT NULL DEFAULT 1, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "minorUnits",
+            "columnName": "minor_units",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currencyCode",
+            "columnName": "currency_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "capturedAtEpochSecond",
+            "columnName": "captured_at_epoch_second",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "capturedAtNano",
+            "columnName": "captured_at_nano",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "includeInAvailableNow",
+            "columnName": "include_in_available_now",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "1"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_accounts_name",
+            "unique": true,
+            "columnNames": [
+              "name"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_accounts_name` ON `${TABLE_NAME}` (`name`)"
+          }
+        ]
+      },
+      {
+        "tableName": "activities",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL DEFAULT '', `account_id` TEXT NOT NULL DEFAULT 'legacy-main', `direction` TEXT NOT NULL, `minor_units` INTEGER NOT NULL, `currency_code` TEXT NOT NULL, `state` TEXT NOT NULL, `budget_month` TEXT NOT NULL, `expected_on_epoch_day` INTEGER, `booked_at_epoch_second` INTEGER, `booked_at_nano` INTEGER, `source_kind` TEXT NOT NULL, `recurring_item_id` TEXT, `recurring_occurrence_key` TEXT, `category_id` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'legacy-main'"
+          },
+          {
+            "fieldPath": "direction",
+            "columnName": "direction",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "minorUnits",
+            "columnName": "minor_units",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currencyCode",
+            "columnName": "currency_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "state",
+            "columnName": "state",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "budgetMonth",
+            "columnName": "budget_month",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "expectedOnEpochDay",
+            "columnName": "expected_on_epoch_day",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "bookedAtEpochSecond",
+            "columnName": "booked_at_epoch_second",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "bookedAtNano",
+            "columnName": "booked_at_nano",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "sourceKind",
+            "columnName": "source_kind",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "recurringItemId",
+            "columnName": "recurring_item_id",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "recurringOccurrenceKey",
+            "columnName": "recurring_occurrence_key",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "categoryId",
+            "columnName": "category_id",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_activities_account_id",
+            "unique": false,
+            "columnNames": [
+              "account_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_activities_account_id` ON `${TABLE_NAME}` (`account_id`)"
+          },
+          {
+            "name": "index_activities_recurring_occurrence",
+            "unique": true,
+            "columnNames": [
+              "recurring_item_id",
+              "recurring_occurrence_key"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_activities_recurring_occurrence` ON `${TABLE_NAME}` (`recurring_item_id`, `recurring_occurrence_key`)"
+          }
+        ]
+      },
+      {
+        "tableName": "recurring_items",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `account_id` TEXT NOT NULL DEFAULT 'legacy-main', `direction` TEXT NOT NULL, `minor_units` INTEGER NOT NULL, `currency_code` TEXT NOT NULL, `timing_kind` TEXT NOT NULL, `timing_first_day` INTEGER, `timing_last_day` INTEGER, `starts_on_epoch_day` INTEGER NOT NULL, `first_occurrence_epoch_day` INTEGER NOT NULL DEFAULT 0, `repeat_every` INTEGER NOT NULL DEFAULT 1, `repeat_unit` TEXT NOT NULL DEFAULT 'months', `counts_toward` TEXT NOT NULL DEFAULT 'occurrence_month', `schedule_timing_kind` TEXT NOT NULL DEFAULT 'specific_date', `period_end_offset_days` INTEGER, `require_manual_confirmation` INTEGER NOT NULL DEFAULT 0, `ends_at_epoch_day` INTEGER, `review_on_epoch_day` INTEGER, `occurrence_reminder_days` INTEGER, `review_reminder_days` INTEGER, `end_reminder_days` INTEGER, `category_id` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "accountId",
+            "columnName": "account_id",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'legacy-main'"
+          },
+          {
+            "fieldPath": "direction",
+            "columnName": "direction",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "minorUnits",
+            "columnName": "minor_units",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "currencyCode",
+            "columnName": "currency_code",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "legacyTimingKind",
+            "columnName": "timing_kind",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "legacyTimingFirstDay",
+            "columnName": "timing_first_day",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "legacyTimingLastDay",
+            "columnName": "timing_last_day",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "legacyStartsOnEpochDay",
+            "columnName": "starts_on_epoch_day",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "firstOccurrenceEpochDay",
+            "columnName": "first_occurrence_epoch_day",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "repeatEvery",
+            "columnName": "repeat_every",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "1"
+          },
+          {
+            "fieldPath": "repeatUnit",
+            "columnName": "repeat_unit",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'months'"
+          },
+          {
+            "fieldPath": "countsToward",
+            "columnName": "counts_toward",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'occurrence_month'"
+          },
+          {
+            "fieldPath": "scheduleTimingKind",
+            "columnName": "schedule_timing_kind",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "'specific_date'"
+          },
+          {
+            "fieldPath": "periodEndOffsetDays",
+            "columnName": "period_end_offset_days",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "requireManualConfirmation",
+            "columnName": "require_manual_confirmation",
+            "affinity": "INTEGER",
+            "notNull": true,
+            "defaultValue": "0"
+          },
+          {
+            "fieldPath": "endsOnEpochDay",
+            "columnName": "ends_at_epoch_day",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "remindOnEpochDay",
+            "columnName": "review_on_epoch_day",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "occurrenceReminderDays",
+            "columnName": "occurrence_reminder_days",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "remindReminderDays",
+            "columnName": "review_reminder_days",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "endReminderDays",
+            "columnName": "end_reminder_days",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "categoryId",
+            "columnName": "category_id",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_recurring_items_account_id",
+            "unique": false,
+            "columnNames": [
+              "account_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_recurring_items_account_id` ON `${TABLE_NAME}` (`account_id`)"
+          }
+        ]
+      },
+      {
+        "tableName": "tags",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`name` TEXT NOT NULL, PRIMARY KEY(`name`))",
+        "fields": [
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "name"
+          ]
+        }
+      },
+      {
+        "tableName": "activity_tags",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`activity_id` TEXT NOT NULL, `tag_name` TEXT NOT NULL, PRIMARY KEY(`activity_id`, `tag_name`), FOREIGN KEY(`activity_id`) REFERENCES `activities`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`tag_name`) REFERENCES `tags`(`name`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "activityId",
+            "columnName": "activity_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tagName",
+            "columnName": "tag_name",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "activity_id",
+            "tag_name"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_activity_tags_tag_name",
+            "unique": false,
+            "columnNames": [
+              "tag_name"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_activity_tags_tag_name` ON `${TABLE_NAME}` (`tag_name`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "activities",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "activity_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "tags",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "tag_name"
+            ],
+            "referencedColumns": [
+              "name"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "recurring_item_tags",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`recurring_item_id` TEXT NOT NULL, `tag_name` TEXT NOT NULL, PRIMARY KEY(`recurring_item_id`, `tag_name`), FOREIGN KEY(`recurring_item_id`) REFERENCES `recurring_items`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`tag_name`) REFERENCES `tags`(`name`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "recurringItemId",
+            "columnName": "recurring_item_id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "tagName",
+            "columnName": "tag_name",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "recurring_item_id",
+            "tag_name"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_recurring_item_tags_tag_name",
+            "unique": false,
+            "columnNames": [
+              "tag_name"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_recurring_item_tags_tag_name` ON `${TABLE_NAME}` (`tag_name`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "recurring_items",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "recurring_item_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "tags",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "tag_name"
+            ],
+            "referencedColumns": [
+              "name"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "custom_categories",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL COLLATE NOCASE, `icon` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "icon",
+            "columnName": "icon",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_custom_categories_name",
+            "unique": true,
+            "columnNames": [
+              "name"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_custom_categories_name` ON `${TABLE_NAME}` (`name`)"
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'b521ea4218ef9e0f72d369d6f8192824')"
+    ]
+  }
+}

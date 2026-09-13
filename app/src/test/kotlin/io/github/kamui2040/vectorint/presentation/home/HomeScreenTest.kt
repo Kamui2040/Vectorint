@@ -63,16 +63,16 @@ class HomeScreenTest {
         compose.onNodeWithText("€650.00").assertIsDisplayed()
         compose.onNodeWithText("September 2026").assertIsDisplayed()
         compose.onNodeWithText("Add activity").assertIsDisplayed()
-        compose.onNodeWithText("Current funds").assertDoesNotExist()
+        compose.onNodeWithText("Included account funds").assertDoesNotExist()
         compose.onNodeWithContentDescription("Show This month details").performClick()
-        compose.onNodeWithText("Current funds").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Included account funds").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("€900.00").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Reserved expenses").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("€250.00").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Expected income").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Not included").performScrollTo().assertIsDisplayed()
         compose.onNodeWithContentDescription("Hide This month details").performScrollTo().performClick()
-        compose.onNodeWithText("Current funds").assertDoesNotExist()
+        compose.onNodeWithText("Included account funds").assertDoesNotExist()
         compose.onNodeWithText("Try again").assertDoesNotExist()
     }
 
@@ -209,12 +209,12 @@ class HomeScreenTest {
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
         compose.onNodeWithText("Couldn’t load your budget").assertDoesNotExist()
         compose.onNodeWithText("Try again").assertDoesNotExist()
-        compose.onNodeWithText("Set Current funds").performClick()
+        compose.onNodeWithText("Set up an account").performClick()
         compose.runOnIdle { assertEquals(1, setupCount) }
     }
 
     @Test
-    fun `ready state offers activity and Current funds actions`() {
+    fun `ready state offers activity and account actions`() {
         var activityCount = 0
         var recurringCount = 0
         var editCount = 0
@@ -239,7 +239,7 @@ class HomeScreenTest {
 
         compose.onNodeWithText("Add activity").assertIsDisplayed().performClick()
         compose.onNodeWithText("Recurring items").performScrollTo().performClick()
-        compose.onNodeWithText("Edit Current funds").performScrollTo().performClick()
+        compose.onNodeWithText("Manage accounts").performScrollTo().performClick()
         compose.runOnIdle {
             assertEquals(1, activityCount)
             assertEquals(1, recurringCount)

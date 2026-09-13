@@ -59,6 +59,7 @@ sealed interface ActivitySource {
 data class ActivityEntry(
     val id: ActivityId,
     val name: String = "",
+    val accountId: AccountId = LEGACY_DEFAULT_ACCOUNT_ID,
     val direction: Direction,
     val amount: Money,
     val state: ActivityState,

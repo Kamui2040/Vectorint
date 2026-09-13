@@ -139,6 +139,6 @@ class GermanAvailableNowWidgetContentTest {
             )
 
         assertEquals("Einrichtung nötig", content.headline)
-        assertEquals("Öffne Vectorint und lege dein aktuelles Guthaben fest.", content.details)
+        assertEquals("Öffne Vectorint und richte ein Konto ein.", content.details)
     }
 }

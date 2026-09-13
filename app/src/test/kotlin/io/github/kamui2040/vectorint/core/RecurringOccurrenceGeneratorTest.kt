@@ -88,6 +88,16 @@ class RecurringOccurrenceGeneratorTest {
     }
 
     @Test
+    fun `every generated occurrence keeps its recurring account`() {
+        val accountId = AccountId("paypal")
+        val assigned = item().copy(accountId = accountId)
+
+        val occurrence = generate(assigned, YearMonth.of(2026, 2)).single()
+
+        assertEquals(accountId, occurrence.accountId)
+    }
+
+    @Test
     fun `following-month expected income remains an explicit calculation choice`() {
         val salary =
             item("salary", Direction.INCOME, LocalDate.of(2026, 1, 31)).copy(

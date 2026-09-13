@@ -19,20 +19,25 @@ Treat every tracked file as suitable for public release.
 
 ## Product and accounting invariants
 
-- One pooled **Current funds** value is the cash baseline; accounts, bank sync, and
-  foreign-exchange aggregation are outside the core.
+- Local accounts keep bank, PayPal, cash, savings, and other same-currency money
+  sources separate. Each has its own **Current funds** baseline and an explicit
+  include-in-**Available now** choice. Bank sync and foreign-exchange aggregation
+  remain outside the core.
 - **Available now** is the primary budgeting result for one explicit calendar
   month.
 - Income and expense use one direction-neutral activity and recurring-item model.
-- A confirmed activity after the Current funds capture instant changes confirmed
+- Every activity and recurring item belongs to one known account. A confirmed
+  activity after that account's Current funds capture instant changes confirmed
   funds exactly once. Confirmed activity at or before that baseline is never
-  replayed.
+  replayed. An excluded account's baseline and assigned activity do not affect
+  Available now.
 - A planned recurring occurrence is one economic event. Confirmation replaces its
   planned state, removes its reservation, and must not create a second event.
 - Planned current-month expenses are always reserved. Expected income affects
   Available now only through an explicit user-controlled opt-in.
-- Missing, duplicated, mixed-currency, malformed, or overflowing accounting input
-  fails closed instead of producing a reassuring number.
+- Missing or duplicated accounts, unknown account assignments, mixed-currency,
+  malformed, or overflowing accounting input fails closed instead of producing a
+  reassuring number.
 - Negative results are valid. Money uses integer minor units; do not use floating
   point for accounting.
 - Booking time and budget-month assignment remain separate.
@@ -72,8 +77,11 @@ Treat every tracked file as suitable for public release.
 - Add persistence and UI around the tested domain rather than embedding accounting
   rules in composables, Android services, or database queries.
 - Home may show an Available now amount only from a successful domain calculation.
-  Represent loading, missing Current funds, unsafe data, and load failure as
+  Represent loading, missing account setup, unsafe data, and load failure as
   distinct screen states, and reload the complete snapshot when retrying.
+- Hide the account chooser when exactly one account exists and select that account
+  automatically. With multiple accounts, use direct, accessible selection chips
+  in new-entry editors.
 - Keep both home-screen widget choices: the detailed current-month summary and a
   compact quick-add option. The compact widget shows only the Available now label
   and calculated value, or a safe placeholder, and tapping it opens one-off
@@ -117,10 +125,11 @@ Treat every tracked file as suitable for public release.
 
 - Treat the exported Room schema as a public data contract and keep every schema
   version tracked.
-- Preserve `Instant` values as epoch seconds plus nanoseconds; do not reduce the
-  Current funds baseline or booking time to millisecond precision.
-- Keep one Current funds row and one activity row per economic event. A recurring
-  item ID plus occurrence key must remain unique across activity rows.
+- Preserve `Instant` values as epoch seconds plus nanoseconds; do not reduce an
+  account's Current funds baseline or booking time to millisecond precision.
+- Keep one account row per local money source and one activity row per economic
+  event. Account deletion must fail while activity or recurring items reference it.
+  A recurring item ID plus occurrence key must remain unique across activity rows.
 - Do not use generic Room upsert for activity rows. Inside one transaction, update
   only a known activity ID; otherwise insert with conflict-abort so an alternate
   recurring-occurrence collision cannot become a silent no-op.
@@ -208,7 +217,7 @@ Treat every tracked file as suitable for public release.
 
 ## Privacy and public safety
 
-- Core budgeting is offline-capable and must not require accounts, telemetry,
+- Core budgeting is offline-capable and must not require online sign-in, telemetry,
   analytics, advertising, tracking, automatic crash upload, or proprietary cloud
   services.
 - Never commit credentials, signing or recovery material, authentic financial or

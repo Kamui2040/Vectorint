@@ -1,5 +1,7 @@
 package io.github.kamui2040.vectorint.data.local
 
+import io.github.kamui2040.vectorint.core.Account
+import io.github.kamui2040.vectorint.core.AccountId
 import io.github.kamui2040.vectorint.core.ActivityEntry
 import io.github.kamui2040.vectorint.core.ActivityId
 import io.github.kamui2040.vectorint.core.ActivitySource
@@ -29,14 +31,21 @@ class PersistenceMappingsTest {
     private val eur = CurrencyCode.of("EUR")
 
     @Test
-    fun `Current funds preserves an exact sub-millisecond capture instant`() {
+    fun `account preserves its balance flags and exact sub-millisecond capture instant`() {
         val funds =
             CurrentFunds(
                 amount = Money(123_456, eur),
                 capturedAt = Instant.parse("2026-09-05T12:34:56.123456789Z"),
             )
+        val account =
+            Account(
+                id = AccountId("cash"),
+                name = "Cash",
+                currentFunds = funds,
+                includeInAvailableNow = false,
+            )
 
-        assertEquals(funds, funds.toEntity().toDomain())
+        assertEquals(account, account.toEntity().toDomain())
     }
 
     @Test
@@ -124,8 +133,10 @@ class PersistenceMappingsTest {
 
     @Test
     fun `out-of-range stored nanoseconds fail closed`() {
-        val malformedFunds =
-            CurrentFundsEntity(
+        val malformedAccount =
+            AccountEntity(
+                id = "cash",
+                name = "Cash",
                 minorUnits = 1,
                 currencyCode = "EUR",
                 capturedAtEpochSecond = 1,
@@ -142,7 +153,7 @@ class PersistenceMappingsTest {
                 tags = emptyList(),
             )
 
-        assertThrows(IllegalArgumentException::class.java) { malformedFunds.toDomain() }
+        assertThrows(IllegalArgumentException::class.java) { malformedAccount.toDomain() }
         assertThrows(IllegalArgumentException::class.java) { malformedActivity.toDomain() }
     }
 

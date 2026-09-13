@@ -1,6 +1,7 @@
 package io.github.kamui2040.vectorint.core
 
 import java.time.Instant
+import java.util.Locale
 
 data class CurrentFunds(
     val amount: Money,
@@ -12,8 +13,11 @@ data class CalculationPolicy(
 )
 
 enum class UnsafeReason {
+    DUPLICATE_ACCOUNT_ID,
+    DUPLICATE_ACCOUNT_NAME,
     DUPLICATE_ACTIVITY_ID,
     DUPLICATE_RECURRING_OCCURRENCE,
+    UNKNOWN_ACCOUNT_ASSIGNMENT,
     CURRENCY_MISMATCH,
     UNKNOWN_CATEGORY_ASSIGNMENT,
     ARITHMETIC_OVERFLOW,
@@ -39,10 +43,35 @@ object AvailableFundsCalculator {
         month: BudgetMonth,
         activity: List<ActivityEntry>,
         policy: CalculationPolicy = CalculationPolicy(),
+    ): AvailableFundsResult =
+        calculate(
+            accounts = listOf(currentFunds.asLegacyDefaultAccount()),
+            month = month,
+            activity = activity,
+            policy = policy,
+        )
+
+    fun calculate(
+        accounts: List<Account>,
+        month: BudgetMonth,
+        activity: List<ActivityEntry>,
+        policy: CalculationPolicy = CalculationPolicy(),
     ): AvailableFundsResult {
-        val currency = currentFunds.amount.currency
+        require(accounts.isNotEmpty()) { "At least one account is required" }
+        val currency =
+            accounts
+                .first()
+                .currentFunds.amount.currency
+        val accountsById = accounts.associateBy(Account::id)
         val reasons =
             buildSet {
+                if (accountsById.size != accounts.size) {
+                    add(UnsafeReason.DUPLICATE_ACCOUNT_ID)
+                }
+                val normalizedNames = accounts.map { it.name.lowercase(Locale.ROOT) }
+                if (normalizedNames.distinct().size != normalizedNames.size) {
+                    add(UnsafeReason.DUPLICATE_ACCOUNT_NAME)
+                }
                 if (activity.map(ActivityEntry::id).distinct().size != activity.size) {
                     add(UnsafeReason.DUPLICATE_ACTIVITY_ID)
                 }
@@ -57,7 +86,14 @@ object AvailableFundsCalculator {
                     add(UnsafeReason.DUPLICATE_RECURRING_OCCURRENCE)
                 }
 
-                if (activity.any { it.amount.currency != currency }) {
+                if (activity.any { it.accountId !in accountsById }) {
+                    add(UnsafeReason.UNKNOWN_ACCOUNT_ASSIGNMENT)
+                }
+
+                if (
+                    accounts.any { it.currentFunds.amount.currency != currency } ||
+                    activity.any { it.amount.currency != currency }
+                ) {
                     add(UnsafeReason.CURRENCY_MISMATCH)
                 }
             }
@@ -67,14 +103,26 @@ object AvailableFundsCalculator {
         }
 
         return try {
-            var confirmedMinorUnits = currentFunds.amount.minorUnits
+            var confirmedMinorUnits = 0L
             var plannedIncomeMinorUnits = 0L
             var reservedExpenseMinorUnits = 0L
 
+            accounts
+                .filter(Account::includeInAvailableNow)
+                .forEach { account ->
+                    confirmedMinorUnits =
+                        Math.addExact(
+                            confirmedMinorUnits,
+                            account.currentFunds.amount.minorUnits,
+                        )
+                }
+
             activity.forEach { entry ->
+                val account = checkNotNull(accountsById[entry.accountId])
+                if (!account.includeInAvailableNow) return@forEach
                 when (entry.state) {
                     ActivityState.CONFIRMED -> {
-                        if (entry.bookedAt!!.isAfter(currentFunds.capturedAt)) {
+                        if (entry.bookedAt!!.isAfter(account.currentFunds.capturedAt)) {
                             confirmedMinorUnits =
                                 Math.addExact(
                                     confirmedMinorUnits,

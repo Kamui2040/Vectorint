@@ -1,5 +1,7 @@
 package io.github.kamui2040.vectorint.presentation.entry
 
+import io.github.kamui2040.vectorint.core.Account
+import io.github.kamui2040.vectorint.core.AccountId
 import io.github.kamui2040.vectorint.core.ActivityEntry
 import io.github.kamui2040.vectorint.core.ActivityId
 import io.github.kamui2040.vectorint.core.ActivityState
@@ -17,6 +19,7 @@ import io.github.kamui2040.vectorint.core.PredefinedCategory
 import io.github.kamui2040.vectorint.core.RecurringItem
 import io.github.kamui2040.vectorint.core.RecurringItemId
 import io.github.kamui2040.vectorint.core.Tag
+import io.github.kamui2040.vectorint.core.asLegacyDefaultAccount
 import io.github.kamui2040.vectorint.data.BudgetRepository
 import io.github.kamui2040.vectorint.data.BudgetSnapshot
 import kotlinx.coroutines.runBlocking
@@ -38,64 +41,6 @@ class BudgetEntryEditorsTest {
     private val moneyAdapter = RegionalEntryMoneyAdapter { Locale.US }
 
     @Test
-    fun `Current funds setup defaults to the regional currency`() =
-        runBlocking {
-            val result = CurrentFundsEditor(FakeBudgetRepository(), moneyAdapter, clock).load()
-
-            assertEquals(
-                CurrentFundsLoadResult.Ready(
-                    CurrentFundsFormSeed(
-                        amountInput = "",
-                        currencyCodeInput = "USD",
-                        isEditing = false,
-                    ),
-                ),
-                result,
-            )
-        }
-
-    @Test
-    fun `Current funds editing uses ungrouped regional input and preserves currency`() =
-        runBlocking {
-            val repository = FakeBudgetRepository(currentFunds = funds(123_456))
-
-            assertEquals(
-                CurrentFundsLoadResult.Ready(
-                    CurrentFundsFormSeed(
-                        amountInput = "1234.56",
-                        currencyCodeInput = "USD",
-                        isEditing = true,
-                    ),
-                ),
-                CurrentFundsEditor(repository, moneyAdapter, clock).load(),
-            )
-        }
-
-    @Test
-    fun `Current funds save accepts debt and captures a new exact baseline`() =
-        runBlocking {
-            val repository = FakeBudgetRepository()
-            val editor = CurrentFundsEditor(repository, moneyAdapter, clock)
-
-            assertEquals(EntrySaveResult.Saved, editor.save("-12.34", "usd"))
-            assertEquals(
-                CurrentFunds(Money(-1_234, usd), editTime),
-                repository.currentFunds,
-            )
-        }
-
-    @Test
-    fun `invalid Current funds input never writes`() =
-        runBlocking {
-            val repository = FakeBudgetRepository()
-            val editor = CurrentFundsEditor(repository, moneyAdapter, clock)
-
-            assertEquals(EntrySaveResult.InvalidCurrency, editor.save("10.00", "US"))
-            assertEquals(EntrySaveResult.InvalidAmount, editor.save("10,00", "USD"))
-            assertEquals(0, repository.currentFundsWrites)
-        }
-
-    @Test
     fun `confirmed one-off expense changes funds once and a later baseline does not replay it`() =
         runBlocking {
             val repository = FakeBudgetRepository(currentFunds = funds(100_000))
@@ -108,10 +53,7 @@ class BudgetEntryEditorsTest {
             assertAvailableNow(97_500, repository)
 
             val laterClock = Clock.fixed(editTime.plusSeconds(60), ZoneOffset.UTC)
-            assertEquals(
-                EntrySaveResult.Saved,
-                CurrentFundsEditor(repository, moneyAdapter, laterClock).save("975.00", "USD"),
-            )
+            repository.saveCurrentFunds(CurrentFunds(Money(97_500, usd), laterClock.instant()))
             assertAvailableNow(97_500, repository)
             assertEquals(1, repository.activities.size)
         }
@@ -189,6 +131,59 @@ class BudgetEntryEditorsTest {
                 editor.save("0.00", usd, Direction.EXPENSE, ActivityState.CONFIRMED),
             )
             assertEquals(emptyList<ActivityEntry>(), repository.activities)
+        }
+
+    @Test
+    fun `one account is selected automatically and saved without another choice`() =
+        runBlocking {
+            val cash =
+                Account(
+                    id = AccountId("cash"),
+                    name = "Cash",
+                    currentFunds = funds(20_000),
+                )
+            val repository = FakeBudgetRepository(initialAccounts = listOf(cash))
+            val editor = activityEditor(repository)
+
+            val ready = editor.load() as OneOffActivityLoadResult.Ready
+            assertEquals(cash.id, ready.seed.selectedAccountId)
+            assertEquals(listOf(cash), ready.seed.accounts)
+            assertEquals(
+                EntrySaveResult.Saved,
+                editor.save(
+                    nameInput = "Coffee",
+                    amountInput = "3.50",
+                    currencyCode = usd,
+                    direction = Direction.EXPENSE,
+                    state = ActivityState.CONFIRMED,
+                    accountId = ready.seed.selectedAccountId,
+                ),
+            )
+            assertEquals(cash.id, repository.activities.single().accountId)
+        }
+
+    @Test
+    fun `multiple accounts default to the first included account`() =
+        runBlocking {
+            val savings =
+                Account(
+                    id = AccountId("savings"),
+                    name = "Savings",
+                    currentFunds = funds(50_000),
+                    includeInAvailableNow = false,
+                )
+            val cash =
+                Account(
+                    id = AccountId("cash"),
+                    name = "Cash",
+                    currentFunds = funds(20_000),
+                )
+
+            val ready =
+                activityEditor(FakeBudgetRepository(initialAccounts = listOf(savings, cash))).load()
+                    as OneOffActivityLoadResult.Ready
+
+            assertEquals(cash.id, ready.seed.selectedAccountId)
         }
 
     @Test
@@ -275,7 +270,7 @@ class BudgetEntryEditorsTest {
         val snapshot = requireNotNull(repository.loadSnapshot())
         val result =
             AvailableFundsCalculator.calculate(
-                currentFunds = snapshot.currentFunds,
+                accounts = snapshot.accounts,
                 month = BudgetMonth(YearMonth.of(2026, 9)),
                 activity = snapshot.activities,
                 policy = policy,
@@ -289,21 +284,26 @@ private class FakeBudgetRepository(
     var currentFunds: CurrentFunds? = null,
     val activities: MutableList<ActivityEntry> = mutableListOf(),
     private val failCreate: Boolean = false,
+    initialAccounts: List<Account>? = null,
 ) : BudgetRepository {
-    var currentFundsWrites: Int = 0
-        private set
+    private val accountStorage =
+        initialAccounts?.toMutableList()
+            ?: currentFunds?.let { mutableListOf(it.asLegacyDefaultAccount()) }
+            ?: mutableListOf()
 
-    fun loadSnapshot(): BudgetSnapshot? = currentFunds?.let { BudgetSnapshot(it, activities.toList()) }
+    fun loadSnapshot(): BudgetSnapshot? =
+        accountStorage.takeIf { it.isNotEmpty() }?.let {
+            BudgetSnapshot(it.toList(), activities.toList())
+        }
 
     override suspend fun loadBudgetSnapshot(): BudgetSnapshot? = loadSnapshot()
 
-    override suspend fun saveCurrentFunds(currentFunds: CurrentFunds) {
-        currentFundsWrites++
-        this.currentFunds = currentFunds
-    }
+    override suspend fun loadAccounts(): List<Account> = accountStorage.toList()
 
-    override suspend fun clearCurrentFunds() {
-        currentFunds = null
+    suspend fun saveCurrentFunds(currentFunds: CurrentFunds) {
+        this.currentFunds = currentFunds
+        accountStorage.removeAll { it.id == io.github.kamui2040.vectorint.core.LEGACY_DEFAULT_ACCOUNT_ID }
+        accountStorage += currentFunds.asLegacyDefaultAccount()
     }
 
     override suspend fun loadActivities(): List<ActivityEntry> = activities.toList()

@@ -1,5 +1,6 @@
 package io.github.kamui2040.vectorint.backup
 
+import io.github.kamui2040.vectorint.core.AccountId
 import io.github.kamui2040.vectorint.core.ActivityEntry
 import io.github.kamui2040.vectorint.core.ActivityId
 import io.github.kamui2040.vectorint.core.ActivitySource
@@ -53,9 +54,9 @@ class VectorintBackupCodecTest {
         assertEquals(backup, decoded)
         assertEquals(
             123_456_789,
-            decoded.data.currentFunds
-                ?.capturedAt
-                ?.nano,
+            decoded.data.accounts
+                .single()
+                .currentFunds.capturedAt.nano,
         )
         assertEquals(
             987_654_321,
@@ -64,6 +65,47 @@ class VectorintBackupCodecTest {
                 .bookedAt
                 ?.nano,
         )
+    }
+
+    @Test
+    fun `round trip preserves multiple accounts flags and record assignments`() {
+        val original = completeBackup()
+        val main =
+            original.data.accounts
+                .single()
+                .copy(name = "Bank")
+        val cash =
+            main.copy(
+                id = AccountId("cash"),
+                name = "Cash",
+                currentFunds =
+                    CurrentFunds(
+                        amount = Money(12_345, main.currentFunds.amount.currency),
+                        capturedAt = Instant.parse("2026-09-04T09:00:00.000000003Z"),
+                    ),
+                includeInAvailableNow = false,
+            )
+        val backup =
+            original.copy(
+                data =
+                    original.data.copy(
+                        accounts = listOf(cash, main),
+                        activities =
+                            original.data.activities.mapIndexed { index, activity ->
+                                activity.copy(accountId = if (index == 0) main.id else cash.id)
+                            },
+                        recurringItems =
+                            original.data.recurringItems.mapIndexed { index, item ->
+                                item.copy(accountId = if (index == 0) cash.id else main.id)
+                            },
+                    ),
+            )
+
+        val decoded = codec.decode(codec.encode(backup))
+
+        assertEquals(backup, decoded)
+        assertEquals(listOf(false, true), decoded.data.accounts.map { it.includeInAvailableNow })
+        assertEquals(listOf(main.id, cash.id), decoded.data.activities.map { it.accountId })
     }
 
     @Test
@@ -117,7 +159,7 @@ class VectorintBackupCodecTest {
             codec
                 .encode(categoryFree)
                 .toString(StandardCharsets.UTF_8)
-                .replace("\"version\":${VectorintBackupContract.VERSION}", "\"version\":4")
+                .asLegacyVersion(4)
                 .replaceFirst(",\"name\":\"Salary payment\"", "")
                 .replaceFirst(",\"name\":\"Rent\"", "")
                 .replace(",\"customCategories\":[]", "")
@@ -137,13 +179,19 @@ class VectorintBackupCodecTest {
             codec
                 .encode(completeBackup())
                 .toString(StandardCharsets.UTF_8)
-                .replace("\"version\":${VectorintBackupContract.VERSION}", "\"version\":5")
+                .asLegacyVersion(5)
                 .replaceFirst(",\"name\":\"Salary payment\"", "")
                 .replaceFirst(",\"name\":\"Rent\"", "")
 
         val decoded = codec.decode(versionFive.toByteArray(StandardCharsets.UTF_8))
 
         assertEquals(5, decoded.sourceVersion)
+        assertEquals(
+            "Main",
+            decoded.data.accounts
+                .single()
+                .name,
+        )
         assertEquals(listOf("", ""), decoded.data.activities.map { it.name })
     }
 
@@ -247,10 +295,27 @@ class VectorintBackupCodecTest {
     }
 
     @Test
-    fun `budget records without Current funds are rejected`() {
-        val backup = completeBackup().let { it.copy(data = it.data.copy(currentFunds = null)) }
+    fun `budget records without accounts are rejected`() {
+        val backup = completeBackup().let { it.copy(data = it.data.copy(accounts = emptyList())) }
 
         assertThrows(InvalidVectorintBackup::class.java) { codec.encode(backup) }
+    }
+
+    @Test
+    fun `unknown account assignments are rejected before backup replacement`() {
+        val original = completeBackup()
+        val unknown =
+            original.copy(
+                data =
+                    original.data.copy(
+                        activities =
+                            original.data.activities.mapIndexed { index, activity ->
+                                if (index == 0) activity.copy(accountId = AccountId("missing")) else activity
+                            },
+                    ),
+            )
+
+        assertThrows(InvalidVectorintBackup::class.java) { codec.encode(unknown) }
     }
 
     @Test
@@ -314,6 +379,20 @@ class VectorintBackupCodecTest {
         assertThrows(InvalidVectorintBackup::class.java) {
             codec.decode(text.toByteArray(StandardCharsets.UTF_8))
         }
+    }
+
+    private fun String.asLegacyVersion(version: Int): String {
+        val accountsStart = indexOf("\"accounts\":[")
+        val categoriesStart = indexOf(",\"customCategories\":", startIndex = accountsStart)
+        check(accountsStart >= 0 && categoriesStart > accountsStart)
+        val accountsJson = substring(accountsStart, categoriesStart)
+        val currentFundsStart = accountsJson.indexOf("\"currentFunds\":") + "\"currentFunds\":".length
+        val currentFundsEnd = accountsJson.indexOf(",\"includeInAvailableNow\":", startIndex = currentFundsStart)
+        check(currentFundsStart >= 0 && currentFundsEnd > currentFundsStart)
+        val currentFundsJson = accountsJson.substring(currentFundsStart, currentFundsEnd)
+        return replaceRange(accountsStart, categoriesStart, "\"currentFunds\":$currentFundsJson")
+            .replace("\"version\":${VectorintBackupContract.VERSION}", "\"version\":$version")
+            .replace(",\"accountId\":\"legacy-main\"", "")
     }
 
     private fun completeBackup(): VectorintBackup {

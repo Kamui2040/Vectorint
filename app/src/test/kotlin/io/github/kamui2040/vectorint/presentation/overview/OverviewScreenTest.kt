@@ -148,11 +148,11 @@ class OverviewScreenTest {
             }
         }
 
-        compose.onNodeWithText("Set Current funds first").assertIsDisplayed()
+        compose.onNodeWithText("Set up an account first").assertIsDisplayed()
         compose
-            .onNodeWithText("Set Current funds first")
+            .onNodeWithText("Set up an account first")
             .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
-        compose.onNodeWithText("Set Current funds").performClick()
+        compose.onNodeWithText("Set up an account").performClick()
         compose.runOnIdle { assertEquals(1, setupCount) }
     }
 

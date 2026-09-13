@@ -37,7 +37,7 @@ class AboutDialogTest {
             .onNodeWithText("See how much you can safely spend now.")
             .assertIsDisplayed()
         compose
-            .onNodeWithText("Local · offline-first · no account · no ads · no analytics · no tracking")
+            .onNodeWithText("Local · offline-first · no sign-in · no ads · no analytics · no tracking")
             .performScrollTo()
             .assertIsDisplayed()
         compose.onNodeWithText("Changelog").assertIsDisplayed()

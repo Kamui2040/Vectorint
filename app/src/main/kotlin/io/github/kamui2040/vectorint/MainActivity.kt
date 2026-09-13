@@ -30,14 +30,14 @@ import io.github.kamui2040.vectorint.core.RecurringItemId
 import io.github.kamui2040.vectorint.data.RecurringOccurrenceCoordinator
 import io.github.kamui2040.vectorint.data.UserSettings
 import io.github.kamui2040.vectorint.presentation.about.AboutDialog
+import io.github.kamui2040.vectorint.presentation.account.AccountManagementRoute
+import io.github.kamui2040.vectorint.presentation.account.AccountManager
 import io.github.kamui2040.vectorint.presentation.activity.ActivityEditRoute
 import io.github.kamui2040.vectorint.presentation.activity.ActivityEditor
 import io.github.kamui2040.vectorint.presentation.activity.ActivityHistoryLoader
 import io.github.kamui2040.vectorint.presentation.activity.ActivityHistoryRoute
 import io.github.kamui2040.vectorint.presentation.activity.RegionalActivityDisplayFormatter
 import io.github.kamui2040.vectorint.presentation.category.CategoryManager
-import io.github.kamui2040.vectorint.presentation.entry.CurrentFundsEditor
-import io.github.kamui2040.vectorint.presentation.entry.CurrentFundsRoute
 import io.github.kamui2040.vectorint.presentation.entry.OneOffActivityEditor
 import io.github.kamui2040.vectorint.presentation.entry.OneOffActivityRoute
 import io.github.kamui2040.vectorint.presentation.entry.RegionalEntryMoneyAdapter
@@ -103,8 +103,8 @@ class MainActivity : AppCompatActivity() {
                 occurrenceUpdater = recurringOccurrenceCoordinator,
             )
         val entryMoneyAdapter = RegionalEntryMoneyAdapter()
-        val currentFundsEditor =
-            CurrentFundsEditor(
+        val accountManager =
+            AccountManager(
                 budgetRepository = vectorintApplication.budgetRepository,
                 moneyAdapter = entryMoneyAdapter,
             )
@@ -212,8 +212,8 @@ class MainActivity : AppCompatActivity() {
                             HomeScreen(
                                 state = homeState,
                                 onRetry = { reloadKey++ },
-                                onSetCurrentFunds = { destination = AppDestination.CURRENT_FUNDS },
-                                onEditCurrentFunds = { destination = AppDestination.CURRENT_FUNDS },
+                                onSetCurrentFunds = { destination = AppDestination.ACCOUNTS },
+                                onEditCurrentFunds = { destination = AppDestination.ACCOUNTS },
                                 onAddActivity = {
                                     activityReturnDestination = AppDestination.HOME
                                     destination = AppDestination.ADD_ACTIVITY
@@ -248,7 +248,7 @@ class MainActivity : AppCompatActivity() {
                             OverviewScreen(
                                 state = overviewState,
                                 onRetry = { reloadKey++ },
-                                onSetCurrentFunds = { destination = AppDestination.CURRENT_FUNDS },
+                                onSetCurrentFunds = { destination = AppDestination.ACCOUNTS },
                                 selectedMonthIsCurrent = selectedOverviewMonthOffset == 0,
                                 onPreviousMonth = { selectedOverviewMonthOffset-- },
                                 onNextMonth = { selectedOverviewMonthOffset++ },
@@ -256,13 +256,12 @@ class MainActivity : AppCompatActivity() {
                             )
                         }
 
-                        AppDestination.CURRENT_FUNDS ->
-                            CurrentFundsRoute(
-                                editor = currentFundsEditor,
-                                onSaved = {
+                        AppDestination.ACCOUNTS ->
+                            AccountManagementRoute(
+                                manager = accountManager,
+                                onChanged = {
                                     vectorintApplication.refreshWidgets()
                                     reloadKey++
-                                    destination = AppDestination.HOME
                                 },
                                 onBack = { destination = AppDestination.HOME },
                             )
@@ -452,7 +451,7 @@ internal fun consumeQuickAddRequestFrom(intent: Intent?): Boolean {
 private enum class AppDestination {
     HOME,
     OVERVIEW,
-    CURRENT_FUNDS,
+    ACCOUNTS,
     ADD_ACTIVITY,
     ACTIVITY_HISTORY,
     EDIT_ACTIVITY,
@@ -464,7 +463,7 @@ private enum class AppDestination {
 private fun AppDestination.mainView(activityReturnDestination: AppDestination): MainView =
     when (this) {
         AppDestination.HOME,
-        AppDestination.CURRENT_FUNDS,
+        AppDestination.ACCOUNTS,
         AppDestination.RECURRING_ITEMS,
         AppDestination.ADD_RECURRING_ITEM,
         AppDestination.EDIT_RECURRING_ITEM,

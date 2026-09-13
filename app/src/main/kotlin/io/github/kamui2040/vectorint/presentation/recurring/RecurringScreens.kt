@@ -50,6 +50,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import io.github.kamui2040.vectorint.R
+import io.github.kamui2040.vectorint.core.AccountId
 import io.github.kamui2040.vectorint.core.BudgetMonthAssignment
 import io.github.kamui2040.vectorint.core.CategoryId
 import io.github.kamui2040.vectorint.core.CustomCategory
@@ -57,6 +58,7 @@ import io.github.kamui2040.vectorint.core.Direction
 import io.github.kamui2040.vectorint.core.RecurrenceUnit
 import io.github.kamui2040.vectorint.core.RecurringItemId
 import io.github.kamui2040.vectorint.core.Tag
+import io.github.kamui2040.vectorint.presentation.account.AccountSelector
 import io.github.kamui2040.vectorint.presentation.category.CategoryManager
 import io.github.kamui2040.vectorint.presentation.category.CategorySelector
 import io.github.kamui2040.vectorint.presentation.category.CategorySummary
@@ -216,6 +218,11 @@ private fun RecurringItemCard(
                 style = MaterialTheme.typography.bodyMedium,
                 color = directionColors.onContainer.copy(alpha = 0.78f),
             )
+            Text(
+                text = stringResource(R.string.account_assignment_label, item.accountName),
+                style = MaterialTheme.typography.labelMedium,
+                color = directionColors.onContainer.copy(alpha = 0.9f),
+            )
             CategorySummary(
                 categoryId = item.categoryId,
                 customCategories = customCategories,
@@ -308,6 +315,7 @@ private fun RecurringItemReadyRoute(
 ) {
     var nameInput by rememberSaveable { mutableStateOf(seed.nameInput) }
     var amountInput by rememberSaveable { mutableStateOf(seed.amountInput) }
+    var accountIdValue by rememberSaveable { mutableStateOf(seed.accountId.value) }
     var direction by rememberSaveable { mutableStateOf(seed.direction) }
     var firstOccurrenceEpochDay by rememberSaveable { mutableLongStateOf(seed.firstOccurrence.toEpochDay()) }
     var timingChoice by rememberSaveable { mutableStateOf(seed.timingChoice) }
@@ -342,6 +350,7 @@ private fun RecurringItemReadyRoute(
         seed = seed,
         nameInput = nameInput,
         amountInput = amountInput,
+        accountId = AccountId(accountIdValue),
         direction = direction,
         timingChoice = timingChoice,
         firstOccurrenceLabel =
@@ -372,6 +381,10 @@ private fun RecurringItemReadyRoute(
         },
         onAmountChange = {
             amountInput = it
+            clearIssue()
+        },
+        onAccountChange = {
+            accountIdValue = it.value
             clearIssue()
         },
         onDirectionChange = {
@@ -471,6 +484,7 @@ private fun RecurringItemReadyRoute(
                         seed = seed,
                         nameInput = nameInput,
                         amountInput = amountInput,
+                        accountId = AccountId(accountIdValue),
                         direction = direction,
                         firstOccurrence = firstOccurrence,
                         timingChoice = timingChoice,
@@ -588,6 +602,7 @@ internal fun RecurringItemEditorScreen(
     seed: RecurringItemFormSeed,
     nameInput: String,
     amountInput: String,
+    accountId: AccountId = seed.accountId,
     direction: Direction,
     timingChoice: RecurringTimingChoice = RecurringTimingChoice.SPECIFIC_DATE,
     firstOccurrenceLabel: String,
@@ -609,6 +624,7 @@ internal fun RecurringItemEditorScreen(
     tags: Set<Tag> = seed.tags,
     onNameChange: (String) -> Unit,
     onAmountChange: (String) -> Unit,
+    onAccountChange: (AccountId) -> Unit = {},
     onDirectionChange: (Direction) -> Unit,
     onTimingChoiceChange: (RecurringTimingChoice) -> Unit = {},
     onSelectFirstOccurrence: () -> Unit,
@@ -678,6 +694,12 @@ internal fun RecurringItemEditorScreen(
                 isError =
                     issue == RecurringItemMutationResult.InvalidAmount ||
                         issue == RecurringItemMutationResult.AmountMustBePositive,
+            )
+            AccountSelector(
+                accounts = seed.accounts,
+                selectedAccountId = accountId,
+                enabled = !saving,
+                onAccountChange = onAccountChange,
             )
             if (direction == Direction.INCOME) {
                 InfoHeading(

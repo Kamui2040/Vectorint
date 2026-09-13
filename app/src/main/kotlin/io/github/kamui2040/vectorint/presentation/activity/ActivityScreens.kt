@@ -232,6 +232,11 @@ private fun ActivityHistoryCard(
                     style = MaterialTheme.typography.bodyMedium,
                     color = directionColors.onContainer.copy(alpha = 0.78f),
                 )
+                Text(
+                    text = stringResource(R.string.account_assignment_label, item.accountName),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = directionColors.onContainer.copy(alpha = 0.9f),
+                )
                 CategorySummary(
                     categoryId = item.categoryId,
                     customCategories = customCategories,

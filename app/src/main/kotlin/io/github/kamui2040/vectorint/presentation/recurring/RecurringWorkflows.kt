@@ -1,5 +1,7 @@
 package io.github.kamui2040.vectorint.presentation.recurring
 
+import io.github.kamui2040.vectorint.core.Account
+import io.github.kamui2040.vectorint.core.AccountId
 import io.github.kamui2040.vectorint.core.BudgetMonth
 import io.github.kamui2040.vectorint.core.BudgetMonthAssignment
 import io.github.kamui2040.vectorint.core.CategoryId
@@ -51,6 +53,7 @@ internal data class RecurringListItemUi(
     val amount: String,
     val schedule: RecurringSchedule,
     val firstOccurrenceLabel: String,
+    val accountName: String = "Main",
     val categoryId: CategoryId? = null,
     val tags: List<String> = emptyList(),
 )
@@ -108,6 +111,9 @@ internal class RecurringListLoader(
     suspend fun load(): RecurringListUiState =
         try {
             val items = budgetRepository.loadRecurringItems()
+            val accounts = budgetRepository.loadAccounts()
+            val accountNames = accounts.associate { it.id to it.name }
+            require(items.all { it.accountId in accountNames }) { "Recurring account assignment is unknown" }
             if (items.isEmpty()) {
                 RecurringListUiState.Empty
             } else {
@@ -128,6 +134,7 @@ internal class RecurringListLoader(
                                     amount = formatter.formatMoney(item.amount),
                                     schedule = item.schedule,
                                     firstOccurrenceLabel = item.schedule.firstOccurrenceLabel(scheduleAdapter),
+                                    accountName = checkNotNull(accountNames[item.accountId]),
                                     categoryId = item.categoryId,
                                     tags = item.tags.toSortedLabels(),
                                 )
@@ -182,6 +189,8 @@ internal data class RecurringItemFormSeed(
     val endReminder: RecurringReminderInput,
     val categoryId: CategoryId? = null,
     val tags: Set<Tag> = emptySet(),
+    val accounts: List<Account> = emptyList(),
+    val accountId: AccountId = io.github.kamui2040.vectorint.core.LEGACY_DEFAULT_ACCOUNT_ID,
 ) {
     val isEditing: Boolean = item != null
 }
@@ -232,22 +241,26 @@ internal class RecurringItemEditor(
 ) {
     suspend fun load(recurringItemId: RecurringItemId?): RecurringItemLoadResult =
         try {
-            val currentFunds =
-                budgetRepository.loadBudgetSnapshot()?.currentFunds
-                    ?: return RecurringItemLoadResult.NeedsCurrentFunds
+            val accounts = budgetRepository.loadAccounts()
+            if (accounts.isEmpty()) return RecurringItemLoadResult.NeedsCurrentFunds
+            val currencies = accounts.map { it.currentFunds.amount.currency }.distinct()
+            require(currencies.size == 1) { "Account currencies must match" }
+            val currency = currencies.single()
             val item =
                 recurringItemId?.let { id ->
                     budgetRepository.loadRecurringItems().singleOrNull { it.id == id }
                         ?: return RecurringItemLoadResult.Missing
                 }
             if (item != null) {
-                require(item.amount.currency == currentFunds.amount.currency) {
-                    "Recurring item currency must match Current funds"
+                require(item.accountId in accounts.map(Account::id)) { "Recurring account assignment is unknown" }
+                require(item.amount.currency == currency) {
+                    "Recurring item currency must match its account"
                 }
             }
             RecurringItemLoadResult.Ready(
                 item.toSeed(
-                    currencyCode = currentFunds.amount.currency,
+                    accounts = accounts,
+                    currencyCode = currency,
                     moneyAdapter = moneyAdapter,
                     scheduleAdapter = scheduleAdapter,
                     defaultFirstOccurrence = LocalDate.now(clock),
@@ -279,6 +292,7 @@ internal class RecurringItemEditor(
         endReminder: RecurringReminderInput = seed.endReminder,
         categoryId: CategoryId? = seed.categoryId,
         tags: Set<Tag> = seed.tags,
+        accountId: AccountId = seed.accountId,
     ): RecurringItemMutationResult {
         val name = nameInput.trim()
         if (name.isEmpty()) return RecurringItemMutationResult.InvalidName
@@ -335,6 +349,7 @@ internal class RecurringItemEditor(
         val item =
             seed.item?.copy(
                 name = name,
+                accountId = accountId,
                 direction = direction,
                 amount = amount,
                 schedule = schedule,
@@ -344,6 +359,7 @@ internal class RecurringItemEditor(
             ) ?: RecurringItem(
                 id = idFactory.create(),
                 name = name,
+                accountId = accountId,
                 direction = direction,
                 amount = amount,
                 schedule = schedule,
@@ -380,6 +396,7 @@ internal class RecurringItemEditor(
 }
 
 private fun RecurringItem?.toSeed(
+    accounts: List<Account>,
     currencyCode: CurrencyCode,
     moneyAdapter: EntryMoneyAdapter,
     scheduleAdapter: RecurringScheduleInputAdapter,
@@ -389,6 +406,8 @@ private fun RecurringItem?.toSeed(
     val schedule = item?.schedule ?: RecurringSchedule(firstOccurrence = defaultFirstOccurrence)
     return RecurringItemFormSeed(
         item = item,
+        accounts = accounts,
+        accountId = item?.accountId ?: accounts.firstOrNull(Account::includeInAvailableNow)?.id ?: accounts.first().id,
         nameInput = item?.name.orEmpty(),
         amountInput = item?.amount?.let(moneyAdapter::formatInput).orEmpty(),
         currencyCode = currencyCode,

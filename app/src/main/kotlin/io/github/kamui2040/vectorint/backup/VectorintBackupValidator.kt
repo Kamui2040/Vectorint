@@ -1,5 +1,6 @@
 package io.github.kamui2040.vectorint.backup
 
+import io.github.kamui2040.vectorint.core.Account
 import io.github.kamui2040.vectorint.core.ActivitySource
 import io.github.kamui2040.vectorint.core.PredefinedCategory
 import java.util.Locale
@@ -7,6 +8,7 @@ import java.util.Locale
 internal object VectorintBackupValidator {
     fun validate(backup: VectorintBackup) {
         val data = backup.data
+        requireBackup(data.accounts.size <= VectorintBackupContract.MAX_ACCOUNTS, "Too many accounts")
         requireBackup(data.activities.size <= VectorintBackupContract.MAX_ACTIVITIES, "Too many activities")
         requireBackup(
             data.recurringItems.size <= VectorintBackupContract.MAX_RECURRING_ITEMS,
@@ -17,9 +19,18 @@ internal object VectorintBackupValidator {
             "Too many custom categories",
         )
         requireBackup(
-            data.currentFunds != null || (data.activities.isEmpty() && data.recurringItems.isEmpty()),
-            "Budget records require Current funds",
+            data.accounts.isNotEmpty() || (data.activities.isEmpty() && data.recurringItems.isEmpty()),
+            "Budget records require an account",
         )
+
+        val accountIds = data.accounts.map(Account::id)
+        requireBackup(accountIds.distinct().size == accountIds.size, "Account IDs must be unique")
+        val accountNames = data.accounts.map { it.name.lowercase(Locale.ROOT) }
+        requireBackup(accountNames.distinct().size == accountNames.size, "Account names must be unique")
+        data.accounts.forEach { account ->
+            requireText(account.id.value, "Account ID")
+            requireText(account.name, "Account name")
+        }
 
         val activityIds = data.activities.map { it.id.value }
         requireBackup(activityIds.distinct().size == activityIds.size, "Activity IDs must be unique")
@@ -54,10 +65,20 @@ internal object VectorintBackupValidator {
             "Recurring occurrence identities must be unique",
         )
 
-        val currency = data.currentFunds?.amount?.currency
+        val currency =
+            data.accounts
+                .firstOrNull()
+                ?.currentFunds
+                ?.amount
+                ?.currency
+        requireBackup(
+            data.accounts.all { it.currentFunds.amount.currency == currency },
+            "Account currencies must match",
+        )
         data.activities.forEach { activity ->
             requireText(activity.id.value, "Activity ID")
-            requireBackup(activity.amount.currency == currency, "Activity currency does not match Current funds")
+            requireBackup(activity.accountId in accountIds, "Activity account assignment is unknown")
+            requireBackup(activity.amount.currency == currency, "Activity currency does not match its account")
             requireKnownCategory(activity.categoryId, customCategoryIds)
             requireTags(activity.tags.map { it.value })
             (activity.source as? ActivitySource.Recurring)?.let { source ->
@@ -68,7 +89,8 @@ internal object VectorintBackupValidator {
         data.recurringItems.forEach { item ->
             requireText(item.id.value, "Recurring item ID")
             requireText(item.name, "Recurring item name")
-            requireBackup(item.amount.currency == currency, "Recurring currency does not match Current funds")
+            requireBackup(item.accountId in accountIds, "Recurring account assignment is unknown")
+            requireBackup(item.amount.currency == currency, "Recurring currency does not match its account")
             requireKnownCategory(item.categoryId, customCategoryIds)
             requireBackup(
                 item.reminders.remind == null || item.schedule.remindOn != null,

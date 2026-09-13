@@ -45,176 +45,20 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import io.github.kamui2040.vectorint.R
+import io.github.kamui2040.vectorint.core.Account
+import io.github.kamui2040.vectorint.core.AccountId
 import io.github.kamui2040.vectorint.core.ActivityState
 import io.github.kamui2040.vectorint.core.CategoryId
 import io.github.kamui2040.vectorint.core.Direction
 import io.github.kamui2040.vectorint.core.Tag
+import io.github.kamui2040.vectorint.presentation.account.AccountSelector
 import io.github.kamui2040.vectorint.presentation.category.CategoryManager
 import io.github.kamui2040.vectorint.presentation.category.CategorySelector
-import io.github.kamui2040.vectorint.presentation.component.ContextualHelpButton
 import io.github.kamui2040.vectorint.presentation.component.InfoHeading
 import io.github.kamui2040.vectorint.presentation.tag.TagEditor
 import io.github.kamui2040.vectorint.presentation.tag.rememberTagState
 import io.github.kamui2040.vectorint.presentation.theme.directionColors
 import kotlinx.coroutines.launch
-import java.util.Locale
-
-@Composable
-internal fun CurrentFundsRoute(
-    editor: CurrentFundsEditor,
-    onSaved: () -> Unit,
-    onBack: () -> Unit,
-) {
-    var loadKey by remember { mutableIntStateOf(0) }
-    val result by
-        produceState<CurrentFundsLoadResult?>(initialValue = null, key1 = loadKey) {
-            value = editor.load()
-        }
-
-    when (val current = result) {
-        null -> EntryLoadingScreen(onBack)
-        CurrentFundsLoadResult.Failed ->
-            EntryMessageScreen(
-                title = stringResource(R.string.current_funds_load_failed),
-                body = stringResource(R.string.entry_load_failed_body),
-                onRetry = { loadKey++ },
-                onBack = onBack,
-            )
-
-        is CurrentFundsLoadResult.Ready ->
-            key(current.seed) {
-                CurrentFundsReadyRoute(
-                    editor = editor,
-                    seed = current.seed,
-                    onSaved = onSaved,
-                    onBack = onBack,
-                )
-            }
-    }
-}
-
-@Composable
-private fun CurrentFundsReadyRoute(
-    editor: CurrentFundsEditor,
-    seed: CurrentFundsFormSeed,
-    onSaved: () -> Unit,
-    onBack: () -> Unit,
-) {
-    var amountInput by rememberSaveable { mutableStateOf(seed.amountInput) }
-    var currencyCodeInput by rememberSaveable { mutableStateOf(seed.currencyCodeInput) }
-    var issue by remember { mutableStateOf<EntrySaveResult?>(null) }
-    var saving by remember { mutableStateOf(false) }
-    val scope = rememberCoroutineScope()
-
-    BackHandler(enabled = !saving, onBack = onBack)
-    CurrentFundsScreen(
-        amountInput = amountInput,
-        currencyCodeInput = currencyCodeInput,
-        isEditing = seed.isEditing,
-        saving = saving,
-        issue = issue,
-        onAmountChange = {
-            amountInput = it
-            issue = null
-        },
-        onCurrencyChange = {
-            currencyCodeInput = it.uppercase(Locale.ROOT).take(3)
-            issue = null
-        },
-        onSave = {
-            saving = true
-            issue = null
-            scope.launch {
-                when (val result = editor.save(amountInput, currencyCodeInput)) {
-                    EntrySaveResult.Saved -> onSaved()
-                    else -> {
-                        issue = result
-                        saving = false
-                    }
-                }
-            }
-        },
-        onBack = onBack,
-    )
-}
-
-@Composable
-internal fun CurrentFundsScreen(
-    amountInput: String,
-    currencyCodeInput: String,
-    isEditing: Boolean,
-    saving: Boolean,
-    issue: EntrySaveResult?,
-    onAmountChange: (String) -> Unit,
-    onCurrencyChange: (String) -> Unit,
-    onSave: () -> Unit,
-    onBack: () -> Unit,
-) {
-    EntryScaffold(
-        title =
-            stringResource(
-                if (isEditing) R.string.current_funds_edit_title else R.string.current_funds_setup_title,
-            ),
-        onBack = onBack,
-        backEnabled = !saving,
-    ) {
-        OutlinedTextField(
-            value = amountInput,
-            onValueChange = onAmountChange,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !saving,
-            label = { Text(stringResource(R.string.entry_amount)) },
-            trailingIcon = {
-                ContextualHelpButton(
-                    title = stringResource(R.string.current_funds_setup_title),
-                    help = stringResource(R.string.current_funds_explanation),
-                )
-            },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            singleLine = true,
-            isError = issue == EntrySaveResult.InvalidAmount,
-        )
-        OutlinedTextField(
-            value = currencyCodeInput,
-            onValueChange = onCurrencyChange,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !saving,
-            readOnly = isEditing,
-            label = { Text(stringResource(R.string.entry_currency)) },
-            trailingIcon = {
-                ContextualHelpButton(
-                    title = stringResource(R.string.entry_currency),
-                    help =
-                        stringResource(
-                            if (isEditing) {
-                                R.string.current_funds_currency_locked
-                            } else {
-                                R.string.current_funds_currency_help
-                            },
-                        ),
-                )
-            },
-            keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters),
-            singleLine = true,
-            isError = issue == EntrySaveResult.InvalidCurrency,
-        )
-        EntryIssue(issue)
-        Button(
-            onClick = onSave,
-            modifier = Modifier.fillMaxWidth(),
-            enabled = !saving,
-        ) {
-            if (saving) {
-                CircularProgressIndicator(
-                    modifier = Modifier.padding(vertical = 2.dp),
-                    color = MaterialTheme.colorScheme.onPrimary,
-                )
-            } else {
-                Text(stringResource(R.string.current_funds_save))
-            }
-        }
-    }
-}
 
 @Composable
 internal fun OneOffActivityRoute(
@@ -270,6 +114,7 @@ private fun OneOffActivityReadyRoute(
 ) {
     var nameInput by rememberSaveable { mutableStateOf("") }
     var amountInput by rememberSaveable { mutableStateOf("") }
+    var accountIdValue by rememberSaveable { mutableStateOf(seed.selectedAccountId.value) }
     var direction by rememberSaveable { mutableStateOf(Direction.EXPENSE) }
     var state by rememberSaveable { mutableStateOf(ActivityState.CONFIRMED) }
     var categoryIdValue by rememberSaveable { mutableStateOf<String?>(null) }
@@ -282,6 +127,8 @@ private fun OneOffActivityReadyRoute(
     OneOffActivityScreen(
         nameInput = nameInput,
         amountInput = amountInput,
+        accounts = seed.accounts,
+        accountId = AccountId(accountIdValue),
         currencyCode = seed.currencyCode.value,
         direction = direction,
         state = state,
@@ -296,6 +143,10 @@ private fun OneOffActivityReadyRoute(
         },
         onAmountChange = {
             amountInput = it
+            issue = null
+        },
+        onAccountChange = {
+            accountIdValue = it.value
             issue = null
         },
         onDirectionChange = {
@@ -324,6 +175,7 @@ private fun OneOffActivityReadyRoute(
                             nameInput = nameInput,
                             amountInput = amountInput,
                             currencyCode = seed.currencyCode,
+                            accountId = AccountId(accountIdValue),
                             direction = direction,
                             state = state,
                             categoryId = categoryIdValue?.let(::CategoryId),
@@ -347,6 +199,8 @@ internal fun OneOffActivityScreen(
     nameInput: String,
     amountInput: String,
     currencyCode: String,
+    accounts: List<Account> = emptyList(),
+    accountId: AccountId = io.github.kamui2040.vectorint.core.LEGACY_DEFAULT_ACCOUNT_ID,
     direction: Direction,
     state: ActivityState,
     saving: Boolean,
@@ -356,6 +210,7 @@ internal fun OneOffActivityScreen(
     tags: Set<Tag> = emptySet(),
     onNameChange: (String) -> Unit,
     onAmountChange: (String) -> Unit,
+    onAccountChange: (AccountId) -> Unit = {},
     onDirectionChange: (Direction) -> Unit,
     onStateChange: (ActivityState) -> Unit,
     onCategoryChange: (CategoryId?) -> Unit = {},
@@ -388,6 +243,13 @@ internal fun OneOffActivityScreen(
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
             singleLine = true,
             isError = issue == EntrySaveResult.InvalidAmount || issue == EntrySaveResult.AmountMustBePositive,
+        )
+
+        AccountSelector(
+            accounts = accounts,
+            selectedAccountId = accountId,
+            enabled = !saving,
+            onAccountChange = onAccountChange,
         )
 
         SelectionHeading(stringResource(R.string.activity_direction))

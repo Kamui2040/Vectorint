@@ -19,6 +19,7 @@ object RecurringOccurrenceGenerator {
             ActivityEntry(
                 id = activityId(),
                 name = item.name,
+                accountId = item.accountId,
                 direction = item.direction,
                 amount = item.amount,
                 state = if (isAutomaticallyConfirmed) ActivityState.CONFIRMED else ActivityState.PLANNED,
