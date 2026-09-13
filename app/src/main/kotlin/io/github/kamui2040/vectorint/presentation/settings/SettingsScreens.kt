@@ -767,11 +767,9 @@ private fun SettingsDataPage(
         )
     }
     HorizontalDivider()
-    SettingsSectionTitle(stringResource(R.string.settings_auto_backup))
-    Text(
-        text = stringResource(R.string.settings_auto_backup_body),
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        style = MaterialTheme.typography.bodyMedium,
+    InfoHeading(
+        title = stringResource(R.string.settings_auto_backup),
+        help = stringResource(R.string.settings_auto_backup_body),
     )
     when {
         autoBackupLoading -> {
@@ -836,7 +834,10 @@ private fun SettingsDataPage(
                         onCheckedChange = onAutoBackupAppBackgroundChange,
                     )
                 }
-                SettingsSectionTitle(stringResource(R.string.settings_auto_backup_timed))
+                InfoHeading(
+                    title = stringResource(R.string.settings_auto_backup_timed),
+                    help = stringResource(R.string.settings_auto_backup_timing_note),
+                )
                 SettingsChoiceCard {
                     AutoBackupInterval.entries.forEach { interval ->
                         SettingsChoiceRow(
@@ -847,11 +848,6 @@ private fun SettingsDataPage(
                         )
                     }
                 }
-                Text(
-                    text = stringResource(R.string.settings_auto_backup_timing_note),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    style = MaterialTheme.typography.bodySmall,
-                )
                 autoBackupLastResult.messageResource()?.let { messageResource ->
                     Text(
                         text = stringResource(messageResource),

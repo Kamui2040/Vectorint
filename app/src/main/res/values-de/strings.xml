@@ -8,6 +8,8 @@
     <string name="home_available_now">Jetzt verfügbar</string>
     <string name="home_available_now_supporting">Nach den geplanten Ausgaben dieses Monats</string>
     <string name="home_breakdown">Dieser Monat</string>
+    <string name="home_show_breakdown">Details zu „Dieser Monat“ anzeigen</string>
+    <string name="home_hide_breakdown">Details zu „Dieser Monat“ ausblenden</string>
     <string name="home_current_funds">Aktuelles Guthaben</string>
     <string name="home_reserved_expenses">Reservierte Ausgaben</string>
     <string name="home_expected_income">Erwartete Einnahmen</string>

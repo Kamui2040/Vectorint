@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -16,14 +17,22 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -69,8 +78,8 @@ internal fun HomeScreen(
                     .windowInsetsPadding(
                         WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
                     ).verticalScroll(rememberScrollState())
-                    .padding(horizontal = 24.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp),
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             MonthBrowser(
                 monthLabel = state.monthLabel(),
@@ -297,16 +306,17 @@ private fun ReadyContent(
     onViewRecurringItems: () -> Unit,
 ) {
     val flowColors = MaterialTheme.flowColors
-    Column(verticalArrangement = Arrangement.spacedBy(24.dp)) {
+    var breakdownExpanded by rememberSaveable { mutableStateOf(false) }
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         Surface(
             modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(32.dp),
+            shape = RoundedCornerShape(28.dp),
             color = MaterialTheme.colorScheme.primaryContainer,
             contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
         ) {
             Column(
-                modifier = Modifier.padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(20.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Text(
                     text = stringResource(R.string.home_available_now),
@@ -325,56 +335,99 @@ private fun ReadyContent(
             }
         }
 
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        Button(
+            onClick = onAddActivity,
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 56.dp),
+        ) {
             Text(
-                text = stringResource(R.string.home_breakdown),
-                modifier = Modifier.semantics { heading() },
-                style = MaterialTheme.typography.titleLarge,
+                text = stringResource(R.string.home_add_activity),
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
             )
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(24.dp),
-                color = MaterialTheme.colorScheme.surfaceContainer,
-            ) {
-                Column(modifier = Modifier.padding(horizontal = 20.dp)) {
-                    DetailRow(
-                        label = stringResource(R.string.home_current_funds),
-                        value = state.currentFunds,
-                    )
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                    DetailRow(
-                        label = stringResource(R.string.home_reserved_expenses),
-                        value = state.reservedExpenses,
-                        valueColor = flowColors.onExpenseContainer,
-                    )
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                    when (val expectedIncome = state.expectedIncome) {
-                        ExpectedIncomeUi.Excluded ->
-                            DetailRow(
-                                label = stringResource(R.string.home_expected_income),
-                                value = stringResource(R.string.home_not_included),
-                            )
+        }
 
-                        is ExpectedIncomeUi.Included ->
-                            DetailRow(
-                                label = stringResource(R.string.home_expected_income),
-                                value = expectedIncome.amount,
-                                supporting = stringResource(R.string.home_included),
-                                valueColor = flowColors.onIncomeContainer,
-                            )
+        Surface(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(24.dp),
+            color = MaterialTheme.colorScheme.surfaceContainer,
+        ) {
+            Column {
+                Surface(
+                    onClick = { breakdownExpanded = !breakdownExpanded },
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = 48.dp),
+                    color = Color.Transparent,
+                    contentColor = MaterialTheme.colorScheme.onSurface,
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = stringResource(R.string.home_breakdown),
+                            modifier = Modifier.semantics { heading() },
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Icon(
+                            imageVector =
+                                if (breakdownExpanded) {
+                                    Icons.Rounded.ExpandLess
+                                } else {
+                                    Icons.Rounded.ExpandMore
+                                },
+                            contentDescription =
+                                stringResource(
+                                    if (breakdownExpanded) {
+                                        R.string.home_hide_breakdown
+                                    } else {
+                                        R.string.home_show_breakdown
+                                    },
+                                ),
+                        )
+                    }
+                }
+                if (breakdownExpanded) {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    Column(modifier = Modifier.padding(horizontal = 20.dp)) {
+                        DetailRow(
+                            label = stringResource(R.string.home_current_funds),
+                            value = state.currentFunds,
+                        )
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        DetailRow(
+                            label = stringResource(R.string.home_reserved_expenses),
+                            value = state.reservedExpenses,
+                            valueColor = flowColors.onExpenseContainer,
+                        )
+                        HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                        when (val expectedIncome = state.expectedIncome) {
+                            ExpectedIncomeUi.Excluded ->
+                                DetailRow(
+                                    label = stringResource(R.string.home_expected_income),
+                                    value = stringResource(R.string.home_not_included),
+                                )
+
+                            is ExpectedIncomeUi.Included ->
+                                DetailRow(
+                                    label = stringResource(R.string.home_expected_income),
+                                    value = expectedIncome.amount,
+                                    supporting = stringResource(R.string.home_included),
+                                    valueColor = flowColors.onIncomeContainer,
+                                )
+                        }
                     }
                 }
             }
         }
 
-        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Button(
-                onClick = onAddActivity,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(stringResource(R.string.home_add_activity))
-            }
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedButton(
                 onClick = onViewRecurringItems,
                 modifier = Modifier.fillMaxWidth(),

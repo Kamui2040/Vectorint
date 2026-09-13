@@ -9,6 +9,8 @@
     <string name="home_available_now">Available now</string>
     <string name="home_available_now_supporting">After this month’s planned expenses</string>
     <string name="home_breakdown">This month</string>
+    <string name="home_show_breakdown">Show This month details</string>
+    <string name="home_hide_breakdown">Hide This month details</string>
     <string name="home_current_funds">Current funds</string>
     <string name="home_reserved_expenses">Reserved expenses</string>
     <string name="home_expected_income">Expected income</string>
