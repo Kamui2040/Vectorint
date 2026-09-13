@@ -3,13 +3,16 @@
 Vectorint is a local-first Android budgeting companion focused on one clear
 answer: **How much can I safely spend right now?**
 
-Start with your current funds for an immediate answer. Add income, expenses, and
-recurring items when you are ready to make that answer more precise. Vectorint
-reserves planned expenses and includes expected income only when you choose to.
+Set up one or more local accounts with their current funds for an immediate
+answer. Add income, expenses, and recurring items when you are ready to make that
+answer more precise. Vectorint reserves planned expenses and includes expected
+income only when you choose to.
 
 ## What it does
 
 - Shows **Available now** for the selected month.
+- Keeps bank, PayPal, cash, savings, and other same-currency money sources
+  separate, with an explicit choice to include each one in **Available now**.
 - Offers detailed and compact home-screen widgets for the current month's
   **Available now** amount, with quick entry creation from the compact widget.
 - Uses the same predictable model for income and expenses.
@@ -20,7 +23,8 @@ reserves planned expenses and includes expected income only when you choose to.
 - Stores a newest-first history and supports manual or automatic local JSON
   backups plus restore. Automatic backups can run after saved changes, at app
   start or background, or daily/weekly in a user-selected folder.
-- Works without an account, ads, analytics, tracking, or an internet connection.
+- Works without online sign-in, ads, analytics, tracking, or an internet
+  connection.
 
 Vectorint's first production release is version 0.0.8.
 

@@ -124,7 +124,7 @@
     <string name="about_purpose">See how much you can safely spend now.</string>
     <string name="about_privacy">Local · offline-first · no sign-in · no ads · no analytics · no tracking</string>
     <string name="about_changelog">Changelog</string>
-    <string name="about_changelog_body">This closed beta adds separate accounts with optional Available now inclusion, compact and detailed widgets, and automatic local backups.</string>
+    <string name="about_changelog_body">This update adds separate accounts with optional Available now inclusion, compact and detailed widgets, and automatic local backups.</string>
     <string name="about_license">License &amp; usage</string>
     <string name="about_license_body">Vectorint source is licensed under GPL-3.0-only. The Vectorint Raven is Copyright 2026 K2040 and licensed under CC BY 4.0. The artwork was generated with OpenAI at K2040’s direction and contributed by K2040. The K2040 logo is Copyright 2026 K2040 and is used only in About.</string>
     <string name="about_sources">Sources</string>

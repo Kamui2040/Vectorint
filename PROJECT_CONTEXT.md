@@ -149,7 +149,7 @@ reminder-delivery acknowledgements, and other device-local runtime state are not
 portable data; reminders are reconciled from the restored definitions instead.
 Platform cloud backup and device transfer remain disabled.
 
-Automatic backup reuses the same bounded, readable version-6 JSON snapshot. The
+Automatic backup reuses the same bounded, readable version-7 JSON snapshot. The
 user grants one folder through Android's Storage Access Framework and can choose
 backups after saved portable-data changes, when the app starts, when it moves to
 the background, daily, or weekly. Change-triggered work is coalesced, scheduled
@@ -273,6 +273,12 @@ from it.
 Version 0.0.8 is the first production release. Complete visual, accessibility,
 device, reproducibility, signing, and publication gates before publishing any
 later production release.
+
+Version 0.0.11 with Android version code 12 is the next release candidate. Its
+source scope is limited to separate local accounts, automatic local backups, the
+detailed and compact widget choices, and the related compact Home and settings
+refinements. It remains unsigned and unpublished until the remaining release
+gates and maintainer approvals are complete.
 
 F-Droid is a separate update channel: it will build from the public release source
 and use its own repository-specific signature. Vectorint's permanent developer

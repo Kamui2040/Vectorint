@@ -1,0 +1,1 @@
+Add separate local accounts with optional inclusion in Available now and simple account selection when adding entries. Add verified automatic local backups, detailed and compact widgets with quick add, plus a cleaner Home screen with collapsible month details and compact backup help.
