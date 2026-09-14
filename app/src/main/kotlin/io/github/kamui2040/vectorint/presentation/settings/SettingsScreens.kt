@@ -2,6 +2,7 @@ package io.github.kamui2040.vectorint.presentation.settings
 
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -13,12 +14,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -53,8 +51,6 @@ import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import io.github.kamui2040.vectorint.R
 import io.github.kamui2040.vectorint.backup.AutoBackupConfiguration
 import io.github.kamui2040.vectorint.backup.AutoBackupInterval
@@ -95,9 +91,9 @@ internal fun SettingsRoute(
         }
 
     when (val current = result) {
-        null -> SettingsMessageDialog(onBack = onBack)
+        null -> SettingsMessageScreen(onBack = onBack)
         SettingsLoadResult.Failed ->
-            SettingsMessageDialog(
+            SettingsMessageScreen(
                 title = stringResource(R.string.settings_load_failed),
                 body = stringResource(R.string.settings_load_failed_body),
                 onRetry = { loadKey++ },
@@ -460,138 +456,129 @@ internal fun SettingsScreen(
             -> null
         }
 
-    Dialog(
-        onDismissRequest = { if (!busy) onDismiss() },
-        properties =
-            DialogProperties(
-                dismissOnBackPress = !busy,
-                dismissOnClickOutside = !busy,
-                usePlatformDefaultWidth = false,
-                decorFitsSystemWindows = false,
-            ),
+    BackHandler(enabled = !busy) {
+        if (page == SettingsPage.ROOT) {
+            onDismiss()
+        } else {
+            onPageChange(SettingsPage.ROOT)
+        }
+    }
+
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .semantics { paneTitle = screenTitle }
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .safeDrawingPadding()
-                    .padding(20.dp),
-            contentAlignment = Alignment.Center,
+        Row(
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Surface(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .widthIn(max = 620.dp)
-                        .heightIn(max = 780.dp)
-                        .semantics { paneTitle = screenTitle },
-                shape = RoundedCornerShape(32.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                tonalElevation = 8.dp,
-            ) {
-                Column(
-                    modifier =
-                        Modifier
-                            .verticalScroll(rememberScrollState())
-                            .padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
+            if (page != SettingsPage.ROOT) {
+                TextButton(
+                    onClick = { onPageChange(SettingsPage.ROOT) },
+                    enabled = !busy,
                 ) {
-                    if (page != SettingsPage.ROOT) {
-                        TextButton(
-                            onClick = { onPageChange(SettingsPage.ROOT) },
-                            enabled = !busy,
-                        ) {
-                            Text(stringResource(R.string.entry_back))
-                        }
-                    }
-                    if (pageHelp == null) {
-                        Text(
-                            text = pageTitle,
-                            modifier = Modifier.semantics { heading() },
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    } else {
-                        InfoHeading(
-                            title = pageTitle,
-                            help = pageHelp,
-                            style = MaterialTheme.typography.headlineMedium,
-                            fontWeight = FontWeight.Bold,
-                        )
-                    }
-                    when (page) {
-                        SettingsPage.ROOT ->
-                            SettingsRootPage(
-                                enabled = !busy,
-                                onPageChange = onPageChange,
-                                onOpenAbout = onOpenAbout,
-                            )
-
-                        SettingsPage.APPEARANCE ->
-                            SettingsAppearancePage(
-                                themeMode = themeMode,
-                                colorPalette = colorPalette,
-                                enabled = !busy,
-                                saving = saving,
-                                onThemeModeChange = onThemeModeChange,
-                                onColorPaletteChange = onColorPaletteChange,
-                                onSave = onSave,
-                            )
-
-                        SettingsPage.LANGUAGE ->
-                            SettingsLanguagePage(
-                                language = language,
-                                enabled = !busy,
-                                onLanguageChange = onLanguageChange,
-                            )
-
-                        SettingsPage.CALCULATION ->
-                            SettingsCalculationPage(
-                                includeExpectedIncome = includeExpectedIncome,
-                                enabled = !busy,
-                                saving = saving,
-                                onIncludeExpectedIncomeChange = onIncludeExpectedIncomeChange,
-                                onSave = onSave,
-                            )
-
-                        SettingsPage.DATA ->
-                            SettingsDataPage(
-                                enabled = !busy,
-                                backupState = backupState,
-                                autoBackupConfiguration = autoBackupConfiguration,
-                                autoBackupLastResult = autoBackupLastResult,
-                                autoBackupLoading = autoBackupLoading,
-                                autoBackupLoadFailed = autoBackupLoadFailed,
-                                autoBackupUiState = autoBackupUiState,
-                                onExportBackup = onExportBackup,
-                                onRestoreBackup = onRestoreBackup,
-                                onChooseAutoBackupFolder = onChooseAutoBackupFolder,
-                                onForgetAutoBackupFolder = onForgetAutoBackupFolder,
-                                onAutoBackupAfterChangesChange = onAutoBackupAfterChangesChange,
-                                onAutoBackupAppStartChange = onAutoBackupAppStartChange,
-                                onAutoBackupAppBackgroundChange = onAutoBackupAppBackgroundChange,
-                                onAutoBackupIntervalChange = onAutoBackupIntervalChange,
-                            )
-                    }
-                    if (saveFailed) {
-                        Text(
-                            text = stringResource(R.string.settings_save_failed),
-                            modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyMedium,
-                        )
-                    }
-                    if (page == SettingsPage.ROOT) {
-                        Button(
-                            onClick = onDismiss,
-                            modifier = Modifier.align(Alignment.End),
-                            enabled = !busy,
-                        ) {
-                            Text(stringResource(R.string.settings_close))
-                        }
-                    }
+                    Text(stringResource(R.string.entry_back))
                 }
             }
+
+            if (pageHelp == null) {
+                Text(
+                    text = pageTitle,
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .semantics { heading() },
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+            } else {
+                InfoHeading(
+                    title = pageTitle,
+                    help = pageHelp,
+                    modifier = Modifier.weight(1f),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                )
+            }
+
+            if (page == SettingsPage.ROOT) {
+                TextButton(
+                    onClick = onDismiss,
+                    enabled = !busy,
+                ) {
+                    Text(stringResource(R.string.settings_close))
+                }
+            }
+        }
+
+        when (page) {
+            SettingsPage.ROOT ->
+                SettingsRootPage(
+                    enabled = !busy,
+                    onPageChange = onPageChange,
+                    onOpenAbout = onOpenAbout,
+                )
+
+            SettingsPage.APPEARANCE ->
+                SettingsAppearancePage(
+                    themeMode = themeMode,
+                    colorPalette = colorPalette,
+                    enabled = !busy,
+                    saving = saving,
+                    onThemeModeChange = onThemeModeChange,
+                    onColorPaletteChange = onColorPaletteChange,
+                    onSave = onSave,
+                )
+
+            SettingsPage.LANGUAGE ->
+                SettingsLanguagePage(
+                    language = language,
+                    enabled = !busy,
+                    onLanguageChange = onLanguageChange,
+                )
+
+            SettingsPage.CALCULATION ->
+                SettingsCalculationPage(
+                    includeExpectedIncome = includeExpectedIncome,
+                    enabled = !busy,
+                    saving = saving,
+                    onIncludeExpectedIncomeChange = onIncludeExpectedIncomeChange,
+                    onSave = onSave,
+                )
+
+            SettingsPage.DATA ->
+                SettingsDataPage(
+                    enabled = !busy,
+                    backupState = backupState,
+                    autoBackupConfiguration = autoBackupConfiguration,
+                    autoBackupLastResult = autoBackupLastResult,
+                    autoBackupLoading = autoBackupLoading,
+                    autoBackupLoadFailed = autoBackupLoadFailed,
+                    autoBackupUiState = autoBackupUiState,
+                    onExportBackup = onExportBackup,
+                    onRestoreBackup = onRestoreBackup,
+                    onChooseAutoBackupFolder = onChooseAutoBackupFolder,
+                    onForgetAutoBackupFolder = onForgetAutoBackupFolder,
+                    onAutoBackupAfterChangesChange = onAutoBackupAfterChangesChange,
+                    onAutoBackupAppStartChange = onAutoBackupAppStartChange,
+                    onAutoBackupAppBackgroundChange = onAutoBackupAppBackgroundChange,
+                    onAutoBackupIntervalChange = onAutoBackupIntervalChange,
+                )
+        }
+
+        if (saveFailed) {
+            Text(
+                text = stringResource(R.string.settings_save_failed),
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
+            )
         }
     }
 }
@@ -602,31 +589,43 @@ private fun SettingsRootPage(
     onPageChange: (SettingsPage) -> Unit,
     onOpenAbout: () -> Unit,
 ) {
-    SettingsMenuCard(
-        title = stringResource(R.string.settings_appearance),
-        enabled = enabled,
-        onClick = { onPageChange(SettingsPage.APPEARANCE) },
-    )
-    SettingsMenuCard(
-        title = stringResource(R.string.settings_language),
-        enabled = enabled,
-        onClick = { onPageChange(SettingsPage.LANGUAGE) },
-    )
-    SettingsMenuCard(
-        title = stringResource(R.string.settings_calculation),
-        enabled = enabled,
-        onClick = { onPageChange(SettingsPage.CALCULATION) },
-    )
-    SettingsMenuCard(
-        title = stringResource(R.string.settings_data_backup),
-        enabled = enabled,
-        onClick = { onPageChange(SettingsPage.DATA) },
-    )
-    SettingsMenuCard(
-        title = stringResource(R.string.about_title),
-        enabled = enabled,
-        onClick = onOpenAbout,
-    )
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = MaterialTheme.shapes.extraLarge,
+        color = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Column {
+            SettingsMenuRow(
+                title = stringResource(R.string.settings_appearance),
+                enabled = enabled,
+                onClick = { onPageChange(SettingsPage.APPEARANCE) },
+            )
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            SettingsMenuRow(
+                title = stringResource(R.string.settings_language),
+                enabled = enabled,
+                onClick = { onPageChange(SettingsPage.LANGUAGE) },
+            )
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            SettingsMenuRow(
+                title = stringResource(R.string.settings_calculation),
+                enabled = enabled,
+                onClick = { onPageChange(SettingsPage.CALCULATION) },
+            )
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            SettingsMenuRow(
+                title = stringResource(R.string.settings_data_backup),
+                enabled = enabled,
+                onClick = { onPageChange(SettingsPage.DATA) },
+            )
+            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
+            SettingsMenuRow(
+                title = stringResource(R.string.about_title),
+                enabled = enabled,
+                onClick = onOpenAbout,
+            )
+        }
+    }
 }
 
 @Composable
@@ -703,7 +702,7 @@ private fun SettingsCalculationPage(
                         enabled = enabled,
                         role = Role.Switch,
                         onValueChange = onIncludeExpectedIncomeChange,
-                    ).padding(20.dp),
+                    ).padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -897,7 +896,7 @@ private fun SettingsSwitchRow(
                     enabled = enabled,
                     role = Role.Switch,
                     onValueChange = onCheckedChange,
-                ).padding(horizontal = 16.dp, vertical = 10.dp),
+                ).padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -907,7 +906,7 @@ private fun SettingsSwitchRow(
 }
 
 @Composable
-private fun SettingsMenuCard(
+private fun SettingsMenuRow(
     title: String,
     enabled: Boolean,
     onClick: () -> Unit,
@@ -916,11 +915,10 @@ private fun SettingsMenuCard(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
         enabled = enabled,
-        shape = RoundedCornerShape(24.dp),
         color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
@@ -947,7 +945,7 @@ private fun SettingsChoiceCard(content: @Composable ColumnScope.() -> Unit) {
         color = MaterialTheme.colorScheme.surfaceContainer,
     ) {
         Column(
-            modifier = Modifier.padding(vertical = 12.dp),
+            modifier = Modifier.padding(vertical = 4.dp),
             content = content,
         )
     }
@@ -969,7 +967,7 @@ private fun SettingsChoiceRow(
                     enabled = enabled,
                     role = Role.RadioButton,
                     onClick = onClick,
-                ).padding(horizontal = 16.dp, vertical = 10.dp),
+                ).padding(horizontal = 16.dp, vertical = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -1103,71 +1101,66 @@ private fun releasePersistedFolderPermission(
 }
 
 @Composable
-private fun SettingsMessageDialog(
+private fun SettingsMessageScreen(
     title: String = stringResource(R.string.entry_loading),
     body: String? = null,
     onRetry: (() -> Unit)? = null,
     onBack: () -> Unit,
 ) {
-    Dialog(
-        onDismissRequest = onBack,
-        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+    BackHandler(onBack = onBack)
+
+    Column(
+        modifier =
+            Modifier
+                .fillMaxSize()
+                .semantics { paneTitle = title }
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Box(
-            modifier =
-                Modifier
-                    .fillMaxSize()
-                    .safeDrawingPadding()
-                    .padding(20.dp),
-            contentAlignment = Alignment.Center,
+        Row(
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Surface(
+            Text(
+                text = title,
                 modifier =
                     Modifier
-                        .fillMaxWidth()
-                        .widthIn(max = 620.dp)
-                        .semantics { paneTitle = title },
-                shape = RoundedCornerShape(32.dp),
-                color = MaterialTheme.colorScheme.surfaceContainerHigh,
-                tonalElevation = 8.dp,
+                        .weight(1f)
+                        .semantics {
+                            heading()
+                            liveRegion = LiveRegionMode.Polite
+                        },
+                style = MaterialTheme.typography.headlineSmall,
+                fontWeight = FontWeight.Bold,
+            )
+            TextButton(onClick = onBack) {
+                Text(stringResource(R.string.settings_close))
+            }
+        }
+
+        if (body == null) {
+            Box(
+                modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
+                contentAlignment = Alignment.Center,
             ) {
-                Column(
-                    modifier = Modifier.padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(16.dp),
-                ) {
-                    Text(
-                        text = title,
-                        modifier =
-                            Modifier.semantics {
-                                heading()
-                                liveRegion = LiveRegionMode.Polite
-                            },
-                        style = MaterialTheme.typography.headlineMedium,
-                        fontWeight = FontWeight.Bold,
-                    )
-                    if (body == null) {
-                        Box(
-                            modifier = Modifier.fillMaxWidth().padding(vertical = 32.dp),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            CircularProgressIndicator()
-                        }
-                    } else {
-                        Text(
-                            text = body,
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    if (onRetry != null) {
-                        Button(onClick = onRetry) {
-                            Text(stringResource(R.string.home_try_again))
-                        }
-                    }
-                    TextButton(onClick = onBack, modifier = Modifier.align(Alignment.End)) {
-                        Text(stringResource(R.string.settings_close))
-                    }
-                }
+                CircularProgressIndicator()
+            }
+        } else {
+            Text(
+                text = body,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+
+        if (onRetry != null) {
+            Button(
+                onClick = onRetry,
+                modifier = Modifier.fillMaxWidth(),
+            ) {
+                Text(stringResource(R.string.home_try_again))
             }
         }
     }

@@ -53,9 +53,10 @@ The initial foundation is deliberately small:
 - a browsable monthly Overview with an exact category expense total, pie chart,
   and accessible icon, amount, and share legend; uncategorized expenses appear
   once under Other;
-- title-only Settings cards for system/light/dark appearance, Orbit/Nova/Nebula
-  palettes, in-app device/English/German language selection, the expected-income
-  calculation choice, data and backup, and About;
+- a full-page Settings experience with compact grouped navigation for
+  system/light/dark appearance, Orbit/Nova/Nebula palettes, in-app
+  device/English/German language selection, the expected-income calculation
+  choice, data and backup, and About;
 - a branded About card opened from the raven or Settings, with the K2040 creator
   logo, app version, short purpose, changelog, licences, sources, and the privacy
   summary at the bottom;
@@ -123,8 +124,9 @@ records remain readable and use a localized History fallback. Version 6 replaces
 the pooled balance row with account rows and migrates every existing record to the
 included `Main` account.
 
-Settings use a title-only card menu reached from the permanent top-right controls
-action. They contain one calculation choice—whether expected income contributes
+Settings use a full-page layout reached from the permanent top-right controls
+action. The root menu is compact and grouped while individual setting rows retain
+accessible touch targets. They contain one calculation choice—whether expected income contributes
 to Available now—device, light, or dark appearance using the Orbit, Nova, or
 Nebula palette, device/English/German app-language selection, data and backup,
 and About. Expected income defaults to off; appearance follows the device and

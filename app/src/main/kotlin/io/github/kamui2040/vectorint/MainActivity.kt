@@ -343,43 +343,44 @@ class MainActivity : AppCompatActivity() {
                 MainViewScaffold(
                     selectedView = destination.mainView(activityReturnDestination),
                     onViewSelected = { selectedView ->
+                        showSettings = false
                         if (selectedView == MainView.HOME) selectedHomeMonthOffset = 0
                         destination = selectedView.toAppDestination()
                     },
                     onOpenAbout = { showAbout = true },
                     onOpenSettings = { showSettings = true },
-                    content = destinationContent,
+                    content = {
+                        if (showSettings) {
+                            SettingsRoute(
+                                editor = settingsEditor,
+                                autoBackupEditor = autoBackupSettingsEditor,
+                                backupDocumentService = backupDocumentService,
+                                language = currentAppLanguage(),
+                                onLanguageChange = { language ->
+                                    applyAppLanguage(language)
+                                    vectorintApplication.refreshWidgets()
+                                },
+                                onSaved = {
+                                    vectorintApplication.refreshWidgets()
+                                    reloadKey++
+                                },
+                                onRestored = {
+                                    vectorintApplication.refreshReminders()
+                                    vectorintApplication.refreshWidgets()
+                                    reloadKey++
+                                    selectedHomeMonthOffset = 0
+                                    selectedOverviewMonthOffset = 0
+                                    destination = AppDestination.HOME
+                                    showSettings = false
+                                },
+                                onOpenAbout = { showAbout = true },
+                                onBack = { showSettings = false },
+                            )
+                        } else {
+                            destinationContent()
+                        }
+                    },
                 )
-                if (showSettings) {
-                    SettingsRoute(
-                        editor = settingsEditor,
-                        autoBackupEditor = autoBackupSettingsEditor,
-                        backupDocumentService = backupDocumentService,
-                        language = currentAppLanguage(),
-                        onLanguageChange = { language ->
-                            applyAppLanguage(language)
-                            vectorintApplication.refreshWidgets()
-                        },
-                        onSaved = {
-                            vectorintApplication.refreshWidgets()
-                            reloadKey++
-                        },
-                        onRestored = {
-                            vectorintApplication.refreshReminders()
-                            vectorintApplication.refreshWidgets()
-                            reloadKey++
-                            selectedHomeMonthOffset = 0
-                            selectedOverviewMonthOffset = 0
-                            destination = AppDestination.HOME
-                            showSettings = false
-                        },
-                        onOpenAbout = {
-                            showSettings = false
-                            showAbout = true
-                        },
-                        onBack = { showSettings = false },
-                    )
-                }
                 if (showAbout) {
                     AboutDialog(onDismiss = { showAbout = false })
                 }
