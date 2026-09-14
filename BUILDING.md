@@ -24,6 +24,18 @@ All other direct build and runtime versions are listed in
 
 This creates `app/build/outputs/apk/release/app-release-unsigned.apk`.
 
+## ONE Store build
+
+Vectorint does not contain an in-app Ko-fi, donation, or payment-support action.
+The additional `onestore` build type therefore keeps the normal app behavior and
+release configuration unchanged while providing a separate store artifact:
+
+```shell
+./gradlew clean ktlintCheck testDebugUnitTest assembleOnestore lintOnestore
+```
+
+This creates `app/build/outputs/apk/onestore/app-onestore-unsigned.apk`.
+
 Signing keys and credentials are not part of the repository. GitHub and compatible
 storefront releases are signed outside the source tree with Vectorint's permanent
 developer identity.

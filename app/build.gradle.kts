@@ -30,6 +30,11 @@ android {
                 include = false
             }
         }
+
+        create("onestore") {
+            initWith(getByName("release"))
+            matchingFallbacks += listOf("release")
+        }
     }
 
     androidResources {
