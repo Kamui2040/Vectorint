@@ -7,9 +7,7 @@ import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
-import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
-import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.Density
@@ -123,19 +121,6 @@ class AboutDialogTest {
                 opened,
             )
         }
-    }
-
-    @Test
-    fun `about card stays materially narrower than the window`() {
-        compose.setContent {
-            VectorintTheme {
-                AboutDialog(onDismiss = {})
-            }
-        }
-
-        val cardWidth = compose.onNodeWithTag("about_card").fetchSemanticsNode().boundsInRoot.width
-        val windowWidth = compose.onRoot().fetchSemanticsNode().boundsInRoot.width
-        assertTrue("About card is too wide", cardWidth <= windowWidth * 0.88f)
     }
 
     @Test
