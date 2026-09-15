@@ -18,7 +18,7 @@ import io.github.kamui2040.vectorint.presentation.home.ExpectedIncomeUi
 import io.github.kamui2040.vectorint.presentation.home.HomeStateLoader
 import io.github.kamui2040.vectorint.presentation.home.HomeUiState
 import io.github.kamui2040.vectorint.presentation.home.RegionalHomeValueFormatter
-import io.github.kamui2040.vectorint.presentation.settings.currentAppLanguage
+import io.github.kamui2040.vectorint.presentation.settings.currentAppLanguageSnapshot
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -229,7 +229,7 @@ private fun openAppIntent(
 
 @SuppressLint("AppBundleLocaleChanges")
 internal fun Context.widgetTextContext(): Context {
-    val languageTag = currentAppLanguage().languageTag ?: return this
+    val languageTag = currentAppLanguageSnapshot().languageTag ?: return this
     val configuration = Configuration(resources.configuration)
     configuration.setLocale(Locale.forLanguageTag(languageTag))
     return createConfigurationContext(configuration)
