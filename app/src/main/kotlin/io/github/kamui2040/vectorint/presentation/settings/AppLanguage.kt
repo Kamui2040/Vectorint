@@ -2,6 +2,8 @@ package io.github.kamui2040.vectorint.presentation.settings
 
 import androidx.annotation.StringRes
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.core.os.LocaleListCompat
 import io.github.kamui2040.vectorint.R
 
@@ -24,13 +26,16 @@ internal enum class AppLanguage(
     }
 }
 
-internal fun currentAppLanguage(): AppLanguage =
-    AppLanguage.fromLanguageTag(
+@Composable
+internal fun currentAppLanguage(): AppLanguage {
+    LocalConfiguration.current
+    return AppLanguage.fromLanguageTag(
         AppCompatDelegate
             .getApplicationLocales()
             .get(0)
             ?.toLanguageTag(),
     )
+}
 
 internal fun applyAppLanguage(language: AppLanguage) {
     val locales =
