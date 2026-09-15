@@ -16,7 +16,7 @@ import org.robolectric.annotation.Config
 class AppLanguageConfigurationTest {
     @Test
     fun `main activity handles locale changes without recreation`() {
-        val context = RuntimeEnvironment.getApplication<Application>()
+        val context: Application = RuntimeEnvironment.getApplication()
         val activityInfo =
             context.packageManager.getActivityInfo(
                 ComponentName(context, MainActivity::class.java),
