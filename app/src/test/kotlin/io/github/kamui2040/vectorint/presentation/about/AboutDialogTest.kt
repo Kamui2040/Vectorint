@@ -2,13 +2,18 @@ package io.github.kamui2040.vectorint.presentation.about
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
+import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.Density
+import io.github.kamui2040.vectorint.BuildConfig
 import io.github.kamui2040.vectorint.presentation.theme.VectorintTheme
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -19,13 +24,13 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [36])
+@Config(sdk = [36], qualifiers = "w411dp-h891dp")
 class AboutDialogTest {
     @get:Rule
     val compose = createComposeRule()
 
     @Test
-    fun `about presents the brand purpose privacy and navigation`() {
+    fun `about presents compact navigation and privacy summary`() {
         compose.setContent {
             VectorintTheme {
                 AboutDialog(onDismiss = {})
@@ -36,17 +41,33 @@ class AboutDialogTest {
         compose
             .onNodeWithText("See how much you can safely spend now.")
             .assertIsDisplayed()
+        compose.onNodeWithText("Changelog").assertIsDisplayed()
+        compose.onNodeWithText("License & usage").assertIsDisplayed()
+        compose.onNodeWithText("Sources").assertIsDisplayed()
+        compose.onNodeWithText("Support on Ko-fi").assertIsDisplayed()
         compose
             .onNodeWithText("Local · offline-first · no sign-in · no ads · no analytics · no tracking")
             .performScrollTo()
             .assertIsDisplayed()
-        compose.onNodeWithText("Changelog").assertIsDisplayed()
-        compose.onNodeWithText("License & usage").assertIsDisplayed()
-        compose.onNodeWithText("Sources").assertIsDisplayed()
     }
 
     @Test
-    fun `about exposes software and raven licences`() {
+    fun `about changelog follows the current app version`() {
+        compose.setContent {
+            VectorintTheme {
+                AboutDialog(onDismiss = {})
+            }
+        }
+
+        compose.onNodeWithText("Changelog").performClick()
+        compose.onNodeWithText("Version ${BuildConfig.VERSION_NAME}").assertIsDisplayed()
+        compose
+            .onNodeWithText("Separate local accounts", substring = true)
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `about exposes application artwork and runtime licences`() {
         compose.setContent {
             VectorintTheme {
                 AboutDialog(onDismiss = {})
@@ -54,12 +75,67 @@ class AboutDialogTest {
         }
 
         compose.onNodeWithText("License & usage").performClick()
+        compose.onNodeWithText("Vectorint source").assertIsDisplayed()
+        compose.onNodeWithText("GPL-3.0-only").assertIsDisplayed()
+        compose.onNodeWithText("Vectorint Raven").assertIsDisplayed()
+        compose.onNodeWithText("CC BY 4.0").assertIsDisplayed()
+        compose.onNodeWithText("Material Icons").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Apache License 2.0").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("desugar_jdk_libs").performScrollTo().assertIsDisplayed()
         compose
-            .onNodeWithText(
-                "Vectorint source is licensed under GPL-3.0-only. The Vectorint Raven is Copyright 2026 K2040 " +
-                    "and licensed under CC BY 4.0. The artwork was generated with OpenAI at K2040’s direction " +
-                    "and contributed by K2040. The K2040 logo is Copyright 2026 K2040 and is used only in About.",
-            ).assertIsDisplayed()
+            .onNodeWithText("GPL-2.0 with Classpath Exception")
+            .performScrollTo()
+            .assertIsDisplayed()
+    }
+
+    @Test
+    fun `about opens support repository and websites from labelled rows`() {
+        val opened = mutableListOf<String>()
+        val uriHandler =
+            object : UriHandler {
+                override fun openUri(uri: String) {
+                    opened += uri
+                }
+            }
+
+        compose.setContent {
+            CompositionLocalProvider(LocalUriHandler provides uriHandler) {
+                VectorintTheme {
+                    AboutDialog(onDismiss = {})
+                }
+            }
+        }
+
+        compose.onNodeWithText("Support on Ko-fi").performClick()
+        compose.onNodeWithText("Sources").performClick()
+        compose.onNodeWithText("Repository").performClick()
+        compose.onNodeWithText("App website").performClick()
+        compose.onNodeWithText("Main website").performClick()
+
+        compose.runOnIdle {
+            assertEquals(
+                listOf(
+                    "https://ko-fi.com/k2040",
+                    "https://github.com/Kamui2040/Vectorint",
+                    "https://kamui2040.github.io/K2040-Android-Releases/apps/vectorint/",
+                    "https://kamui2040.github.io/",
+                ),
+                opened,
+            )
+        }
+    }
+
+    @Test
+    fun `about card stays materially narrower than the window`() {
+        compose.setContent {
+            VectorintTheme {
+                AboutDialog(onDismiss = {})
+            }
+        }
+
+        val cardWidth = compose.onNodeWithTag("about_card").fetchSemanticsNode().boundsInRoot.width
+        val windowWidth = compose.onRoot().fetchSemanticsNode().boundsInRoot.width
+        assertTrue("About card is too wide", cardWidth <= windowWidth * 0.88f)
     }
 
     @Test
