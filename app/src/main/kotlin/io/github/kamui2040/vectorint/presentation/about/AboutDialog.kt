@@ -23,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -43,7 +42,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.compose.ui.platform.testTag
 import io.github.kamui2040.vectorint.BuildConfig
 import io.github.kamui2040.vectorint.R
 
@@ -87,7 +85,6 @@ internal fun AboutDialog(onDismiss: () -> Unit) {
                         .fillMaxWidth(0.9f)
                         .widthIn(max = 440.dp)
                         .heightIn(max = 680.dp)
-                        .testTag(ABOUT_CARD_TAG)
                         .semantics { this.paneTitle = paneTitle },
                 shape = RoundedCornerShape(28.dp),
                 color = MaterialTheme.colorScheme.surfaceContainerHigh,
@@ -452,7 +449,6 @@ private fun AboutLinkCard(
 }
 
 private val BrandMarkBackground = Color(0xFF08051F)
-private const val ABOUT_CARD_TAG = "about_card"
 private const val REPOSITORY_URL = "https://github.com/Kamui2040/Vectorint"
 private const val APP_WEBSITE_URL = "https://kamui2040.github.io/K2040-Android-Releases/apps/vectorint/"
 private const val MAIN_WEBSITE_URL = "https://kamui2040.github.io/"
