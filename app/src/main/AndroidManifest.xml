@@ -15,6 +15,7 @@
         android:theme="@style/Theme.Vectorint">
         <activity
             android:name=".MainActivity"
+            android:configChanges="locale|layoutDirection"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
