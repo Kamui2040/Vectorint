@@ -228,6 +228,9 @@ Treat every tracked file as suitable for public release.
 ## Build and validation
 
 - Use the checked-in Gradle wrapper with JDK 21.
+- Keep debug builds install-isolated from production and store builds with the
+  `.debug` application ID suffix and a visibly distinct app label. Ordinary device
+  QA must never require uninstalling a production or store installation.
 - Keep release output independent of repository metadata. Disable AGP-generated
   VCS metadata for release builds and require byte-identical unsigned APKs from
   the same tracked source both with and without a `.git` directory.
