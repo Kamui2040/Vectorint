@@ -29,13 +29,16 @@ internal enum class AppLanguage(
 @Composable
 internal fun currentAppLanguage(): AppLanguage {
     LocalConfiguration.current
-    return AppLanguage.fromLanguageTag(
+    return currentAppLanguageSnapshot()
+}
+
+internal fun currentAppLanguageSnapshot(): AppLanguage =
+    AppLanguage.fromLanguageTag(
         AppCompatDelegate
             .getApplicationLocales()
             .get(0)
             ?.toLanguageTag(),
     )
-}
 
 internal fun applyAppLanguage(language: AppLanguage) {
     val locales =
