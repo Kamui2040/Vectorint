@@ -274,6 +274,7 @@ Treat every tracked file as suitable for public release.
 - Re-read the device hierarchy after any interaction that can reflow Compose
   content. Derive controls from the current bounds and assert the visible meaning;
   do not assume that status and date use separate semantic nodes.
+- User-run terminal handoff blocks must not terminate the caller's interactive shell. Put fallible execution in a subshell or child process, capture its status, and report that status without a parent-shell `exit`.
 - Before committing, run `git diff --check`, `ktlintCheck`, pure unit tests, the
   Android unit-test task, `assembleDebug`, and `lintDebug` when applicable.
 - Run `ktlintFormat` and `ktlintCheck` in separate Gradle invocations. Their task
