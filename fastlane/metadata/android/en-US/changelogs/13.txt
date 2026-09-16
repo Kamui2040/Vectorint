@@ -1,0 +1,1 @@
+Tighten the About card with a current-version changelog, clearer licence and source links, and Ko-fi support. Add an in-app Privacy page that reflects the public privacy policy, with clearer information about local data, backups, reminders, and data removal.
