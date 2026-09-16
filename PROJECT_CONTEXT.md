@@ -57,9 +57,10 @@ The initial foundation is deliberately small:
   system/light/dark appearance, Orbit/Nova/Nebula palettes, in-app
   device/English/German language selection, the expected-income calculation
   choice, data and backup, and About;
-- a branded About card opened from the raven or Settings, with the K2040 creator
-  logo, app version, short purpose, changelog, licences, sources, and the privacy
-  summary at the bottom;
+- a branded compact About card opened from the raven or Settings, with the K2040
+  creator logo, app version, short purpose, current-version changelog, licences,
+  labelled repository and website links, Ko-fi support, and a dedicated Privacy
+  page reflecting the public policy;
 - user-selected manual and automatic local JSON backups plus a fail-closed
   whole-data restore flow;
 - idempotent current-month occurrence generation that stores one planned Activity
@@ -276,11 +277,12 @@ Version 0.0.8 is the first production release. Complete visual, accessibility,
 device, reproducibility, signing, and publication gates before publishing any
 later production release.
 
-Version 0.0.11 with Android version code 12 is the next release candidate. Its
-source scope is limited to separate local accounts, automatic local backups, the
-detailed and compact widget choices, and the related compact Home and settings
-refinements. It remains unsigned and unpublished until the remaining release
-gates and maintainer approvals are complete.
+Version 0.0.11 with Android version code 12 is the most recent tagged source
+baseline. Version 0.0.12 with Android version code 13 is the next release
+candidate; its delta from 0.0.11 is the tightened About card, current-version
+changelog and licence/source/support links, dedicated in-app Privacy page, and
+clarified public privacy policy. Version 0.0.12 remains unsigned and unpublished
+until the remaining release gates and maintainer approvals are complete.
 
 F-Droid is a separate update channel: it will build from the public release source
 and use its own repository-specific signature. Vectorint's permanent developer
