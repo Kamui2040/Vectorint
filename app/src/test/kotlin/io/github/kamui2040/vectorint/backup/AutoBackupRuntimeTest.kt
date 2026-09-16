@@ -1,10 +1,10 @@
 package io.github.kamui2040.vectorint.backup
 
+import android.app.Application
 import android.app.job.JobScheduler
 import android.content.ComponentName
 import android.content.Context
 import android.content.pm.PackageManager
-import io.github.kamui2040.vectorint.VectorintApplication
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -19,7 +19,7 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 
 @RunWith(RobolectricTestRunner::class)
-@Config(sdk = [36])
+@Config(sdk = [36], application = Application::class)
 class AutoBackupRuntimeTest {
     private lateinit var context: Context
     private lateinit var jobScheduler: JobScheduler
@@ -27,7 +27,7 @@ class AutoBackupRuntimeTest {
 
     @Before
     fun setUp() {
-        context = RuntimeEnvironment.getApplication() as VectorintApplication
+        context = RuntimeEnvironment.getApplication()
         jobScheduler = context.getSystemService(JobScheduler::class.java)
         jobScheduler.cancel(ONE_TIME_JOB_ID)
         jobScheduler.cancel(PERIODIC_JOB_ID)
