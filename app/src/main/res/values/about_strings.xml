@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="about_support_kofi">Support on Ko-fi</string>
+    <string name="about_changelog_version">Version %1$s</string>
+    <string name="about_changelog_current_body">• Separate local accounts with their own Current funds and Available now inclusion.\n• Automatic local JSON backups with user-selected folders and optional triggers.\n• Detailed and compact home-screen widgets for Available now.\n• A clearer Home layout with a more direct add-entry action and compact guidance.</string>
+    <string name="about_license_source_name">Vectorint source</string>
+    <string name="about_license_source_value">GPL-3.0-only</string>
+    <string name="about_license_raven_name">Vectorint Raven</string>
+    <string name="about_license_raven_value">CC BY 4.0</string>
+    <string name="about_license_raven_note">© 2026 K2040 · generated with OpenAI at K2040’s direction · contributed by K2040.</string>
+    <string name="about_license_material_icons_name">Material Icons</string>
+    <string name="about_license_material_icons_value">Apache License 2.0</string>
+    <string name="about_license_desugar_name">desugar_jdk_libs</string>
+    <string name="about_license_desugar_value">GPL-2.0 with Classpath Exception</string>
+    <string name="about_license_logo_note">K2040 logo © 2026 K2040 · used only in About.</string>
+    <string name="about_license_inventory_note">Full dependency and licence notices are maintained in the source repository.</string>
+    <string name="about_sources_intro">Project pages and source code</string>
+    <string name="about_source_repository">Repository</string>
+    <string name="about_source_repository_detail">Source code and project files</string>
+    <string name="about_source_app_website">App website</string>
+    <string name="about_source_app_website_detail">Vectorint project, releases and downloads</string>
+    <string name="about_source_main_website">Main website</string>
+    <string name="about_source_main_website_detail">K2040 projects and updates</string>
+</resources>
