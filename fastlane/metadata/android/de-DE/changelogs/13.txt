@@ -1,0 +1,1 @@
+Der kompaktere „Über Vectorint“-Dialog bietet einen Changelog zur aktuellen Version, klarere Lizenz- und Quellenlinks sowie Ko-fi-Unterstützung. Neu ist außerdem eine Datenschutzseite in der App, die die öffentliche Richtlinie zu lokalen Daten, Sicherungen, Erinnerungen und Datenlöschung widerspiegelt.
