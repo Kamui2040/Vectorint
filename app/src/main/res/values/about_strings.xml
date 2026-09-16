@@ -2,7 +2,7 @@
 <resources>
     <string name="about_support_kofi">Support on Ko-fi</string>
     <string name="about_changelog_version">Version %1$s</string>
-    <string name="about_changelog_current_body">• Separate local accounts with their own Current funds and Available now inclusion.\n• Automatic local JSON backups with user-selected folders and optional triggers.\n• Detailed and compact home-screen widgets for Available now.\n• A clearer Home layout with a more direct add-entry action and compact guidance.</string>
+    <string name="about_changelog_current_body">• Tighter About card with clearer navigation and a current-version changelog.\n• Dedicated licence and Sources sections with Repository, App website, Main website, and Ko-fi links.\n• New Privacy page that mirrors the public privacy policy inside the app.\n• Clearer privacy wording for local data, backups, reminders, and data removal.</string>
     <string name="about_license_source_name">Vectorint source</string>
     <string name="about_license_source_value">GPL-3.0-only</string>
     <string name="about_license_raven_name">Vectorint Raven</string>

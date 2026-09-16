@@ -2,7 +2,7 @@
 <resources>
     <string name="about_support_kofi">Auf Ko-fi unterstützen</string>
     <string name="about_changelog_version">Version %1$s</string>
-    <string name="about_changelog_current_body">• Getrennte lokale Konten mit eigenem aktuellem Guthaben und Auswahl für „Jetzt verfügbar“.\n• Automatische lokale JSON-Sicherungen in selbst gewählte Ordner mit optionalen Auslösern.\n• Ausführliches und kompaktes Startbildschirm-Widget für „Jetzt verfügbar“.\n• Eine übersichtlichere Startseite mit direkterer Eintragsaktion und kompakteren Hinweisen.</string>
+    <string name="about_changelog_current_body">• Kompakterer „Über Vectorint“-Dialog mit klarerer Navigation und Changelog zur aktuellen Version.\n• Eigene Bereiche für Lizenzen und Quellen mit Links zu Repository, App-Website, Hauptwebsite und Ko-fi.\n• Neue Datenschutzseite, die die öffentliche Datenschutzrichtlinie direkt in der App widerspiegelt.\n• Klarere Datenschutzhinweise zu lokalen Daten, Sicherungen, Erinnerungen und Datenlöschung.</string>
     <string name="about_license_source_name">Vectorint-Quellcode</string>
     <string name="about_license_source_value">GPL-3.0-only</string>
     <string name="about_license_raven_name">Vectorint-Rabe</string>

@@ -2,7 +2,18 @@
 
 All notable user-facing changes will be recorded here.
 
-## 0.0.11 - Unreleased
+## 0.0.12 - Unreleased
+
+- Tighten About into a smaller, easier-to-scan card with a current-version
+  changelog, clear licence details, and labelled links for the repository, app
+  website, main website, and Ko-fi support.
+- Add a dedicated in-app Privacy page that reflects the public privacy policy for
+  local data use, backups, notifications, data removal, and privacy questions.
+- Clarify the public privacy policy around locally processed financial and
+  user-authored data, Android document providers, system-calendar access, and
+  lock-screen reminder privacy.
+
+## 0.0.11 - Tagged 2026-09-16
 
 - Add separate local accounts with their own Current funds baseline and an
   explicit choice to include each account in Available now. A single account is
