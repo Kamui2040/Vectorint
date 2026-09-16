@@ -41,8 +41,9 @@ class AboutDialogTest {
             .assertIsDisplayed()
         compose.onNodeWithText("Changelog").assertIsDisplayed()
         compose.onNodeWithText("License & usage").assertIsDisplayed()
-        compose.onNodeWithText("Sources").assertIsDisplayed()
-        compose.onNodeWithText("Support on Ko-fi").assertIsDisplayed()
+        compose.onNodeWithText("Privacy").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Sources").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Support on Ko-fi").performScrollTo().assertIsDisplayed()
         compose
             .onNodeWithText("Local · offline-first · no sign-in · no ads · no analytics · no tracking")
             .performScrollTo()
@@ -87,6 +88,54 @@ class AboutDialogTest {
     }
 
     @Test
+    fun `about privacy page reflects the repository privacy policy`() {
+        val opened = mutableListOf<String>()
+        val uriHandler =
+            object : UriHandler {
+                override fun openUri(uri: String) {
+                    opened += uri
+                }
+            }
+
+        compose.setContent {
+            CompositionLocalProvider(LocalUriHandler provides uriHandler) {
+                VectorintTheme {
+                    AboutDialog(onDismiss = {})
+                }
+            }
+        }
+
+        compose.onNodeWithText("Privacy").performScrollTo().performClick()
+        compose
+            .onNodeWithText("Vectorint keeps your budget data on your device.")
+            .assertIsDisplayed()
+        compose.onNodeWithText("Data use").assertIsDisplayed()
+        compose
+            .onNodeWithText("K2040 does not receive, upload, sell, or share", substring = true)
+            .assertIsDisplayed()
+        compose.onNodeWithText("Stored locally").performScrollTo().assertIsDisplayed()
+        compose
+            .onNodeWithText("does not access your Android system calendar", substring = true)
+            .performScrollTo()
+            .assertIsDisplayed()
+        compose.onNodeWithText("Backups").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Notifications").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Removing your data").performScrollTo().assertIsDisplayed()
+        compose
+            .onNodeWithText("Policy last updated: 16 September 2026.")
+            .performScrollTo()
+            .assertIsDisplayed()
+        compose.onNodeWithText("Privacy questions & reports").performScrollTo().performClick()
+
+        compose.runOnIdle {
+            assertEquals(
+                listOf("https://github.com/Kamui2040/Vectorint/issues"),
+                opened,
+            )
+        }
+    }
+
+    @Test
     fun `about opens support repository and websites from labelled rows`() {
         val opened = mutableListOf<String>()
         val uriHandler =
@@ -104,8 +153,8 @@ class AboutDialogTest {
             }
         }
 
-        compose.onNodeWithText("Support on Ko-fi").performClick()
-        compose.onNodeWithText("Sources").performClick()
+        compose.onNodeWithText("Support on Ko-fi").performScrollTo().performClick()
+        compose.onNodeWithText("Sources").performScrollTo().performClick()
         compose.onNodeWithText("Repository").performClick()
         compose.onNodeWithText("App website").performClick()
         compose.onNodeWithText("Main website").performClick()

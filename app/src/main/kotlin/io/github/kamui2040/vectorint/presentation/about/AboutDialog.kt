@@ -49,6 +49,7 @@ private enum class AboutPage {
     ROOT,
     CHANGELOG,
     LICENSE,
+    PRIVACY,
     SOURCES,
 }
 
@@ -117,6 +118,10 @@ internal fun AboutDialog(onDismiss: () -> Unit) {
                                     onClick = { page = AboutPage.LICENSE },
                                 )
                                 AboutMenuCard(
+                                    title = stringResource(R.string.about_privacy_page),
+                                    onClick = { page = AboutPage.PRIVACY },
+                                )
+                                AboutMenuCard(
                                     title = stringResource(R.string.about_sources),
                                     onClick = { page = AboutPage.SOURCES },
                                 )
@@ -143,6 +148,12 @@ internal fun AboutDialog(onDismiss: () -> Unit) {
 
                             AboutPage.LICENSE ->
                                 AboutLicense(onBack = { page = AboutPage.ROOT })
+
+                            AboutPage.PRIVACY ->
+                                AboutPrivacy(
+                                    onBack = { page = AboutPage.ROOT },
+                                    onOpenQuestions = { uriHandler.openUri(PRIVACY_ISSUES_URL) },
+                                )
 
                             AboutPage.SOURCES ->
                                 AboutSources(
@@ -314,6 +325,52 @@ private fun AboutLicense(onBack: () -> Unit) {
 }
 
 @Composable
+private fun AboutPrivacy(
+    onBack: () -> Unit,
+    onOpenQuestions: () -> Unit,
+) {
+    AboutSectionHeader(
+        title = stringResource(R.string.about_privacy_page),
+        onBack = onBack,
+    )
+    Text(
+        text = stringResource(R.string.about_privacy_intro),
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+    AboutTextCard(
+        title = stringResource(R.string.about_privacy_data_use_title),
+        body = stringResource(R.string.about_privacy_data_use_body),
+    )
+    AboutTextCard(
+        title = stringResource(R.string.about_privacy_local_data_title),
+        body = stringResource(R.string.about_privacy_local_data_body),
+    )
+    AboutTextCard(
+        title = stringResource(R.string.about_privacy_backups_title),
+        body = stringResource(R.string.about_privacy_backups_body),
+    )
+    AboutTextCard(
+        title = stringResource(R.string.about_privacy_notifications_title),
+        body = stringResource(R.string.about_privacy_notifications_body),
+    )
+    AboutTextCard(
+        title = stringResource(R.string.about_privacy_removal_title),
+        body = stringResource(R.string.about_privacy_removal_body),
+    )
+    AboutLinkCard(
+        title = stringResource(R.string.about_privacy_questions),
+        supporting = stringResource(R.string.about_privacy_questions_detail),
+        onClick = onOpenQuestions,
+    )
+    Text(
+        text = stringResource(R.string.about_privacy_updated),
+        style = MaterialTheme.typography.bodySmall,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+@Composable
 private fun AboutSources(
     onBack: () -> Unit,
     onOpenRepository: () -> Unit,
@@ -406,6 +463,34 @@ private fun AboutInfoCard(
 }
 
 @Composable
+private fun AboutTextCard(
+    title: String,
+    body: String,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 14.dp, vertical = 12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = body,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+    }
+}
+
+@Composable
 private fun AboutLinkCard(
     title: String,
     supporting: String,
@@ -453,3 +538,4 @@ private const val REPOSITORY_URL = "https://github.com/Kamui2040/Vectorint"
 private const val APP_WEBSITE_URL = "https://kamui2040.github.io/K2040-Android-Releases/apps/vectorint/"
 private const val MAIN_WEBSITE_URL = "https://kamui2040.github.io/"
 private const val KOFI_URL = "https://ko-fi.com/k2040"
+private const val PRIVACY_ISSUES_URL = "https://github.com/Kamui2040/Vectorint/issues"
