@@ -30,6 +30,9 @@ android {
             versionNameSuffix = "-debug"
         }
         release {
+            optimization {
+                enable = true
+            }
             vcsInfo {
                 include = false
             }
