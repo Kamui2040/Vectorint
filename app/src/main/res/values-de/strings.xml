@@ -150,6 +150,8 @@
     <string name="account_setup_explanation">Gib dieser Geldquelle einen Namen und trage ihr aktuelles Guthaben ein.</string>
     <string name="account_name">Kontoname</string>
     <string name="account_current_funds">Aktuelles Guthaben</string>
+    <string name="account_make_balance_negative">Negativen Kontostand verwenden</string>
+    <string name="account_make_balance_positive">Positiven Kontostand verwenden</string>
     <string name="account_currency_locked">Alle Konten verwenden dieselbe Währung.</string>
     <string name="account_include_available">In „Jetzt verfügbar“ einbeziehen</string>
     <string name="account_included_supporting">Dieses Guthaben und seine Einträge zählen mit.</string>

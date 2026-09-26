@@ -3,6 +3,7 @@ package io.github.kamui2040.vectorint.presentation.account
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import io.github.kamui2040.vectorint.core.Account
@@ -64,6 +65,33 @@ class AccountControlsTest {
         compose.onNodeWithText("Bank").assertIsDisplayed().assertIsSelected()
         compose.onNodeWithText("Cash").assertIsDisplayed().performClick()
         compose.runOnIdle { assertEquals(cash.id, selected) }
+    }
+
+    @Test
+    fun `balance sign control enters a minus without keyboard support`() {
+        var changedAmount: String? = null
+
+        compose.setContent {
+            VectorintTheme {
+                AccountBalanceSignButton(
+                    amountInput = "",
+                    enabled = true,
+                    onAmountChange = { changedAmount = it },
+                )
+            }
+        }
+
+        compose
+            .onNodeWithContentDescription("Use a negative balance")
+            .assertIsDisplayed()
+            .performClick()
+        compose.runOnIdle { assertEquals("-", changedAmount) }
+    }
+
+    @Test
+    fun `balance sign control preserves localized amount text`() {
+        assertEquals("-12,34", toggleAccountBalanceSign("12,34"))
+        assertEquals("12,34", toggleAccountBalanceSign("-12,34"))
     }
 
     private fun account(
