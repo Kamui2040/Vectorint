@@ -61,7 +61,7 @@ class AboutDialogTest {
         compose.onNodeWithText("Changelog").performClick()
         compose.onNodeWithText("Version ${BuildConfig.VERSION_NAME}").assertIsDisplayed()
         compose
-            .onNodeWithText("Separate local accounts", substring = true)
+            .onNodeWithText("Tighter About card", substring = true)
             .assertIsDisplayed()
     }
 
