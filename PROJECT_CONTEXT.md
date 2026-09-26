@@ -281,8 +281,10 @@ Version 0.0.11 with Android version code 12 is the most recent tagged source
 baseline. Version 0.0.12 with Android version code 13 is the next release
 candidate; its delta from 0.0.11 is the tightened About card, current-version
 changelog and licence/source/support links, dedicated in-app Privacy page, and
-clarified public privacy policy. Version 0.0.12 remains unsigned and unpublished
-until the remaining release gates and maintainer approvals are complete.
+clarified public privacy policy, plus an accessible Current funds sign control
+for keyboards without a minus key. Version 0.0.12 remains unsigned and
+unpublished until the remaining release gates and maintainer approvals are
+complete.
 
 F-Droid is a separate update channel: it will build from the public release source
 and use its own repository-specific signature. Vectorint's permanent developer

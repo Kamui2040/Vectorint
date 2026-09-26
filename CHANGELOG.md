@@ -12,6 +12,8 @@ All notable user-facing changes will be recorded here.
 - Clarify the public privacy policy around locally processed financial and
   user-authored data, Android document providers, system-calendar access, and
   lock-screen reminder privacy.
+- Add an accessible sign control to Current funds so a negative balance can be
+  entered even when the device keyboard does not provide a minus key.
 
 ## 0.0.11 - Tagged 2026-09-16
 

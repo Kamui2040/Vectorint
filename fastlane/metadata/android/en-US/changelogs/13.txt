@@ -1,1 +1,1 @@
-Tighten the About card with a current-version changelog, clearer licence and source links, and Ko-fi support. Add an in-app Privacy page that reflects the public privacy policy, with clearer information about local data, backups, reminders, and data removal.
+Refresh About with a current-version changelog, clearer licence and source links, Ko-fi support, and an in-app Privacy page covering local data, backups, reminders, and data removal. Current funds now has an accessible sign control, so negative balances can be entered even when the keyboard has no minus key.
