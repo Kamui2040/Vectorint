@@ -151,6 +151,8 @@
     <string name="account_setup_explanation">Give this money source a name and enter its balance now.</string>
     <string name="account_name">Account name</string>
     <string name="account_current_funds">Current funds</string>
+    <string name="account_make_balance_negative">Use a negative balance</string>
+    <string name="account_make_balance_positive">Use a positive balance</string>
     <string name="account_currency_locked">All accounts use the same currency.</string>
     <string name="account_include_available">Include in Available now</string>
     <string name="account_included_supporting">This balance and its entries count.</string>

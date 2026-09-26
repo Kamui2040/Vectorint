@@ -17,8 +17,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Delete
 import androidx.compose.material.icons.rounded.Edit
+import androidx.compose.material.icons.rounded.Remove
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
@@ -319,6 +321,13 @@ private fun AccountForm(
         modifier = Modifier.fillMaxWidth(),
         enabled = !busy,
         label = { Text(stringResource(R.string.account_current_funds)) },
+        leadingIcon = {
+            AccountBalanceSignButton(
+                amountInput = amountInput,
+                enabled = !busy,
+                onAmountChange = onAmountChange,
+            )
+        },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
         singleLine = true,
         isError = issue == AccountMutationResult.InvalidAmount,
@@ -362,6 +371,40 @@ private fun AccountForm(
         }
     }
 }
+
+@Composable
+internal fun AccountBalanceSignButton(
+    amountInput: String,
+    enabled: Boolean,
+    onAmountChange: (String) -> Unit,
+) {
+    val isNegative = amountInput.startsWith('-')
+    val actionLabel =
+        stringResource(
+            if (isNegative) {
+                R.string.account_make_balance_positive
+            } else {
+                R.string.account_make_balance_negative
+            },
+        )
+    IconButton(
+        onClick = { onAmountChange(toggleAccountBalanceSign(amountInput)) },
+        enabled = enabled,
+        modifier = Modifier.semantics { contentDescription = actionLabel },
+    ) {
+        Icon(
+            imageVector = if (isNegative) Icons.Rounded.Add else Icons.Rounded.Remove,
+            contentDescription = null,
+        )
+    }
+}
+
+internal fun toggleAccountBalanceSign(amountInput: String): String =
+    if (amountInput.startsWith('-')) {
+        amountInput.removePrefix("-")
+    } else {
+        "-$amountInput"
+    }
 
 @Composable
 private fun AccountCard(
