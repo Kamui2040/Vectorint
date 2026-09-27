@@ -30,25 +30,30 @@ internal object ReceiptTotalExtractor {
             val labelScore = labelScore(line)
             if (labelScore == 0) return@forEachIndexed
 
-            amountCandidates(line, fractionDigits).forEach { amount ->
-                candidates += Candidate(amount, labelScore)
-            }
-            if (index + 1 < lines.size) {
+            val sameLineAmounts = amountCandidates(line, fractionDigits)
+            sameLineAmounts.forEach { amount -> candidates += Candidate(amount, labelScore) }
+            if (sameLineAmounts.isEmpty() && index + 1 < lines.size) {
                 amountCandidates(lines[index + 1], fractionDigits).forEach { amount ->
                     candidates += Candidate(amount, labelScore - 1)
                 }
             }
         }
-        val bestScore = candidates.maxOfOrNull(Candidate::score) ?: return null
-        val bestAmounts =
-            candidates
-                .asSequence()
-                .filter { it.score == bestScore }
-                .map(Candidate::minorUnits)
-                .distinct()
-                .toList()
-        if (bestAmounts.size != 1) return null
-        return Money(bestAmounts.single(), currencyCode)
+        candidates
+            .asSequence()
+            .map(Candidate::score)
+            .distinct()
+            .sortedDescending()
+            .forEach { score ->
+                val amounts =
+                    candidates
+                        .asSequence()
+                        .filter { it.score == score }
+                        .map(Candidate::minorUnits)
+                        .distinct()
+                        .toList()
+                if (amounts.size == 1) return Money(amounts.single(), currencyCode)
+            }
+        return null
     }
 
     private fun labelScore(line: String): Int {
@@ -149,7 +154,14 @@ internal object ReceiptTotalExtractor {
             Regex("\\bda pagare\\b"),
         )
     private val GENERIC_TOTAL = Regex("\\b(?:total|totale|summe)\\b")
-    private val AMOUNT_TOKEN = Regex("(?<![\\p{L}\\p{N}])\\d[\\d\\s.,'’]*\\d(?![\\p{L}\\p{N}%])|(?<![\\p{L}\\p{N}])\\d(?![\\p{L}\\p{N}%])")
+    private val AMOUNT_TOKEN =
+        Regex(
+            "(?<![\\p{L}\\p{N}])(?:" +
+                "\\d{1,3}(?:[ ' ’]\\d{3})+(?:[.,]\\d{1,3})?|" +
+                "\\d{1,3}(?:[.,]\\d{3})+[.,]\\d{1,3}|" +
+                "\\d+(?:[.,]\\d+)?" +
+                ")(?![\\p{L}\\p{N}%])",
+        )
     private val COMBINING_MARKS = Regex("\\p{M}+")
     private val LONG_MAX = BigInteger.valueOf(Long.MAX_VALUE)
 }

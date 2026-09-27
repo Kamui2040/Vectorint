@@ -34,6 +34,24 @@ class ReceiptTotalExtractorTest {
     }
 
     @Test
+    fun `uses clear summe when a later tax breakdown has multiple totals`() {
+        val text =
+            """
+            SUMME EUR 29,49
+            Geg. BAR EUR 100,00
+            Rückgeld BAR EUR 70,51
+            Gesamtbetrag 25,48 4,01 29,49
+            """.trimIndent()
+
+        assertEquals(2_949L, ReceiptTotalExtractor.extract(text, eur)?.minorUnits)
+    }
+
+    @Test
+    fun `does not join multiple amounts on one labelled line`() {
+        assertNull(ReceiptTotalExtractor.extract("Gesamtbetrag 25,48 4,01 29,49", eur))
+    }
+
+    @Test
     fun `does not guess when equally strong totals disagree`() {
         assertNull(ReceiptTotalExtractor.extract("TOTAL 12.00\nTOTAL 13.00", eur))
     }
