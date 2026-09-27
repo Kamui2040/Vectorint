@@ -120,6 +120,12 @@ Treat every tracked file as suitable for public release.
   one activity within one database transaction.
 - Construct the database and repository once at application scope.
 - Prefer the smallest dependency set that supports the current implemented scope.
+- Keep receipt scanning exclusive to the `playDebug` and `playRelease` build
+  types. The standard `debug` and `release` variants must not compile, package,
+  or expose Google Play services or ML Kit receipt-scanning code.
+- Receipt scanning may propose only an editable one-off expense amount. Never
+  save an expense automatically, and never retain the receipt image or recognized
+  receipt text after the draft flow ends.
 
 ## Persistence integrity
 
@@ -221,6 +227,11 @@ Treat every tracked file as suitable for public release.
 - Core budgeting is offline-capable and must not require online sign-in, telemetry,
   analytics, advertising, tracking, automatic crash upload, or proprietary cloud
   services.
+- The Google Play-only receipt scanner may use Google Play services' documented
+  on-device processing, module delivery, and diagnostic/usage metrics. Keep the
+  receipt image, recognized text, and recognition result out of those metrics,
+  disclose Google processing publicly, and keep Vectorint without Android's
+  internet permission or any Vectorint-operated telemetry.
 - Never commit credentials, signing or recovery material, authentic financial or
   personal data, raw device identifiers, machine-local paths, private links or
   IDs, internal assistant instructions, or maintainer-only diagnostics.
@@ -278,6 +289,9 @@ Treat every tracked file as suitable for public release.
 - User-run terminal handoff blocks must not terminate the caller's interactive shell. Put fallible execution in a subshell or child process, capture its status, and report that status without a parent-shell `exit`.
 - Before committing, run `git diff --check`, `ktlintCheck`, pure unit tests, the
   Android unit-test task, `assembleDebug`, and `lintDebug` when applicable.
+- Receipt-scanner changes also require `assemblePlayDebug`, `assemblePlayRelease`,
+  and `lintPlayDebug`; keep the standard release manifest and packaged dependency
+  graph free of Google Play services.
 - Run `ktlintFormat` and `ktlintCheck` in separate Gradle invocations. Their task
   graphs do not guarantee that a combined invocation checks the formatted files.
 - Review modified, staged, and untracked content for privacy, licence, provenance,

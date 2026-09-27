@@ -19,6 +19,20 @@ initial repository uses the following public build, runtime, and test components
 - desugar_jdk_libs 2.1.5 — Android Open Source Project, GPL-2.0 with the
   Classpath Exception; used to support `java.time` on the minimum Android API.
 
+## Google Play edition only
+
+- Google Play services ML Kit document scanner 16.0.0 — Google, governed by the
+  Google APIs Terms of Service; used only by `playDebug` and `playRelease` for
+  on-device receipt capture and cleanup.
+- Google Play services ML Kit text recognition 19.0.1 — Google, governed by the
+  Google APIs Terms of Service; used only by `playDebug` and `playRelease` to
+  read receipt text on-device.
+
+These proprietary optional components are absent from the standard `debug` and
+`release` variants, including the F-Droid build. Their documentation and terms
+are available at <https://developers.google.com/ml-kit/vision/doc-scanner> and
+<https://developers.google.com/ml-kit/terms>.
+
 ## Build and test only
 
 - Android Gradle Plugin 9.4.0 — Android Open Source Project, Apache-2.0.
@@ -34,6 +48,6 @@ initial repository uses the following public build, runtime, and test components
 - Jetpack Compose UI test libraries selected by BOM 2026.08.00 — Android Open
   Source Project, Apache-2.0.
 
-Versions are pinned in the Gradle build. The complete release runtime dependency
-graph was resolved and reviewed for the first production release; it contains no
-unexpected or non-free dependency families.
+Versions are pinned in the Gradle build. The complete standard release runtime
+dependency graph was resolved and reviewed for the first production release; it
+contains no unexpected or non-free dependency families.

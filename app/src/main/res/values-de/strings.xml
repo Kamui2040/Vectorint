@@ -22,6 +22,10 @@
     <string name="home_try_again">Erneut versuchen</string>
     <string name="home_edit_current_funds">Konten verwalten</string>
     <string name="home_add_activity">Eintrag hinzufügen</string>
+    <string name="home_scan_receipt">Beleg scannen</string>
+    <string name="home_receipt_scan_in_progress">Beleg wird gescannt…</string>
+    <string name="home_receipt_scan_failed">Der Beleg konnte nicht gescannt werden. Versuch es erneut oder füge die Ausgabe manuell hinzu.</string>
+    <string name="home_receipt_scan_unavailable">Das Scannen von Belegen ist auf diesem Gerät nicht verfügbar.</string>
     <string name="home_recurring_items">Wiederkehrende Posten</string>
     <string name="home_previous_month">Zurück</string>
     <string name="home_next_month">Weiter</string>
@@ -181,6 +185,8 @@
     <string name="account_assignment_label">Konto: %1$s</string>
     <string name="activity_add_title">Eintrag hinzufügen</string>
     <string name="activity_currency">Währung: %1$s</string>
+    <string name="activity_receipt_total_added">Der Belegbetrag wurde eingetragen. Prüfe ihn vor dem Speichern.</string>
+    <string name="activity_receipt_total_not_found">Kein eindeutiger Belegbetrag gefunden. Gib den Betrag manuell ein.</string>
     <string name="activity_direction">Art</string>
     <string name="activity_expense">Ausgabe</string>
     <string name="activity_income">Einnahme</string>

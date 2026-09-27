@@ -24,6 +24,29 @@ to K2040 or to a Vectorint-operated service.
 Vectorint does not access your Android system calendar. Dates used for recurring
 entries and reminders are managed within the app.
 
+## Receipt scanning in the Google Play edition
+
+The Google Play edition can scan a receipt and suggest its total in an editable
+expense form. Scanning and text recognition use Google Play services and run on
+the device. Vectorint does not upload the receipt or recognized text to K2040 or
+to a Vectorint-operated service.
+
+The receipt image is held temporarily in Vectorint's private cache, read once,
+and deleted after text recognition. Recognized receipt text stays in memory only
+while preparing the editable expense draft. Nothing is recorded until you review
+the draft and choose to save it.
+
+Google Play services may download the scanner and text-recognition components to
+the device. Google states that ML Kit does not send receipt images, recognized
+text, or recognition results to its servers, but may collect device and app
+information, performance and usage metrics, API configuration, event types, and
+error codes for diagnostics, analytics, maintenance, and abuse prevention. This
+processing is governed by Google's terms and privacy policy. Vectorint itself
+still does not request Android's internet permission and K2040 does not receive
+this metrics data.
+
+The F-Droid edition does not contain or expose this Google Play services feature.
+
 ## Backups
 
 For manual or automatic backups, Android lets you choose where the readable JSON

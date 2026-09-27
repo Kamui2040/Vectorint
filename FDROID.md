@@ -33,6 +33,11 @@ channels.
 - release task: `assembleRelease`
 - output: `app/build/outputs/apk/release/app-release-unsigned.apk`
 
+The F-Droid build remains the standard `release` build. It does not compile or
+package the Google Play-only receipt scanner, its camera action, Google Play
+services, or ML Kit. The `playDebug` and `playRelease` build types are separate
+storefront artifacts and are outside the F-Droid recipe.
+
 Release builds exclude AGP-generated VCS metadata so identical tracked source does
 not change merely because a `.git` directory is present.
 

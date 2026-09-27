@@ -26,6 +26,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
@@ -38,7 +39,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -58,6 +61,7 @@ import io.github.kamui2040.vectorint.presentation.component.InfoHeading
 import io.github.kamui2040.vectorint.presentation.tag.TagEditor
 import io.github.kamui2040.vectorint.presentation.tag.rememberTagState
 import io.github.kamui2040.vectorint.presentation.theme.directionColors
+import io.github.kamui2040.vectorint.receipt.ReceiptTotalExtractor
 import kotlinx.coroutines.launch
 
 @Composable
@@ -66,6 +70,8 @@ internal fun OneOffActivityRoute(
     categoryManager: CategoryManager,
     onSaved: () -> Unit,
     onBack: () -> Unit,
+    receiptText: String? = null,
+    onReceiptConsumed: () -> Unit = {},
 ) {
     var loadKey by remember { mutableIntStateOf(0) }
     val result by
@@ -99,6 +105,8 @@ internal fun OneOffActivityRoute(
                     seed = current.seed,
                     onSaved = onSaved,
                     onBack = onBack,
+                    receiptText = receiptText,
+                    onReceiptConsumed = onReceiptConsumed,
                 )
             }
     }
@@ -111,9 +119,34 @@ private fun OneOffActivityReadyRoute(
     seed: OneOffActivityFormSeed,
     onSaved: () -> Unit,
     onBack: () -> Unit,
+    receiptText: String?,
+    onReceiptConsumed: () -> Unit,
 ) {
+    val receiptDraft =
+        remember {
+            if (receiptText == null) {
+                null
+            } else {
+                val amountInput =
+                    ReceiptTotalExtractor
+                        .extract(receiptText, seed.currencyCode)
+                        ?.let(editor::formatInput)
+                ReceiptDraft(
+                    amountInput = amountInput,
+                    suggestion =
+                        if (amountInput == null) {
+                            ReceiptSuggestion.TOTAL_NOT_FOUND
+                        } else {
+                            ReceiptSuggestion.TOTAL_ADDED
+                        },
+                )
+            }
+        }
+    LaunchedEffect(Unit) {
+        if (receiptText != null) onReceiptConsumed()
+    }
     var nameInput by rememberSaveable { mutableStateOf("") }
-    var amountInput by rememberSaveable { mutableStateOf("") }
+    var amountInput by rememberSaveable { mutableStateOf(receiptDraft?.amountInput.orEmpty()) }
     var accountIdValue by rememberSaveable { mutableStateOf(seed.selectedAccountId.value) }
     var direction by rememberSaveable { mutableStateOf(Direction.EXPENSE) }
     var state by rememberSaveable { mutableStateOf(ActivityState.CONFIRMED) }
@@ -137,6 +170,7 @@ private fun OneOffActivityReadyRoute(
         categoryId = categoryIdValue?.let(::CategoryId),
         categoryManager = categoryManager,
         tags = tags,
+        receiptSuggestion = receiptDraft?.suggestion,
         onNameChange = {
             nameInput = it
             issue = null
@@ -208,6 +242,7 @@ internal fun OneOffActivityScreen(
     categoryId: CategoryId? = null,
     categoryManager: CategoryManager? = null,
     tags: Set<Tag> = emptySet(),
+    receiptSuggestion: ReceiptSuggestion? = null,
     onNameChange: (String) -> Unit,
     onAmountChange: (String) -> Unit,
     onAccountChange: (AccountId) -> Unit = {},
@@ -223,6 +258,23 @@ internal fun OneOffActivityScreen(
         onBack = onBack,
         backEnabled = !saving,
     ) {
+        if (receiptSuggestion != null) {
+            Text(
+                text =
+                    stringResource(
+                        when (receiptSuggestion) {
+                            ReceiptSuggestion.TOTAL_ADDED -> R.string.activity_receipt_total_added
+                            ReceiptSuggestion.TOTAL_NOT_FOUND -> R.string.activity_receipt_total_not_found
+                        },
+                    ),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .semantics { liveRegion = LiveRegionMode.Polite },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         OutlinedTextField(
             value = nameInput,
             onValueChange = onNameChange,
@@ -333,6 +385,16 @@ internal fun OneOffActivityScreen(
         }
     }
 }
+
+internal enum class ReceiptSuggestion {
+    TOTAL_ADDED,
+    TOTAL_NOT_FOUND,
+}
+
+private data class ReceiptDraft(
+    val amountInput: String?,
+    val suggestion: ReceiptSuggestion,
+)
 
 @Composable
 private fun SelectionHeading(text: String) {

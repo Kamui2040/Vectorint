@@ -22,6 +22,10 @@
     <string name="home_try_again">Intentar otra vez</string>
     <string name="home_edit_current_funds">Administrar cuentas</string>
     <string name="home_add_activity">Agregar actividad</string>
+    <string name="home_scan_receipt">Escanear recibo</string>
+    <string name="home_receipt_scan_in_progress">Escaneando recibo…</string>
+    <string name="home_receipt_scan_failed">No se pudo escanear el recibo. Inténtalo de nuevo o añade el gasto manualmente.</string>
+    <string name="home_receipt_scan_unavailable">El escaneo de recibos no está disponible en este dispositivo.</string>
     <string name="home_recurring_items">Artículos recurrentes</string>
     <string name="home_previous_month">Anterior</string>
     <string name="home_next_month">Próximo</string>
@@ -181,6 +185,8 @@
     <string name="account_assignment_label">Cuenta: %1$s</string>
     <string name="activity_add_title">Añadir movimiento</string>
     <string name="activity_currency">Moneda: %1$s</string>
+    <string name="activity_receipt_total_added">Se ha añadido el total del recibo. Compruébalo antes de guardar.</string>
+    <string name="activity_receipt_total_not_found">No se encontró un total claro en el recibo. Introduce el importe manualmente.</string>
     <string name="activity_direction">Tipo</string>
     <string name="activity_expense">Gasto</string>
     <string name="activity_income">Ingreso</string>

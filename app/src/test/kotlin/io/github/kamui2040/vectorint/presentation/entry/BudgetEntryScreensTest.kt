@@ -87,4 +87,31 @@ class BudgetEntryScreensTest {
 
         compose.onNodeWithText("Enter an amount greater than zero.").performScrollTo().assertIsDisplayed()
     }
+
+    @Test
+    fun `receipt suggestion tells the user to verify the extracted total`() {
+        compose.setContent {
+            VectorintTheme {
+                OneOffActivityScreen(
+                    nameInput = "",
+                    amountInput = "25.00",
+                    currencyCode = "USD",
+                    direction = Direction.EXPENSE,
+                    state = ActivityState.CONFIRMED,
+                    saving = false,
+                    issue = null,
+                    receiptSuggestion = ReceiptSuggestion.TOTAL_ADDED,
+                    onNameChange = {},
+                    onAmountChange = {},
+                    onDirectionChange = {},
+                    onStateChange = {},
+                    onSave = {},
+                    onBack = {},
+                )
+            }
+        }
+
+        compose.onNodeWithText("Receipt total added. Check it before saving.").assertIsDisplayed()
+        compose.onNodeWithText("25.00").assertIsDisplayed()
+    }
 }

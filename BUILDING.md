@@ -16,6 +16,17 @@ All other direct build and runtime versions are listed in
 ./gradlew ktlintCheck testDebugUnitTest assembleDebug lintDebug
 ```
 
+The Google Play receipt-scanner edition has separate development and release
+build types:
+
+```shell
+./gradlew assemblePlayDebug lintPlayDebug
+./gradlew bundlePlayRelease
+```
+
+`playDebug` keeps the debug application-ID suffix and visible debug label, so it
+can be tested without replacing an installed production or store build.
+
 ## Release build
 
 ```shell
@@ -23,6 +34,11 @@ All other direct build and runtime versions are listed in
 ```
 
 This creates `app/build/outputs/apk/release/app-release-unsigned.apk`.
+
+The standard release is the Google-free F-Droid source build. Google Play uses
+`bundlePlayRelease`, which creates
+`app/build/outputs/bundle/playRelease/app-playRelease.aab` and alone includes the
+on-device receipt scanner.
 
 Signing keys and credentials are not part of the repository. GitHub and compatible
 storefront releases are signed outside the source tree with Vectorint's permanent
