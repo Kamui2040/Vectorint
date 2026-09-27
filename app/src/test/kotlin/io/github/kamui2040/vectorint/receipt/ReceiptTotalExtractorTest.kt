@@ -52,6 +52,18 @@ class ReceiptTotalExtractorTest {
     }
 
     @Test
+    fun `uses specific payment confirmations when the total label is unreadable`() {
+        val text =
+            """
+            SHNE EUR 7,46
+            Geg E-Cash EUR 7,46
+            Tahlung ertolgt 7, 46
+            """.trimIndent()
+
+        assertEquals(746L, ReceiptTotalExtractor.extract(text, eur)?.minorUnits)
+    }
+
+    @Test
     fun `does not guess when equally strong totals disagree`() {
         assertNull(ReceiptTotalExtractor.extract("TOTAL 12.00\nTOTAL 13.00", eur))
     }

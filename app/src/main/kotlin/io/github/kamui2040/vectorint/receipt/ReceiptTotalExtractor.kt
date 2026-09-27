@@ -62,6 +62,7 @@ internal object ReceiptTotalExtractor {
         return when {
             STRONG_LABELS.any { it.containsMatchIn(normalized) } -> 4
             GENERIC_TOTAL.containsMatchIn(normalized) -> 3
+            PAYMENT_LABELS.any { it.containsMatchIn(normalized) } -> 2
             else -> 0
         }
     }
@@ -71,7 +72,7 @@ internal object ReceiptTotalExtractor {
         fractionDigits: Int,
     ): List<Long> =
         AMOUNT_TOKEN
-            .findAll(line)
+            .findAll(line.replace(SPACED_DECIMAL_SEPARATOR, "$1"))
             .mapNotNull { match -> parseAmount(match.value, fractionDigits) }
             .toList()
 
@@ -154,6 +155,11 @@ internal object ReceiptTotalExtractor {
             Regex("\\bda pagare\\b"),
         )
     private val GENERIC_TOTAL = Regex("\\b(?:total|totale|summe)\\b")
+    private val PAYMENT_LABELS =
+        listOf(
+            Regex("\\be(?:c)?[ -]?cash\\b"),
+            Regex("\\b(?:zahlung|tahlung) (?:erfolgt|ertolgt)\\b"),
+        )
     private val AMOUNT_TOKEN =
         Regex(
             "(?<![\\p{L}\\p{N}])(?:" +
@@ -162,6 +168,7 @@ internal object ReceiptTotalExtractor {
                 "\\d+(?:[.,]\\d+)?" +
                 ")(?![\\p{L}\\p{N}%])",
         )
+    private val SPACED_DECIMAL_SEPARATOR = Regex("([.,])\\s+(?=\\d)")
     private val COMBINING_MARKS = Regex("\\p{M}+")
     private val LONG_MAX = BigInteger.valueOf(Long.MAX_VALUE)
 }
