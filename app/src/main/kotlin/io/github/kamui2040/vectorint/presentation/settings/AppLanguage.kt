@@ -14,6 +14,10 @@ internal enum class AppLanguage(
     FOLLOW_DEVICE(R.string.settings_language_device, null),
     ENGLISH(R.string.settings_language_english, "en"),
     GERMAN(R.string.settings_language_german, "de"),
+    PORTUGUESE(R.string.settings_language_portuguese, "pt"),
+    SPANISH(R.string.settings_language_spanish, "es"),
+    ITALIAN(R.string.settings_language_italian, "it"),
+    FRENCH(R.string.settings_language_french, "fr"),
     ;
 
     companion object {
@@ -21,6 +25,10 @@ internal enum class AppLanguage(
             when (languageTag?.substringBefore('-')?.lowercase()) {
                 "en" -> ENGLISH
                 "de" -> GERMAN
+                "pt" -> PORTUGUESE
+                "es" -> SPANISH
+                "it" -> ITALIAN
+                "fr" -> FRENCH
                 else -> FOLLOW_DEVICE
             }
     }

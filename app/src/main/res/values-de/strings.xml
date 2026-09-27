@@ -73,6 +73,10 @@
     <string name="settings_language_device">Geräteeinstellung folgen</string>
     <string name="settings_language_english">Englisch</string>
     <string name="settings_language_german">Deutsch</string>
+    <string name="settings_language_portuguese">Portugiesisch</string>
+    <string name="settings_language_spanish">Spanisch</string>
+    <string name="settings_language_italian">Italienisch</string>
+    <string name="settings_language_french">Französisch</string>
     <string name="settings_language_body">Wähle die Sprache von Vectorint. Geldbeträge, Zahlen und Daten folgen weiter den Regionseinstellungen deines Geräts.</string>
     <string name="settings_calculation">Berechnung</string>
     <string name="settings_include_expected_income">Erwartete Einnahmen einbeziehen</string>

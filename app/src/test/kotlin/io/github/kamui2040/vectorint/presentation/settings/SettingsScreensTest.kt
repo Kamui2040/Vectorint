@@ -149,7 +149,7 @@ class SettingsScreensTest {
     }
 
     @Test
-    fun `language page offers device English and German choices`() {
+    fun `language page offers every supported language`() {
         var page by mutableStateOf(SettingsPage.ROOT)
         var language by mutableStateOf(AppLanguage.FOLLOW_DEVICE)
         compose.setContent {
@@ -174,6 +174,10 @@ class SettingsScreensTest {
         compose.runOnIdle { assertEquals(AppLanguage.GERMAN, language) }
         compose.onNodeWithText("German").assertIsSelected()
         compose.onNodeWithText("English").assertIsDisplayed()
+        compose.onNodeWithText("Portuguese").assertIsDisplayed()
+        compose.onNodeWithText("Spanish").assertIsDisplayed()
+        compose.onNodeWithText("Italian").assertIsDisplayed()
+        compose.onNodeWithText("French").assertIsDisplayed()
         val help =
             "Choose Vectorint’s language. Money, numbers, and dates still use your device’s regional format."
         compose.onNodeWithText(help).assertDoesNotExist()
