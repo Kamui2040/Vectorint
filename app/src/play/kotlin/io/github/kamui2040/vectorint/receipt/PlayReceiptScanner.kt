@@ -84,7 +84,24 @@ internal class PlayReceiptScanner(
                 recognizer.close()
                 val receiptCleared = clearPrivateCacheFile(pageUri)
                 if (task.isSuccessful && receiptCleared) {
-                    onOutcome(ReceiptScanOutcome.RecognizedText(task.result.text))
+                    val fragments =
+                        task.result.textBlocks.flatMap { block ->
+                            block.lines.mapNotNull { line ->
+                                val bounds = line.boundingBox ?: return@mapNotNull null
+                                ReceiptTextFragment(
+                                    text = line.text,
+                                    left = bounds.left,
+                                    top = bounds.top,
+                                    right = bounds.right,
+                                    bottom = bounds.bottom,
+                                )
+                            }
+                        }
+                    onOutcome(
+                        ReceiptScanOutcome.RecognizedText(
+                            ReceiptTextRowAssembler.assemble(fragments, task.result.text),
+                        ),
+                    )
                 } else {
                     onOutcome(ReceiptScanOutcome.Failed)
                 }
