@@ -77,7 +77,10 @@ The initial foundation is deliberately small:
   one receipt, proposes only a total in the normal editable expense form, and
   removes the temporary image after recognition; the standard and F-Droid builds
   contain no scanner or Google dependency, while Google Play services may manage
-  module downloads and its documented diagnostic and usage metrics;
+  module downloads and its documented diagnostic and usage metrics; a local seed
+  catalogue covers common German retailers and receipt-header aliases across
+  groceries, clothing, and other retail categories, but is not yet connected to
+  vendor-name suggestions;
 - no iOS, desktop, web, or Kotlin Multiplatform targets;
 - no GitHub Actions.
 
