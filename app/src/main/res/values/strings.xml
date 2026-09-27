@@ -74,6 +74,10 @@
     <string name="settings_language_device">Follow device</string>
     <string name="settings_language_english">English</string>
     <string name="settings_language_german">German</string>
+    <string name="settings_language_portuguese">Portuguese</string>
+    <string name="settings_language_spanish">Spanish</string>
+    <string name="settings_language_italian">Italian</string>
+    <string name="settings_language_french">French</string>
     <string name="settings_language_body">Choose Vectorint’s language. Money, numbers, and dates still use your device’s regional format.</string>
     <string name="settings_calculation">Calculation</string>
     <string name="settings_include_expected_income">Include expected income</string>

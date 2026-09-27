@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="about_support_kofi">Supporto su Ko-fi</string>
+    <string name="about_changelog_version">Versione %1$s</string>
+    <string name="about_changelog_current_body">• Scheda Informazioni più compatta, con navigazione più chiara e registro della versione corrente.\n• Sezioni dedicate a licenze e fonti, con link al repository, al sito dell’app, al sito principale e a Ko-fi.\n• Nuova pagina Privacy con l’informativa pubblica all’interno dell’app.\n• Testo più chiaro su dati locali, backup, promemoria e rimozione dei dati.\n• Controllo accessibile del segno del saldo attuale per inserire saldi negativi quando la tastiera non ha il tasto meno.</string>
+    <string name="about_license_source_name">Codice sorgente di Vectorint</string>
+    <string name="about_license_source_value">GPL-3.0-only</string>
+    <string name="about_license_raven_name">Vectorint Raven</string>
+    <string name="about_license_raven_value">CC BY 4.0</string>
+    <string name="about_license_raven_note">© 2026 K2040 · generato con OpenAI sotto la direzione di K2040 · fornito da K2040.</string>
+    <string name="about_license_material_icons_name">Material Icons</string>
+    <string name="about_license_material_icons_value">Apache License 2.0</string>
+    <string name="about_license_desugar_name">desugar_jdk_libs</string>
+    <string name="about_license_desugar_value">GPL-2.0 with Classpath Exception</string>
+    <string name="about_license_logo_note">Logo K2040 © 2026 K2040 · utilizzato solo in Informazioni.</string>
+    <string name="about_license_inventory_note">Gli avvisi completi sulle dipendenze e sulla licenza vengono mantenuti nel repository di origine.</string>
+    <string name="about_privacy_page">Privacy</string>
+    <string name="about_privacy_intro">Vectorint mantiene i dati del tuo budget sul tuo dispositivo.</string>
+    <string name="about_privacy_data_use_title">Utilizzo dei dati</string>
+    <string name="about_privacy_data_use_body">Vectorint non crea un account. K2040 non riceve, carica, vende o condivide i tuoi dati personali o finanziari. Vectorint non contiene pubblicità, analisi, telemetria o tracciamento e non richiede l\'autorizzazione Internet di Android.</string>
+    <string name="about_privacy_local_data_title">Memorizzato localmente</string>
+    <string name="about_privacy_local_data_body">Vectorint memorizza importi finanziari, record di transazioni, testo creato dall\'utente, date ricorrenti e informazioni sui promemoria e impostazioni dell\'app nella memoria privata dell\'app. Non accede al calendario del sistema Android.</string>
+    <string name="about_privacy_backups_title">Backup</string>
+    <string name="about_privacy_backups_body">I backup manuali e automatici sono file JSON leggibili salvati dove si sceglie tramite Android. Vectorint mantiene l\'accesso solo alla cartella di backup automatico selezionata e non carica file di backup né si connette direttamente a un servizio di backup o cloud. Un fornitore di documenti di terze parti può elaborare o sincronizzare i file in base alla propria politica sulla privacy.</string>
+    <string name="about_privacy_notifications_title">Notifiche</string>
+    <string name="about_privacy_notifications_body">Se abiliti i promemoria, Vectorint chiede a Android l\'autorizzazione alle notifiche e pianifica i promemoria localmente. Le notifiche di promemoria sulla schermata di blocco omettono i dettagli finanziari.</string>
+    <string name="about_privacy_removal_title">Rimozione dei tuoi dati</string>
+    <string name="about_privacy_removal_body">Rimuovi i dati Vectorint locali tramite le impostazioni dell\'app Android o disinstallando l\'app. I file di backup rimangono dove li hai salvati e devono essere rimossi separatamente.</string>
+    <string name="about_privacy_questions">Domande e segnalazioni sulla privacy</string>
+    <string name="about_privacy_questions_detail">Apri il tracker dei problemi pubblico Vectorint</string>
+    <string name="about_privacy_updated">Ultimo aggiornamento della politica: 16 settembre 2026.</string>
+    <string name="about_sources_intro">Pagine del progetto e codice sorgente</string>
+    <string name="about_source_repository">Repository</string>
+    <string name="about_source_repository_detail">Codice sorgente e file di progetto</string>
+    <string name="about_source_app_website">Sito web dell\'app</string>
+    <string name="about_source_app_website_detail">Progetto Vectorint, versioni e download</string>
+    <string name="about_source_main_website">Sito principale</string>
+    <string name="about_source_main_website_detail">Progetti e aggiornamenti K2040</string>
+</resources>

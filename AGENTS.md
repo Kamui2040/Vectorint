@@ -155,9 +155,10 @@ Treat every tracked file as suitable for public release.
   income because a setting is absent, unreadable, or malformed.
 - Keep preference writes atomic and preserve unrelated keys. Do not hide storage
   or corruption failures by emitting a permissive fallback.
-- Provide app-language selection inside Settings with device default, English, and
-  German choices. App language changes interface text only; current OS regional
-  settings continue to control dates, numbers, currency, and input parsing.
+- Provide app-language selection inside Settings with device default, English,
+  German, Portuguese, Spanish, Italian, and French choices. App language changes
+  interface text only; current OS regional settings continue to control dates,
+  numbers, currency, and input parsing.
 
 ## Backup and restore integrity
 

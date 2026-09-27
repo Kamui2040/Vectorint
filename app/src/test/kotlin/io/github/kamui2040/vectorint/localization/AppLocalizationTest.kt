@@ -39,9 +39,9 @@ class AppLocalizationParityTest {
                     .toList()
             }
 
-        assertTrue(
-            "German resources must be present",
-            localizedCatalogues.any { it.fileName.toString() == "values-de" },
+        assertEquals(
+            setOf("values-de", "values-es", "values-fr", "values-it", "values-pt"),
+            localizedCatalogues.map { it.fileName.toString() }.toSet(),
         )
         assertFalse("At least one localized catalogue is required", localizedCatalogues.isEmpty())
         assertFalse("The app name is a brand, not translatable text", base.getValue("app_name").translatable)
@@ -58,6 +58,26 @@ class AppLocalizationParityTest {
                 assertEquals(
                     "Format placeholders differ for $name in ${directory.fileName}",
                     placeholders(translatableBase.getValue(name).value),
+                    placeholders(entry.value),
+                )
+            }
+        }
+    }
+
+    @Test
+    fun `localized About catalogues match the English fallback`() {
+        val base = readCatalogue(resourceRoot.resolve("values/about_strings.xml"))
+        val localeDirectories = listOf("de", "es", "fr", "it", "pt")
+
+        localeDirectories.forEach { language ->
+            val localized =
+                readCatalogue(resourceRoot.resolve("values-$language/about_strings.xml"))
+            assertEquals("About keys differ for $language", base.keys, localized.keys)
+            localized.forEach { (name, entry) ->
+                assertTrue("$name is blank for $language", entry.value.isNotBlank())
+                assertEquals(
+                    "About placeholders differ for $name in $language",
+                    placeholders(base.getValue(name).value),
                     placeholders(entry.value),
                 )
             }

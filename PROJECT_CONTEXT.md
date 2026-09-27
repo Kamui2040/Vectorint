@@ -19,7 +19,8 @@ The initial foundation is deliberately small:
 - Preferences DataStore repositories for portable user settings and separate
   device-local automatic-backup configuration and status;
 - OS-regional date and money presentation plus strict locale-aware amount input;
-- complete plain-language English and informal-`du` German UI resources with
+- complete plain-language English, informal-`du` German, Portuguese, Spanish,
+  Italian, and French UI resources with
   automatic Android app-language discovery, while money and date formatting
   continue to follow the OS region;
 - a data-backed Compose Home screen with explicit loading, setup, ready, unsafe,
@@ -55,7 +56,7 @@ The initial foundation is deliberately small:
   once under Other;
 - a full-page Settings experience with compact grouped navigation for
   system/light/dark appearance, Orbit/Nova/Nebula palettes, in-app
-  device/English/German language selection, the expected-income calculation
+  device/English/German/Portuguese/Spanish/Italian/French language selection, the expected-income calculation
   choice, data and backup, and About;
 - a branded compact About card opened from the raven or Settings, with the K2040
   creator logo, app version, short purpose, current-version changelog, licences,
@@ -129,7 +130,7 @@ Settings use a full-page layout reached from the permanent top-right controls
 action. The root menu is compact and grouped while individual setting rows retain
 accessible touch targets. They contain one calculation choice—whether expected income contributes
 to Available now—device, light, or dark appearance using the Orbit, Nova, or
-Nebula palette, device/English/German app-language selection, data and backup,
+Nebula palette, device/English/German/Portuguese/Spanish/Italian/French app-language selection, data and backup,
 and About. Expected income defaults to off; appearance follows the device and
 defaults to Orbit. The app language uses Android's per-app locale support and
 never replaces OS-regional money, number, or date formatting. Calculation and
