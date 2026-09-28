@@ -74,13 +74,13 @@ The initial foundation is deliberately small:
 - no Vectorint-operated network, online sign-in, analytics, advertising, or cloud
   integration, and no Android internet permission;
 - an optional Google Play build that uses on-device Google Play services to scan
-  one receipt, proposes only a total in the normal editable expense form, and
+  one receipt, proposes a total and recognized vendor name in the normal editable
+  expense form, and
   removes the temporary image after recognition; the standard and F-Droid builds
   contain no scanner or Google dependency, while Google Play services may manage
   module downloads and its documented diagnostic and usage metrics; a local seed
-  catalogue covers common German retailers and receipt-header aliases across
-  groceries, clothing, and other retail categories, but is not yet connected to
-  vendor-name suggestions;
+  catalogue recognizes common German retailers from receipt-header aliases across
+  groceries, clothing, and other retail categories;
 - no iOS, desktop, web, or Kotlin Multiplatform targets;
 - no GitHub Actions.
 

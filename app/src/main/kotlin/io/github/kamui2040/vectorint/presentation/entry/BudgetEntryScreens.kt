@@ -62,6 +62,7 @@ import io.github.kamui2040.vectorint.presentation.tag.TagEditor
 import io.github.kamui2040.vectorint.presentation.tag.rememberTagState
 import io.github.kamui2040.vectorint.presentation.theme.directionColors
 import io.github.kamui2040.vectorint.receipt.ReceiptTotalExtractor
+import io.github.kamui2040.vectorint.receipt.ReceiptVendorMatcher
 import kotlinx.coroutines.launch
 
 @Composable
@@ -132,6 +133,7 @@ private fun OneOffActivityReadyRoute(
                         .extract(receiptText, seed.currencyCode)
                         ?.let(editor::formatInput)
                 ReceiptDraft(
+                    nameInput = ReceiptVendorMatcher.match(receiptText)?.displayName,
                     amountInput = amountInput,
                     suggestion =
                         if (amountInput == null) {
@@ -145,7 +147,7 @@ private fun OneOffActivityReadyRoute(
     LaunchedEffect(Unit) {
         if (receiptText != null) onReceiptConsumed()
     }
-    var nameInput by rememberSaveable { mutableStateOf("") }
+    var nameInput by rememberSaveable { mutableStateOf(receiptDraft?.nameInput.orEmpty()) }
     var amountInput by rememberSaveable { mutableStateOf(receiptDraft?.amountInput.orEmpty()) }
     var accountIdValue by rememberSaveable { mutableStateOf(seed.selectedAccountId.value) }
     var direction by rememberSaveable { mutableStateOf(Direction.EXPENSE) }
@@ -392,6 +394,7 @@ internal enum class ReceiptSuggestion {
 }
 
 private data class ReceiptDraft(
+    val nameInput: String?,
     val amountInput: String?,
     val suggestion: ReceiptSuggestion,
 )

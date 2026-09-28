@@ -123,9 +123,9 @@ Treat every tracked file as suitable for public release.
 - Keep receipt scanning exclusive to the `playDebug` and `playRelease` build
   types. The standard `debug` and `release` variants must not compile, package,
   or expose Google Play services or ML Kit receipt-scanning code.
-- Receipt scanning may propose only an editable one-off expense amount. Never
-  save an expense automatically, and never retain the receipt image or recognized
-  receipt text after the draft flow ends.
+- Receipt scanning may propose only an editable one-off expense amount and vendor
+  name. Never save an expense automatically, and never retain the receipt image
+  or recognized receipt text after the draft flow ends.
 
 ## Persistence integrity
 
