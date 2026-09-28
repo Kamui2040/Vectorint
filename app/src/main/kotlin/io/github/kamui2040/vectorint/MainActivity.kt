@@ -188,8 +188,10 @@ class MainActivity : AppCompatActivity() {
             LaunchedEffect(receiptScanState) {
                 val recognized = receiptScanState as? ReceiptScanState.Recognized ?: return@LaunchedEffect
                 receiptDraftText = recognized.text
-                selectedHomeMonthOffset = 0
-                activityReturnDestination = AppDestination.HOME
+                if (destination != AppDestination.ADD_ACTIVITY) {
+                    selectedHomeMonthOffset = 0
+                    activityReturnDestination = AppDestination.HOME
+                }
                 destination = AppDestination.ADD_ACTIVITY
                 showSettings = false
                 showAbout = false
@@ -220,6 +222,22 @@ class MainActivity : AppCompatActivity() {
                 themeMode = userSettings.themeMode,
                 colorPalette = userSettings.colorPalette,
             ) {
+                val onScanReceipt =
+                    receiptScanner?.let { scanner ->
+                        {
+                            receiptScanState = ReceiptScanState.Scanning
+                            scanner.launch()
+                        }
+                    }
+                val receiptScanMessage =
+                    when (receiptScanState) {
+                        ReceiptScanState.Scanning -> stringResource(R.string.home_receipt_scan_in_progress)
+                        ReceiptScanState.Failed -> stringResource(R.string.home_receipt_scan_failed)
+                        ReceiptScanState.Unavailable -> stringResource(R.string.home_receipt_scan_unavailable)
+                        ReceiptScanState.Idle,
+                        is ReceiptScanState.Recognized,
+                        -> null
+                    }
                 val destinationContent: @Composable () -> Unit = {
                     when (destination) {
                         AppDestination.HOME -> {
@@ -248,25 +266,9 @@ class MainActivity : AppCompatActivity() {
                                     activityReturnDestination = AppDestination.HOME
                                     destination = AppDestination.ADD_ACTIVITY
                                 },
-                                onScanReceipt =
-                                    receiptScanner?.let { scanner ->
-                                        {
-                                            receiptScanState = ReceiptScanState.Scanning
-                                            scanner.launch()
-                                        }
-                                    },
+                                onScanReceipt = onScanReceipt,
                                 receiptScanInProgress = receiptScanState == ReceiptScanState.Scanning,
-                                receiptScanMessage =
-                                    when (receiptScanState) {
-                                        ReceiptScanState.Scanning ->
-                                            stringResource(R.string.home_receipt_scan_in_progress)
-                                        ReceiptScanState.Failed -> stringResource(R.string.home_receipt_scan_failed)
-                                        ReceiptScanState.Unavailable ->
-                                            stringResource(R.string.home_receipt_scan_unavailable)
-                                        ReceiptScanState.Idle,
-                                        is ReceiptScanState.Recognized,
-                                        -> null
-                                    },
+                                receiptScanMessage = receiptScanMessage,
                                 onViewRecurringItems = { destination = AppDestination.RECURRING_ITEMS },
                                 selectedMonthIsCurrent = selectedHomeMonthOffset == 0,
                                 onPreviousMonth = { selectedHomeMonthOffset-- },
@@ -331,6 +333,9 @@ class MainActivity : AppCompatActivity() {
                                 },
                                 receiptText = receiptDraftText,
                                 onReceiptConsumed = { receiptDraftText = null },
+                                onScanReceipt = onScanReceipt,
+                                receiptScanInProgress = receiptScanState == ReceiptScanState.Scanning,
+                                receiptScanMessage = receiptScanMessage,
                             )
 
                         AppDestination.ACTIVITY_HISTORY ->
