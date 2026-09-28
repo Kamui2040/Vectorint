@@ -20,6 +20,7 @@ import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.res.stringResource
 import io.github.kamui2040.vectorint.backup.AndroidBackupDocumentGateway
 import io.github.kamui2040.vectorint.backup.AutoBackupTrigger
 import io.github.kamui2040.vectorint.backup.BackupCoordinator
@@ -63,6 +64,9 @@ import io.github.kamui2040.vectorint.presentation.settings.SettingsRoute
 import io.github.kamui2040.vectorint.presentation.settings.applyAppLanguage
 import io.github.kamui2040.vectorint.presentation.settings.currentAppLanguage
 import io.github.kamui2040.vectorint.presentation.theme.VectorintTheme
+import io.github.kamui2040.vectorint.receipt.ReceiptScanOutcome
+import io.github.kamui2040.vectorint.receipt.ReceiptScanner
+import io.github.kamui2040.vectorint.receipt.createReceiptScanner
 import io.github.kamui2040.vectorint.reminder.REMINDER_INTENT_ACTION
 import io.github.kamui2040.vectorint.reminder.REMINDER_ITEM_ID_EXTRA
 import io.github.kamui2040.vectorint.widget.QUICK_ADD_INTENT_ACTION
@@ -72,6 +76,8 @@ class MainActivity : AppCompatActivity() {
     private var pendingReminderItemId by mutableStateOf<String?>(null)
     private var pendingQuickAddRequest by mutableStateOf(false)
     private var resumeGeneration by mutableIntStateOf(0)
+    private var receiptScanState by mutableStateOf<ReceiptScanState>(ReceiptScanState.Idle)
+    private var receiptScanner: ReceiptScanner? = null
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) {
             val vectorintApplication = application as VectorintApplication
@@ -82,6 +88,16 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        receiptScanner =
+            createReceiptScanner(this) { outcome ->
+                receiptScanState =
+                    when (outcome) {
+                        is ReceiptScanOutcome.RecognizedText -> ReceiptScanState.Recognized(outcome.text)
+                        ReceiptScanOutcome.Cancelled -> ReceiptScanState.Idle
+                        ReceiptScanOutcome.Unavailable -> ReceiptScanState.Unavailable
+                        ReceiptScanOutcome.Failed -> ReceiptScanState.Failed
+                    }
+            }
         val vectorintApplication = application as VectorintApplication
         val categoryManager = CategoryManager(vectorintApplication.budgetRepository)
         notificationsAvailable = vectorintApplication.notificationsAllowed()
@@ -165,11 +181,24 @@ class MainActivity : AppCompatActivity() {
             var activityReturnDestination by rememberSaveable { mutableStateOf(AppDestination.HOME) }
             var selectedActivityId by rememberSaveable { mutableStateOf<String?>(null) }
             var selectedRecurringItemId by rememberSaveable { mutableStateOf<String?>(null) }
+            var receiptDraftText by remember { mutableStateOf<String?>(null) }
             var showSettings by rememberSaveable { mutableStateOf(false) }
             var showAbout by rememberSaveable { mutableStateOf(false) }
 
+            LaunchedEffect(receiptScanState) {
+                val recognized = receiptScanState as? ReceiptScanState.Recognized ?: return@LaunchedEffect
+                receiptDraftText = recognized.text
+                selectedHomeMonthOffset = 0
+                activityReturnDestination = AppDestination.HOME
+                destination = AppDestination.ADD_ACTIVITY
+                showSettings = false
+                showAbout = false
+                receiptScanState = ReceiptScanState.Idle
+            }
+
             LaunchedEffect(pendingQuickAddRequest) {
                 if (pendingQuickAddRequest) {
+                    receiptDraftText = null
                     selectedHomeMonthOffset = 0
                     activityReturnDestination = AppDestination.HOME
                     destination = AppDestination.ADD_ACTIVITY
@@ -215,9 +244,29 @@ class MainActivity : AppCompatActivity() {
                                 onSetCurrentFunds = { destination = AppDestination.ACCOUNTS },
                                 onEditCurrentFunds = { destination = AppDestination.ACCOUNTS },
                                 onAddActivity = {
+                                    receiptDraftText = null
                                     activityReturnDestination = AppDestination.HOME
                                     destination = AppDestination.ADD_ACTIVITY
                                 },
+                                onScanReceipt =
+                                    receiptScanner?.let { scanner ->
+                                        {
+                                            receiptScanState = ReceiptScanState.Scanning
+                                            scanner.launch()
+                                        }
+                                    },
+                                receiptScanInProgress = receiptScanState == ReceiptScanState.Scanning,
+                                receiptScanMessage =
+                                    when (receiptScanState) {
+                                        ReceiptScanState.Scanning ->
+                                            stringResource(R.string.home_receipt_scan_in_progress)
+                                        ReceiptScanState.Failed -> stringResource(R.string.home_receipt_scan_failed)
+                                        ReceiptScanState.Unavailable ->
+                                            stringResource(R.string.home_receipt_scan_unavailable)
+                                        ReceiptScanState.Idle,
+                                        is ReceiptScanState.Recognized,
+                                        -> null
+                                    },
                                 onViewRecurringItems = { destination = AppDestination.RECURRING_ITEMS },
                                 selectedMonthIsCurrent = selectedHomeMonthOffset == 0,
                                 onPreviousMonth = { selectedHomeMonthOffset-- },
@@ -271,11 +320,17 @@ class MainActivity : AppCompatActivity() {
                                 editor = oneOffActivityEditor,
                                 categoryManager = categoryManager,
                                 onSaved = {
+                                    receiptDraftText = null
                                     vectorintApplication.refreshWidgets()
                                     reloadKey++
                                     destination = activityReturnDestination
                                 },
-                                onBack = { destination = activityReturnDestination },
+                                onBack = {
+                                    receiptDraftText = null
+                                    destination = activityReturnDestination
+                                },
+                                receiptText = receiptDraftText,
+                                onReceiptConsumed = { receiptDraftText = null },
                             )
 
                         AppDestination.ACTIVITY_HISTORY ->
@@ -286,6 +341,7 @@ class MainActivity : AppCompatActivity() {
                                     destination = AppDestination.EDIT_ACTIVITY
                                 },
                                 onAddActivity = {
+                                    receiptDraftText = null
                                     activityReturnDestination = AppDestination.ACTIVITY_HISTORY
                                     destination = AppDestination.ADD_ACTIVITY
                                 },
@@ -343,12 +399,16 @@ class MainActivity : AppCompatActivity() {
                 MainViewScaffold(
                     selectedView = destination.mainView(activityReturnDestination),
                     onViewSelected = { selectedView ->
+                        receiptDraftText = null
                         showSettings = false
                         if (selectedView == MainView.HOME) selectedHomeMonthOffset = 0
                         destination = selectedView.toAppDestination()
                     },
                     onOpenAbout = { showAbout = true },
-                    onOpenSettings = { showSettings = true },
+                    onOpenSettings = {
+                        receiptDraftText = null
+                        showSettings = true
+                    },
                     content = {
                         if (showSettings) {
                             SettingsRoute(
@@ -432,6 +492,20 @@ class MainActivity : AppCompatActivity() {
             },
         )
     }
+}
+
+private sealed interface ReceiptScanState {
+    data object Idle : ReceiptScanState
+
+    data object Scanning : ReceiptScanState
+
+    data object Failed : ReceiptScanState
+
+    data object Unavailable : ReceiptScanState
+
+    data class Recognized(
+        val text: String,
+    ) : ReceiptScanState
 }
 
 internal fun reminderItemIdFrom(intent: Intent?): String? =

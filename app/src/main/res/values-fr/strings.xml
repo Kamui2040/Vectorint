@@ -22,6 +22,10 @@
     <string name="home_try_again">Essayer à nouveau</string>
     <string name="home_edit_current_funds">Gérer les comptes</string>
     <string name="home_add_activity">Ajouter une activité</string>
+    <string name="home_scan_receipt">Scanner un reçu</string>
+    <string name="home_receipt_scan_in_progress">Numérisation du reçu…</string>
+    <string name="home_receipt_scan_failed">Impossible de scanner le reçu. Réessayez ou ajoutez la dépense manuellement.</string>
+    <string name="home_receipt_scan_unavailable">La numérisation des reçus n’est pas disponible sur cet appareil.</string>
     <string name="home_recurring_items">Éléments récurrents</string>
     <string name="home_previous_month">Précédent</string>
     <string name="home_next_month">Suivant</string>
@@ -181,6 +185,8 @@
     <string name="account_assignment_label">Compte : %1$s</string>
     <string name="activity_add_title">Ajouter une opération</string>
     <string name="activity_currency">Devise : %1$s</string>
+    <string name="activity_receipt_total_added">Le total du reçu a été ajouté. Vérifiez-le avant d’enregistrer.</string>
+    <string name="activity_receipt_total_not_found">Aucun total clair n’a été trouvé. Saisissez le montant manuellement.</string>
     <string name="activity_direction">Type</string>
     <string name="activity_expense">Dépense</string>
     <string name="activity_income">Revenu</string>

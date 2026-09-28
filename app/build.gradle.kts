@@ -37,6 +37,19 @@ android {
                 include = false
             }
         }
+        create("playDebug") {
+            initWith(getByName("debug"))
+            matchingFallbacks += listOf("debug")
+        }
+        create("playRelease") {
+            initWith(getByName("release"))
+            matchingFallbacks += listOf("release")
+        }
+    }
+
+    sourceSets {
+        getByName("playDebug").kotlin.srcDir("src/play/kotlin")
+        getByName("playRelease").kotlin.srcDir("src/play/kotlin")
     }
 
     androidResources {
@@ -72,7 +85,13 @@ dependencies {
     implementation("androidx.room:room-runtime:2.8.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
 
+    add("playDebugImplementation", "com.google.android.gms:play-services-mlkit-document-scanner:16.0.0")
+    add("playDebugImplementation", "com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
+    add("playReleaseImplementation", "com.google.android.gms:play-services-mlkit-document-scanner:16.0.0")
+    add("playReleaseImplementation", "com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
+
     debugImplementation("androidx.compose.ui:ui-test-manifest")
+    add("playDebugImplementation", "androidx.compose.ui:ui-test-manifest")
     ksp("androidx.room:room-compiler:2.8.4")
     testImplementation(composeBom)
     testImplementation("androidx.compose.ui:ui-test-junit4")

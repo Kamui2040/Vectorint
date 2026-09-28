@@ -250,6 +250,36 @@ class HomeScreenTest {
     }
 
     @Test
+    fun `receipt scanner is a separate accessible action when available`() {
+        var activityCount = 0
+        var scanCount = 0
+        compose.setContent {
+            VectorintTheme {
+                HomeScreen(
+                    state =
+                        HomeUiState.Ready(
+                            monthLabel = "September 2026",
+                            availableNow = "€650.00",
+                            currentFunds = "€900.00",
+                            reservedExpenses = "€250.00",
+                            expectedIncome = ExpectedIncomeUi.Excluded,
+                        ),
+                    onRetry = {},
+                    onAddActivity = { activityCount++ },
+                    onScanReceipt = { scanCount++ },
+                )
+            }
+        }
+
+        compose.onNodeWithText("Add activity").performClick()
+        compose.onNodeWithContentDescription("Scan receipt").performClick()
+        compose.runOnIdle {
+            assertEquals(1, activityCount)
+            assertEquals(1, scanCount)
+        }
+    }
+
+    @Test
     fun `load failure offers a retry without showing a budget amount`() {
         var retryCount = 0
         compose.setContent {

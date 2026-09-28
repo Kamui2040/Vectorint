@@ -22,6 +22,10 @@
     <string name="home_try_again">Riprova</string>
     <string name="home_edit_current_funds">Gestisci i conti</string>
     <string name="home_add_activity">Aggiungi movimento</string>
+    <string name="home_scan_receipt">Scansiona scontrino</string>
+    <string name="home_receipt_scan_in_progress">Scansione dello scontrino…</string>
+    <string name="home_receipt_scan_failed">Non è stato possibile scansionare lo scontrino. Riprova o aggiungi la spesa manualmente.</string>
+    <string name="home_receipt_scan_unavailable">La scansione degli scontrini non è disponibile su questo dispositivo.</string>
     <string name="home_recurring_items">Movimenti ricorrenti</string>
     <string name="home_previous_month">Precedente</string>
     <string name="home_next_month">Prossimo</string>
@@ -181,6 +185,8 @@
     <string name="account_assignment_label">Conto: %1$s</string>
     <string name="activity_add_title">Aggiungi movimento</string>
     <string name="activity_currency">Valuta: %1$s</string>
+    <string name="activity_receipt_total_added">Il totale dello scontrino è stato aggiunto. Controllalo prima di salvare.</string>
+    <string name="activity_receipt_total_not_found">Non è stato trovato un totale chiaro. Inserisci l’importo manualmente.</string>
     <string name="activity_direction">Tipo</string>
     <string name="activity_expense">Spesa</string>
     <string name="activity_income">Entrata</string>

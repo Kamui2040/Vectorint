@@ -22,6 +22,10 @@
     <string name="home_try_again">Tente novamente</string>
     <string name="home_edit_current_funds">Gerenciar contas</string>
     <string name="home_add_activity">Adicionar atividade</string>
+    <string name="home_scan_receipt">Digitalizar recibo</string>
+    <string name="home_receipt_scan_in_progress">A digitalizar recibo…</string>
+    <string name="home_receipt_scan_failed">Não foi possível digitalizar o recibo. Tenta novamente ou adiciona a despesa manualmente.</string>
+    <string name="home_receipt_scan_unavailable">A digitalização de recibos não está disponível neste dispositivo.</string>
     <string name="home_recurring_items">Itens recorrentes</string>
     <string name="home_previous_month">Anterior</string>
     <string name="home_next_month">Próximo</string>
@@ -181,6 +185,8 @@
     <string name="account_assignment_label">Conta: %1$s</string>
     <string name="activity_add_title">Adicionar movimentação</string>
     <string name="activity_currency">Moeda: %1$s</string>
+    <string name="activity_receipt_total_added">O total do recibo foi adicionado. Verifica-o antes de guardar.</string>
+    <string name="activity_receipt_total_not_found">Não foi encontrado um total claro no recibo. Introduz o montante manualmente.</string>
     <string name="activity_direction">Tipo</string>
     <string name="activity_expense">Despesa</string>
     <string name="activity_income">Receita</string>

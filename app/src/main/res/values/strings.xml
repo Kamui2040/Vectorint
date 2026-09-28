@@ -23,6 +23,10 @@
     <string name="home_try_again">Try again</string>
     <string name="home_edit_current_funds">Manage accounts</string>
     <string name="home_add_activity">Add activity</string>
+    <string name="home_scan_receipt">Scan receipt</string>
+    <string name="home_receipt_scan_in_progress">Scanning receipt…</string>
+    <string name="home_receipt_scan_failed">Couldn’t scan the receipt. Try again or add the expense manually.</string>
+    <string name="home_receipt_scan_unavailable">Receipt scanning isn’t available on this device.</string>
     <string name="home_recurring_items">Recurring items</string>
     <string name="home_previous_month">Previous</string>
     <string name="home_next_month">Next</string>
@@ -182,6 +186,8 @@
     <string name="account_assignment_label">Account: %1$s</string>
     <string name="activity_add_title">Add activity</string>
     <string name="activity_currency">Currency: %1$s</string>
+    <string name="activity_receipt_total_added">Receipt total added. Check it before saving.</string>
+    <string name="activity_receipt_total_not_found">No clear receipt total was found. Enter the amount manually.</string>
     <string name="activity_direction">Direction</string>
     <string name="activity_expense">Expense</string>
     <string name="activity_income">Income</string>

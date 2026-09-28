@@ -71,7 +71,16 @@ The initial foundation is deliberately small:
 - the selected full-colour Vectorint Raven artwork used by the adaptive launcher
   icon and permanent app header, with the original source image preserved
   unchanged and licensed separately under CC BY 4.0;
-- no network, online sign-in, analytics, advertising, or cloud integration;
+- no Vectorint-operated network, online sign-in, analytics, advertising, or cloud
+  integration, and no Android internet permission;
+- an optional Google Play build that uses on-device Google Play services to scan
+  one receipt, proposes a total and recognized vendor name in the normal editable
+  expense form, and
+  removes the temporary image after recognition; the standard and F-Droid builds
+  contain no scanner or Google dependency, while Google Play services may manage
+  module downloads and its documented diagnostic and usage metrics; a local seed
+  catalogue recognizes common German retailers from receipt-header aliases across
+  groceries, clothing, and other retail categories;
 - no iOS, desktop, web, or Kotlin Multiplatform targets;
 - no GitHub Actions.
 
@@ -268,6 +277,7 @@ from it.
 - Room 2.8.4 with KSP 2.3.11
 - Preferences DataStore 1.2.1
 - Kotlin Coroutines Android 1.11.0
+- Google Play-only ML Kit document scanner 16.0.0 and text recognition 19.0.1
 - Android SDK Platform 37.0 and Build-Tools 37.0.0
 - compile SDK 37, target SDK 37, minimum SDK 23
 - Java and Kotlin JVM target 21

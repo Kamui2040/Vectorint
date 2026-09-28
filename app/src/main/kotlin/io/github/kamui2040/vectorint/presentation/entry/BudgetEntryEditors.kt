@@ -104,6 +104,8 @@ internal class OneOffActivityEditor(
     private val clock: Clock = Clock.systemDefaultZone(),
     private val idFactory: ActivityIdFactory = ActivityIdFactory { ActivityId(UUID.randomUUID().toString()) },
 ) {
+    fun formatInput(money: Money): String = moneyAdapter.formatInput(money)
+
     suspend fun load(): OneOffActivityLoadResult =
         try {
             val accounts = budgetRepository.loadAccounts()

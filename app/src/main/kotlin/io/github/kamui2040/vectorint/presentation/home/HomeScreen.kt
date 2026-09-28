@@ -20,8 +20,10 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.rounded.ExpandLess
 import androidx.compose.material.icons.rounded.ExpandMore
+import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -38,6 +40,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.paneTitle
@@ -57,6 +60,9 @@ internal fun HomeScreen(
     onSetCurrentFunds: () -> Unit = {},
     onEditCurrentFunds: () -> Unit = {},
     onAddActivity: () -> Unit = {},
+    onScanReceipt: (() -> Unit)? = null,
+    receiptScanInProgress: Boolean = false,
+    receiptScanMessage: String? = null,
     onViewRecurringItems: () -> Unit = {},
     selectedMonthIsCurrent: Boolean = true,
     onPreviousMonth: () -> Unit = {},
@@ -96,6 +102,9 @@ internal fun HomeScreen(
                         state = state,
                         onManageAccounts = onEditCurrentFunds,
                         onAddActivity = onAddActivity,
+                        onScanReceipt = onScanReceipt,
+                        receiptScanInProgress = receiptScanInProgress,
+                        receiptScanMessage = receiptScanMessage,
                         onViewRecurringItems = onViewRecurringItems,
                     )
                 is HomeUiState.MonthOverview -> MonthOverviewContent(state)
@@ -303,6 +312,9 @@ private fun ReadyContent(
     state: HomeUiState.Ready,
     onManageAccounts: () -> Unit,
     onAddActivity: () -> Unit,
+    onScanReceipt: (() -> Unit)?,
+    receiptScanInProgress: Boolean,
+    receiptScanMessage: String?,
     onViewRecurringItems: () -> Unit,
 ) {
     val flowColors = MaterialTheme.flowColors
@@ -335,17 +347,56 @@ private fun ReadyContent(
             }
         }
 
-        Button(
-            onClick = onAddActivity,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .heightIn(min = 56.dp),
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
+            Button(
+                onClick = onAddActivity,
+                modifier =
+                    Modifier
+                        .weight(1f)
+                        .heightIn(min = 56.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.home_add_activity),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
+            if (onScanReceipt != null) {
+                val scanReceiptLabel = stringResource(R.string.home_scan_receipt)
+                FilledIconButton(
+                    onClick = onScanReceipt,
+                    enabled = !receiptScanInProgress,
+                    modifier =
+                        Modifier
+                            .size(56.dp)
+                            .semantics { contentDescription = scanReceiptLabel },
+                ) {
+                    if (receiptScanInProgress) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(24.dp),
+                            strokeWidth = 3.dp,
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Rounded.PhotoCamera,
+                            contentDescription = null,
+                        )
+                    }
+                }
+            }
+        }
+        if (receiptScanMessage != null) {
             Text(
-                text = stringResource(R.string.home_add_activity),
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
+                text = receiptScanMessage,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .semantics { liveRegion = LiveRegionMode.Polite },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
 
