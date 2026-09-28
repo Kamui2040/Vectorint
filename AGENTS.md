@@ -123,11 +123,17 @@ Treat every tracked file as suitable for public release.
 - Keep receipt scanning exclusive to the `playDebug` and `playRelease` build
   types. The standard `debug` and `release` variants must not compile, package,
   or expose Google Play services or ML Kit receipt-scanning code.
+- Keep Google Play in-app update checking exclusive to the `playDebug` and
+  `playRelease` build types. Standard builds must remain free of Play update
+  libraries and open Vectorint's public download page instead.
 - Receipt scanning may propose only an editable one-off expense amount and vendor
   name. Never save an expense automatically, and never retain the receipt image
   or recognized receipt text after the draft flow ends. When the scanner is
   available, keep its camera action available inside the one-off editor so entry
   flows opened from the quick-add widget can use the same receipt draft path.
+- Keep screen orientation optional at the Play manifest boundary. A fixed
+  orientation inside the scanner dependency must not reduce Vectorint's device
+  availability.
 - A planned one-off entry may use today or a future date. Assign it to the month
   containing that date, keep it planned until the user confirms it, and never
   silently turn existing planned entries into automatically booked activity.

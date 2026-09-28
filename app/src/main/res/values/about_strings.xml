@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="about_support_kofi">Support on Ko-fi</string>
+    <string name="about_check_updates">Check for updates</string>
+    <string name="about_check_updates_idle">Look for a newer version.</string>
+    <string name="about_check_updates_checking">Checking for updates…</string>
+    <string name="about_check_updates_current">You’re using the latest available version.</string>
+    <string name="about_check_updates_started">Google Play opened the available update.</string>
+    <string name="about_check_updates_cancelled">Update cancelled.</string>
+    <string name="about_check_updates_unavailable">Update checking isn’t available for this installation.</string>
+    <string name="about_check_updates_page_opened">The Vectorint download page opened.</string>
+    <string name="about_check_updates_failed">Couldn’t check for updates. Try again later.</string>
     <string name="about_changelog_version">Version %1$s</string>
     <string name="about_changelog_current_body">• Tighter About card with clearer navigation and a current-version changelog.\n• Dedicated licence and Sources sections with Repository, App website, Main website, and Ko-fi links.\n• New Privacy page that mirrors the public privacy policy inside the app.\n• Clearer privacy wording for local data, backups, reminders, and data removal.\n• Accessible Current funds sign control for entering negative balances when the keyboard has no minus key.</string>
     <string name="about_license_source_name">Vectorint source</string>
@@ -18,6 +27,8 @@
     <string name="about_privacy_intro">Vectorint keeps your budget data on your device.</string>
     <string name="about_privacy_data_use_title">Data use</string>
     <string name="about_privacy_data_use_body">Vectorint does not create an account. K2040 does not receive, upload, sell, or share your personal or financial data. Vectorint contains no advertising, analytics, telemetry, or tracking and does not request Android’s internet permission.</string>
+    <string name="about_privacy_updates_title">Update checking</string>
+    <string name="about_privacy_updates_body">When you check for updates, the Google Play edition asks the Play Store app whether an eligible update is available. Google-free editions open Vectorint’s public download page in your browser. K2040 does not receive the result or your personal or financial data.</string>
     <string name="about_privacy_local_data_title">Stored locally</string>
     <string name="about_privacy_local_data_body">Vectorint stores financial amounts, transaction records, user-created text, recurring dates and reminder information, and app settings in its private app storage. It does not access your Android system calendar.</string>
     <string name="about_privacy_backups_title">Backups</string>
@@ -28,7 +39,7 @@
     <string name="about_privacy_removal_body">Remove local Vectorint data through Android’s app settings or by uninstalling the app. Backup files remain wherever you saved them and must be removed separately.</string>
     <string name="about_privacy_questions">Privacy questions &amp; reports</string>
     <string name="about_privacy_questions_detail">Open the public Vectorint issue tracker</string>
-    <string name="about_privacy_updated">Policy last updated: 16 September 2026.</string>
+    <string name="about_privacy_updated">Policy last updated: 29 September 2026.</string>
     <string name="about_sources_intro">Project pages and source code</string>
     <string name="about_source_repository">Repository</string>
     <string name="about_source_repository_detail">Source code and project files</string>

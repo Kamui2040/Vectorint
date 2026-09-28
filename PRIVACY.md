@@ -47,6 +47,16 @@ this metrics data.
 
 The F-Droid edition does not contain or expose this Google Play services feature.
 
+## Update checking
+
+When you choose **Check for updates** in the Google Play edition, Vectorint asks
+the Google Play Store app whether an eligible newer version is available. If one
+is available, Google Play presents its update flow. This request is handled by
+Google Play; K2040 does not receive the result or any personal or financial data.
+
+Google-free editions open Vectorint's public download page in your chosen browser
+instead. Vectorint itself continues not to request Android's internet permission.
+
 ## Backups
 
 For manual or automatic backups, Android lets you choose where the readable JSON
@@ -76,4 +86,4 @@ Backup files remain wherever you chose to save them and must be removed separate
 Questions and privacy reports can be opened in the public Vectorint issue tracker:
 <https://github.com/Kamui2040/Vectorint/issues>
 
-Last updated: 16 September 2026.
+Last updated: 29 September 2026.

@@ -1,6 +1,9 @@
 package io.github.kamui2040.vectorint.presentation.about
 
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
@@ -13,6 +16,7 @@ import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.unit.Density
 import io.github.kamui2040.vectorint.BuildConfig
 import io.github.kamui2040.vectorint.presentation.theme.VectorintTheme
+import io.github.kamui2040.vectorint.update.AppUpdateState
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Rule
@@ -48,6 +52,29 @@ class AboutDialogTest {
             .onNodeWithText("Local · offline-first · no sign-in · no ads · no analytics · no tracking")
             .performScrollTo()
             .assertIsDisplayed()
+    }
+
+    @Test
+    fun `about checks for updates and announces the result`() {
+        var checks = 0
+        var updateState by mutableStateOf<AppUpdateState>(AppUpdateState.Idle)
+
+        compose.setContent {
+            VectorintTheme {
+                AboutDialog(
+                    updateState = updateState,
+                    onCheckForUpdates = {
+                        checks++
+                        updateState = AppUpdateState.UpToDate
+                    },
+                    onDismiss = {},
+                )
+            }
+        }
+
+        compose.onNodeWithText("Check for updates").performScrollTo().performClick()
+        compose.onNodeWithText("You’re using the latest available version.").assertIsDisplayed()
+        compose.runOnIdle { assertEquals(1, checks) }
     }
 
     @Test
@@ -118,11 +145,16 @@ class AboutDialogTest {
             .onNodeWithText("does not access your Android system calendar", substring = true)
             .performScrollTo()
             .assertIsDisplayed()
+        compose.onNodeWithText("Update checking").performScrollTo().assertIsDisplayed()
+        compose
+            .onNodeWithText("asks the Play Store app", substring = true)
+            .performScrollTo()
+            .assertIsDisplayed()
         compose.onNodeWithText("Backups").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Notifications").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Removing your data").performScrollTo().assertIsDisplayed()
         compose
-            .onNodeWithText("Policy last updated: 16 September 2026.")
+            .onNodeWithText("Policy last updated: 29 September 2026.")
             .performScrollTo()
             .assertIsDisplayed()
         compose.onNodeWithText("Privacy questions & reports").performScrollTo().performClick()

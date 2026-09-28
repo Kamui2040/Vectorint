@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="about_support_kofi">Soutenir sur Ko-fi</string>
+    <string name="about_check_updates">Rechercher des mises à jour</string>
+    <string name="about_check_updates_idle">Rechercher une version plus récente.</string>
+    <string name="about_check_updates_checking">Recherche de mises à jour…</string>
+    <string name="about_check_updates_current">Vous utilisez la dernière version disponible.</string>
+    <string name="about_check_updates_started">Google Play a ouvert la mise à jour disponible.</string>
+    <string name="about_check_updates_cancelled">La mise à jour a été annulée.</string>
+    <string name="about_check_updates_unavailable">La recherche de mises à jour n’est pas disponible pour cette installation.</string>
+    <string name="about_check_updates_page_opened">La page de téléchargement de Vectorint a été ouverte.</string>
+    <string name="about_check_updates_failed">Impossible de rechercher des mises à jour. Réessayez plus tard.</string>
     <string name="about_changelog_version">Version %1$s</string>
     <string name="about_changelog_current_body">• Carte À propos plus compacte, avec une navigation plus claire et le journal de la version actuelle.\n• Sections dédiées aux licences et aux sources, avec des liens vers le dépôt, le site de l’application, le site principal et Ko-fi.\n• Nouvelle page Confidentialité reprenant la politique publique dans l’application.\n• Texte plus clair sur les données locales, les sauvegardes, les rappels et la suppression des données.\n• Commande accessible du signe du solde actuel pour saisir un solde négatif lorsque le clavier n’a pas de touche moins.</string>
     <string name="about_license_source_name">Code source de Vectorint</string>
@@ -18,6 +27,8 @@
     <string name="about_privacy_intro">Vectorint conserve vos données budgétaires sur votre appareil.</string>
     <string name="about_privacy_data_use_title">Utilisation des données</string>
     <string name="about_privacy_data_use_body">Vectorint ne crée pas de compte. K2040 ne reçoit, n’envoie, ne vend ni ne partage vos données personnelles ou financières. Vectorint ne contient ni publicité, ni analyse, ni télémétrie, ni suivi et ne demande pas l’autorisation d’accès à Internet d’Android.</string>
+    <string name="about_privacy_updates_title">Recherche de mises à jour</string>
+    <string name="about_privacy_updates_body">Lorsque vous recherchez des mises à jour, l’édition Google Play demande à l’application Play Store si une mise à jour admissible est disponible. Les éditions sans Google ouvrent la page publique de téléchargement de Vectorint dans votre navigateur. K2040 ne reçoit ni le résultat ni vos données personnelles ou financières.</string>
     <string name="about_privacy_local_data_title">Stocké localement</string>
     <string name="about_privacy_local_data_body">Vectorint stocke les montants financiers, les enregistrements de transactions, le texte créé par l\'utilisateur, les dates récurrentes et les informations de rappel, ainsi que les paramètres de l\'application dans son stockage d\'application privé. Il n\'accède pas à votre calendrier système Android.</string>
     <string name="about_privacy_backups_title">Sauvegardes</string>
@@ -28,7 +39,7 @@
     <string name="about_privacy_removal_body">Supprimez les données locales Vectorint via les paramètres de l\'application Android ou en désinstallant l\'application. Les fichiers de sauvegarde restent là où vous les avez enregistrés et doivent être supprimés séparément.</string>
     <string name="about_privacy_questions">Questions et rapports sur la confidentialité</string>
     <string name="about_privacy_questions_detail">Ouvrir le suivi public des problèmes de Vectorint</string>
-    <string name="about_privacy_updated">Dernière mise à jour de la politique : 16 septembre 2026.</string>
+    <string name="about_privacy_updated">Dernière mise à jour de la politique : 29 septembre 2026.</string>
     <string name="about_sources_intro">Pages du projet et code source</string>
     <string name="about_source_repository">Dépôt</string>
     <string name="about_source_repository_detail">Code source et fichiers de projet</string>

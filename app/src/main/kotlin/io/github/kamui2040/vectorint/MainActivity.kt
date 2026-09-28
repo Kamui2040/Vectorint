@@ -1,6 +1,7 @@
 package io.github.kamui2040.vectorint
 
 import android.Manifest
+import android.app.Activity
 import android.content.Intent
 import android.net.Uri
 import android.os.Build
@@ -69,6 +70,9 @@ import io.github.kamui2040.vectorint.receipt.ReceiptScanner
 import io.github.kamui2040.vectorint.receipt.createReceiptScanner
 import io.github.kamui2040.vectorint.reminder.REMINDER_INTENT_ACTION
 import io.github.kamui2040.vectorint.reminder.REMINDER_ITEM_ID_EXTRA
+import io.github.kamui2040.vectorint.update.AppUpdateChecker
+import io.github.kamui2040.vectorint.update.AppUpdateState
+import io.github.kamui2040.vectorint.update.createAppUpdateChecker
 import io.github.kamui2040.vectorint.widget.QUICK_ADD_INTENT_ACTION
 
 class MainActivity : AppCompatActivity() {
@@ -77,12 +81,23 @@ class MainActivity : AppCompatActivity() {
     private var pendingQuickAddRequest by mutableStateOf(false)
     private var resumeGeneration by mutableIntStateOf(0)
     private var receiptScanState by mutableStateOf<ReceiptScanState>(ReceiptScanState.Idle)
+    private var updateCheckState by mutableStateOf<AppUpdateState>(AppUpdateState.Idle)
     private var receiptScanner: ReceiptScanner? = null
+    private var appUpdateChecker: AppUpdateChecker? = null
     private val notificationPermissionLauncher =
         registerForActivityResult(ActivityResultContracts.RequestPermission()) {
             val vectorintApplication = application as VectorintApplication
             notificationsAvailable = vectorintApplication.notificationsAllowed()
             vectorintApplication.refreshReminders()
+        }
+    private val updateLauncher =
+        registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
+            updateCheckState =
+                when (result.resultCode) {
+                    Activity.RESULT_OK -> AppUpdateState.UpdateStarted
+                    Activity.RESULT_CANCELED -> AppUpdateState.Cancelled
+                    else -> AppUpdateState.Failed
+                }
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -98,6 +113,12 @@ class MainActivity : AppCompatActivity() {
                         ReceiptScanOutcome.Failed -> ReceiptScanState.Failed
                     }
             }
+        appUpdateChecker =
+            createAppUpdateChecker(
+                activity = this,
+                updateLauncher = updateLauncher,
+                onResult = { updateCheckState = it },
+            )
         val vectorintApplication = application as VectorintApplication
         val categoryManager = CategoryManager(vectorintApplication.budgetRepository)
         notificationsAvailable = vectorintApplication.notificationsAllowed()
@@ -447,7 +468,15 @@ class MainActivity : AppCompatActivity() {
                     },
                 )
                 if (showAbout) {
-                    AboutDialog(onDismiss = { showAbout = false })
+                    AboutDialog(
+                        updateState = updateCheckState,
+                        onCheckForUpdates = {
+                            updateCheckState = AppUpdateState.Checking
+                            appUpdateChecker?.checkForUpdate()
+                                ?: run { updateCheckState = AppUpdateState.Unavailable }
+                        },
+                        onDismiss = { showAbout = false },
+                    )
                 }
             }
         }

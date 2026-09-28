@@ -87,8 +87,10 @@ dependencies {
 
     add("playDebugImplementation", "com.google.android.gms:play-services-mlkit-document-scanner:16.0.0")
     add("playDebugImplementation", "com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
+    add("playDebugImplementation", "com.google.android.play:app-update:2.1.0")
     add("playReleaseImplementation", "com.google.android.gms:play-services-mlkit-document-scanner:16.0.0")
     add("playReleaseImplementation", "com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
+    add("playReleaseImplementation", "com.google.android.play:app-update:2.1.0")
 
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     add("playDebugImplementation", "androidx.compose.ui:ui-test-manifest")

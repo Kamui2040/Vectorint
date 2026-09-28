@@ -32,8 +32,10 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.paneTitle
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -44,6 +46,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import io.github.kamui2040.vectorint.BuildConfig
 import io.github.kamui2040.vectorint.R
+import io.github.kamui2040.vectorint.update.AppUpdateState
 
 private enum class AboutPage {
     ROOT,
@@ -54,7 +57,11 @@ private enum class AboutPage {
 }
 
 @Composable
-internal fun AboutDialog(onDismiss: () -> Unit) {
+internal fun AboutDialog(
+    updateState: AppUpdateState = AppUpdateState.Idle,
+    onCheckForUpdates: () -> Unit = {},
+    onDismiss: () -> Unit,
+) {
     var page by rememberSaveable { mutableStateOf(AboutPage.ROOT) }
     val uriHandler = LocalUriHandler.current
     val paneTitle = stringResource(R.string.about_title)
@@ -112,6 +119,11 @@ internal fun AboutDialog(onDismiss: () -> Unit) {
                                 AboutMenuCard(
                                     title = stringResource(R.string.about_changelog),
                                     onClick = { page = AboutPage.CHANGELOG },
+                                )
+                                AboutUpdateCard(
+                                    supporting = updateStatusText(updateState),
+                                    enabled = updateState != AppUpdateState.Checking,
+                                    onClick = onCheckForUpdates,
                                 )
                                 AboutMenuCard(
                                     title = stringResource(R.string.about_license),
@@ -176,6 +188,21 @@ internal fun AboutDialog(onDismiss: () -> Unit) {
         }
     }
 }
+
+@Composable
+private fun updateStatusText(state: AppUpdateState): String =
+    stringResource(
+        when (state) {
+            AppUpdateState.Idle -> R.string.about_check_updates_idle
+            AppUpdateState.Checking -> R.string.about_check_updates_checking
+            AppUpdateState.UpToDate -> R.string.about_check_updates_current
+            AppUpdateState.UpdateStarted -> R.string.about_check_updates_started
+            AppUpdateState.Cancelled -> R.string.about_check_updates_cancelled
+            AppUpdateState.Unavailable -> R.string.about_check_updates_unavailable
+            AppUpdateState.ReleasePageOpened -> R.string.about_check_updates_page_opened
+            AppUpdateState.Failed -> R.string.about_check_updates_failed
+        },
+    )
 
 @Composable
 private fun AboutHeader() {
@@ -271,6 +298,51 @@ private fun AboutMenuCard(
 }
 
 @Composable
+private fun AboutUpdateCard(
+    supporting: String,
+    enabled: Boolean,
+    onClick: () -> Unit,
+) {
+    Surface(
+        onClick = onClick,
+        enabled = enabled,
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .heightIn(min = 64.dp),
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
+            ) {
+                Text(
+                    text = stringResource(R.string.about_check_updates),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                    text = supporting,
+                    modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            Text(
+                text = "↻",
+                style = MaterialTheme.typography.titleLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+}
+
+@Composable
 private fun AboutChangelog(onBack: () -> Unit) {
     AboutSectionHeader(
         title = stringResource(R.string.about_changelog),
@@ -341,6 +413,10 @@ private fun AboutPrivacy(
     AboutTextCard(
         title = stringResource(R.string.about_privacy_data_use_title),
         body = stringResource(R.string.about_privacy_data_use_body),
+    )
+    AboutTextCard(
+        title = stringResource(R.string.about_privacy_updates_title),
+        body = stringResource(R.string.about_privacy_updates_body),
     )
     AboutTextCard(
         title = stringResource(R.string.about_privacy_local_data_title),

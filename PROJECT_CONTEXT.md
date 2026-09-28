@@ -62,7 +62,9 @@ The initial foundation is deliberately small:
 - a branded compact About card opened from the raven or Settings, with the K2040
   creator logo, app version, short purpose, current-version changelog, licences,
   labelled repository and website links, Ko-fi support, and a dedicated Privacy
-  page reflecting the public policy;
+  page reflecting the public policy; About also provides a user-triggered update
+  check through Google Play in Play builds and the public download page in
+  Google-free builds;
 - user-selected manual and automatic local JSON backups plus a fail-closed
   whole-data restore flow;
 - idempotent current-month occurrence generation that stores one planned Activity
@@ -280,6 +282,7 @@ from it.
 - Preferences DataStore 1.2.1
 - Kotlin Coroutines Android 1.11.0
 - Google Play-only ML Kit document scanner 16.0.0 and text recognition 19.0.1
+- Google Play-only In-App Update Library 2.1.0
 - Android SDK Platform 37.0 and Build-Tools 37.0.0
 - compile SDK 37, target SDK 37, minimum SDK 23
 - Java and Kotlin JVM target 21
@@ -291,18 +294,19 @@ device, reproducibility, signing, and publication gates before publishing any
 later production release.
 
 Version 0.0.11 with Android version code 12 is the most recent tagged source
-baseline. Version 0.0.12 with Android version code 15 is the next Google Play
-tester candidate; codes 13 and 14 were earlier tester candidates. Code 15 defers
-optional Google receipt-scanner initialization until the user requests a scan and
-treats provider initialization failures as unavailable, so they cannot block app
-startup. Its delta from 0.0.11 is the
+baseline. Version 0.0.12 with Android version code 15 was uploaded to a Google
+Play tester track and awaits Google's confirmation; codes 13 and 14 were earlier
+tester candidates. Code 15 defers optional Google receipt-scanner initialization
+until the user requests a scan and treats provider initialization failures as
+unavailable, so they cannot block app startup. A later tester build adds in-app
+update checking. The 0.0.12 delta from 0.0.11 is the
 tightened About card, current-version changelog and licence/source/support links,
 dedicated in-app Privacy page, clarified public privacy policy, an accessible
 Current funds sign control for keyboards without a minus key, complete
 Portuguese, Spanish, Italian, and French localization, future-dated one-off
-entries, and optional Google Play receipt scanning. Version 0.0.12 remains
-unpublished until the remaining release gates and maintainer approvals are
-complete.
+entries, and optional Google Play receipt scanning. A later tester build will add
+the user-triggered update check. Version 0.0.12 remains unpublished to production
+until the remaining release gates and maintainer approvals are complete.
 
 F-Droid is a separate update channel: it will build from the public release source
 and use its own repository-specific signature. Vectorint's permanent developer
