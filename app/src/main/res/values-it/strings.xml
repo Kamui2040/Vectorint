@@ -192,11 +192,12 @@
     <string name="activity_income">Entrata</string>
     <string name="activity_timing">Quando</string>
     <string name="activity_confirmed_now">Confermato adesso</string>
-    <string name="activity_planned_month">Previsto questo mese</string>
+    <string name="activity_planned_month">Previsto per una data</string>
     <string name="activity_effect_confirmed_expense">Sottrae una volta dal conto selezionato.</string>
     <string name="activity_effect_confirmed_income">L’importo viene aggiunto una volta al conto selezionato.</string>
-    <string name="activity_effect_planned_expense">L’importo viene riservato in «Disponibile ora» per questo mese.</string>
-    <string name="activity_effect_planned_income">L’importo rientra in «Disponibile ora» solo se le entrate previste sono attive.</string>
+    <string name="activity_effect_planned_expense">L’importo viene riservato in «Disponibile ora» per il mese della data selezionata.</string>
+    <string name="activity_effect_planned_income">L’importo rientra nel mese della data selezionata solo se le entrate previste sono attive.</string>
+    <string name="activity_date_must_not_be_past">Scegli oggi o una data futura.</string>
     <string name="activity_save">Salva movimento</string>
     <string name="activity_current_funds_needed">Conto richiesto</string>
     <string name="activity_current_funds_needed_body">Configura un conto prima di aggiungere movimenti.</string>

@@ -193,11 +193,12 @@
     <string name="activity_income">Income</string>
     <string name="activity_timing">When</string>
     <string name="activity_confirmed_now">Confirmed now</string>
-    <string name="activity_planned_month">Planned this month</string>
+    <string name="activity_planned_month">Planned for a date</string>
     <string name="activity_effect_confirmed_expense">Subtracts once from the selected account.</string>
     <string name="activity_effect_confirmed_income">Adds once to the selected account.</string>
-    <string name="activity_effect_planned_expense">Reserved from Available now for this month.</string>
-    <string name="activity_effect_planned_income">Included in Available now only when expected income is on.</string>
+    <string name="activity_effect_planned_expense">Reserved from Available now for the selected date’s month.</string>
+    <string name="activity_effect_planned_income">Included for the selected date’s month only when expected income is on.</string>
+    <string name="activity_date_must_not_be_past">Choose today or a future date.</string>
     <string name="activity_save">Save activity</string>
     <string name="activity_current_funds_needed">Account required</string>
     <string name="activity_current_funds_needed_body">Set up an account before adding entries.</string>

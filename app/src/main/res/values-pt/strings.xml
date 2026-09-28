@@ -192,11 +192,12 @@
     <string name="activity_income">Receita</string>
     <string name="activity_timing">Quando</string>
     <string name="activity_confirmed_now">Confirmada agora</string>
-    <string name="activity_planned_month">Prevista para este mês</string>
+    <string name="activity_planned_month">Prevista para uma data</string>
     <string name="activity_effect_confirmed_expense">O valor é descontado uma vez da conta selecionada.</string>
     <string name="activity_effect_confirmed_income">O valor é adicionado uma vez à conta selecionada.</string>
-    <string name="activity_effect_planned_expense">O valor fica reservado em “Disponível agora” neste mês.</string>
-    <string name="activity_effect_planned_income">O valor só entra em “Disponível agora” quando a receita prevista está ativada.</string>
+    <string name="activity_effect_planned_expense">O valor fica reservado em “Disponível agora” no mês da data escolhida.</string>
+    <string name="activity_effect_planned_income">O valor só entra no mês da data escolhida quando a receita prevista está ativada.</string>
+    <string name="activity_date_must_not_be_past">Escolha hoje ou uma data futura.</string>
     <string name="activity_save">Salvar movimentação</string>
     <string name="activity_current_funds_needed">Conta necessária</string>
     <string name="activity_current_funds_needed_body">Configure uma conta antes de adicionar movimentações.</string>

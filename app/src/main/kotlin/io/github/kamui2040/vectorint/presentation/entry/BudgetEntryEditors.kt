@@ -75,6 +75,8 @@ internal sealed interface EntrySaveResult {
 
     data object AmountMustBePositive : EntrySaveResult
 
+    data object DateMustNotBePast : EntrySaveResult
+
     data object StorageFailed : EntrySaveResult
 }
 
@@ -82,6 +84,7 @@ internal data class OneOffActivityFormSeed(
     val currencyCode: CurrencyCode,
     val accounts: List<Account> = emptyList(),
     val selectedAccountId: AccountId = io.github.kamui2040.vectorint.core.LEGACY_DEFAULT_ACCOUNT_ID,
+    val today: LocalDate,
 )
 
 internal sealed interface OneOffActivityLoadResult {
@@ -117,6 +120,7 @@ internal class OneOffActivityEditor(
                     accounts = accounts,
                     selectedAccountId = accounts.firstOrNull(Account::includeInAvailableNow)?.id ?: accounts.first().id,
                     currencyCode = currencies.single(),
+                    today = LocalDate.now(clock),
                 ),
             )
         } catch (cancellation: CancellationException) {
@@ -131,6 +135,7 @@ internal class OneOffActivityEditor(
         currencyCode: CurrencyCode,
         direction: Direction,
         state: ActivityState,
+        plannedOn: LocalDate? = null,
         tags: Set<Tag> = emptySet(),
         categoryId: CategoryId? = null,
         accountId: AccountId = io.github.kamui2040.vectorint.core.LEGACY_DEFAULT_ACCOUNT_ID,
@@ -144,6 +149,10 @@ internal class OneOffActivityEditor(
             }
         if (money.minorUnits == 0L) return EntrySaveResult.AmountMustBePositive
 
+        val today = LocalDate.now(clock)
+        val expectedOn = if (state == ActivityState.PLANNED) plannedOn ?: today else null
+        if (expectedOn != null && expectedOn.isBefore(today)) return EntrySaveResult.DateMustNotBePast
+
         val now = clock.instant()
         val activity =
             ActivityEntry(
@@ -153,8 +162,8 @@ internal class OneOffActivityEditor(
                 direction = direction,
                 amount = money,
                 state = state,
-                budgetMonth = BudgetMonth(YearMonth.now(clock)),
-                expectedOn = if (state == ActivityState.PLANNED) LocalDate.now(clock) else null,
+                budgetMonth = BudgetMonth(expectedOn?.let(YearMonth::from) ?: YearMonth.now(clock)),
+                expectedOn = expectedOn,
                 bookedAt = if (state == ActivityState.CONFIRMED) now else null,
                 source = ActivitySource.OneOff,
                 categoryId = categoryId,

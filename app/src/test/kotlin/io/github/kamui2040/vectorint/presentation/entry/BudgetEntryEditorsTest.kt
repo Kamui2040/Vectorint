@@ -109,6 +109,70 @@ class BudgetEntryEditorsTest {
         }
 
     @Test
+    fun `future one-off expense belongs to its selected month`() =
+        runBlocking {
+            val repository = FakeBudgetRepository(currentFunds = funds(100_000))
+            val plannedOn = LocalDate.of(2026, 10, 20)
+
+            assertEquals(
+                EntrySaveResult.Saved,
+                activityEditor(repository).save(
+                    "25.00",
+                    usd,
+                    Direction.EXPENSE,
+                    ActivityState.PLANNED,
+                    plannedOn = plannedOn,
+                ),
+            )
+
+            val activity = repository.activities.single()
+            assertEquals(BudgetMonth(YearMonth.of(2026, 10)), activity.budgetMonth)
+            assertEquals(plannedOn, activity.expectedOn)
+            assertEquals(0L, calculation(repository).reservedExpenses.minorUnits)
+            assertEquals(
+                2_500,
+                calculation(repository, month = BudgetMonth(YearMonth.of(2026, 10))).reservedExpenses.minorUnits,
+            )
+        }
+
+    @Test
+    fun `planned one-off date cannot be in the past`() =
+        runBlocking {
+            val repository = FakeBudgetRepository(currentFunds = funds(100_000))
+
+            assertEquals(
+                EntrySaveResult.DateMustNotBePast,
+                activityEditor(repository).save(
+                    "25.00",
+                    usd,
+                    Direction.EXPENSE,
+                    ActivityState.PLANNED,
+                    plannedOn = LocalDate.of(2026, 9, 14),
+                ),
+            )
+            assertEquals(emptyList<ActivityEntry>(), repository.activities)
+        }
+
+    @Test
+    fun `confirmed one-off ignores a future planning date`() =
+        runBlocking {
+            val repository = FakeBudgetRepository(currentFunds = funds(100_000))
+
+            activityEditor(repository).save(
+                "25.00",
+                usd,
+                Direction.EXPENSE,
+                ActivityState.CONFIRMED,
+                plannedOn = LocalDate.of(2026, 10, 20),
+            )
+
+            val activity = repository.activities.single()
+            assertEquals(BudgetMonth(YearMonth.of(2026, 9)), activity.budgetMonth)
+            assertEquals(null, activity.expectedOn)
+            assertEquals(editTime, activity.bookedAt)
+        }
+
+    @Test
     fun `planned one-off income remains excluded without an explicit opt in`() =
         runBlocking {
             val repository = FakeBudgetRepository(currentFunds = funds(100_000))
@@ -148,6 +212,7 @@ class BudgetEntryEditorsTest {
             val ready = editor.load() as OneOffActivityLoadResult.Ready
             assertEquals(cash.id, ready.seed.selectedAccountId)
             assertEquals(listOf(cash), ready.seed.accounts)
+            assertEquals(LocalDate.of(2026, 9, 15), ready.seed.today)
             assertEquals(
                 EntrySaveResult.Saved,
                 editor.save(
@@ -243,6 +308,7 @@ class BudgetEntryEditorsTest {
         state: ActivityState,
         tags: Set<Tag> = emptySet(),
         categoryId: CategoryId? = null,
+        plannedOn: LocalDate? = null,
     ): EntrySaveResult =
         save(
             nameInput = "Test entry",
@@ -252,6 +318,7 @@ class BudgetEntryEditorsTest {
             state = state,
             tags = tags,
             categoryId = categoryId,
+            plannedOn = plannedOn,
         )
 
     private fun funds(minorUnits: Long): CurrentFunds = CurrentFunds(Money(minorUnits, usd), initialTime)
@@ -266,12 +333,13 @@ class BudgetEntryEditorsTest {
     private fun calculation(
         repository: FakeBudgetRepository,
         policy: CalculationPolicy = CalculationPolicy(),
+        month: BudgetMonth = BudgetMonth(YearMonth.of(2026, 9)),
     ): AvailableFundsResult.Available {
         val snapshot = requireNotNull(repository.loadSnapshot())
         val result =
             AvailableFundsCalculator.calculate(
                 accounts = snapshot.accounts,
-                month = BudgetMonth(YearMonth.of(2026, 9)),
+                month = month,
                 activity = snapshot.activities,
                 policy = policy,
             )
