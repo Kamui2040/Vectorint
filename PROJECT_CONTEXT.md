@@ -75,8 +75,9 @@ The initial foundation is deliberately small:
 - no Vectorint-operated network, online sign-in, analytics, advertising, or cloud
   integration, and no Android internet permission;
 - an optional Google Play build that uses on-device Google Play services to scan
-  one receipt, proposes a total and recognized vendor name in the normal editable
-  expense form, and
+  one receipt from Home or the one-off editor opened directly or through the
+  quick-add widget, proposes a total and recognized vendor name in the normal
+  editable expense form, and
   removes the temporary image after recognition; the standard and F-Droid builds
   contain no scanner or Google dependency, while Google Play services may manage
   module downloads and its documented diagnostic and usage metrics; a local seed

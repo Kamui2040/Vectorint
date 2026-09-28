@@ -12,17 +12,22 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.PhotoCamera
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -44,6 +49,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -79,6 +85,9 @@ internal fun OneOffActivityRoute(
     onBack: () -> Unit,
     receiptText: String? = null,
     onReceiptConsumed: () -> Unit = {},
+    onScanReceipt: (() -> Unit)? = null,
+    receiptScanInProgress: Boolean = false,
+    receiptScanMessage: String? = null,
 ) {
     var loadKey by remember { mutableIntStateOf(0) }
     val result by
@@ -114,6 +123,9 @@ internal fun OneOffActivityRoute(
                     onBack = onBack,
                     receiptText = receiptText,
                     onReceiptConsumed = onReceiptConsumed,
+                    onScanReceipt = onScanReceipt,
+                    receiptScanInProgress = receiptScanInProgress,
+                    receiptScanMessage = receiptScanMessage,
                 )
             }
     }
@@ -128,33 +140,12 @@ private fun OneOffActivityReadyRoute(
     onBack: () -> Unit,
     receiptText: String?,
     onReceiptConsumed: () -> Unit,
+    onScanReceipt: (() -> Unit)?,
+    receiptScanInProgress: Boolean,
+    receiptScanMessage: String?,
 ) {
-    val receiptDraft =
-        remember {
-            if (receiptText == null) {
-                null
-            } else {
-                val amountInput =
-                    ReceiptTotalExtractor
-                        .extract(receiptText, seed.currencyCode)
-                        ?.let(editor::formatInput)
-                ReceiptDraft(
-                    nameInput = ReceiptVendorMatcher.match(receiptText)?.displayName,
-                    amountInput = amountInput,
-                    suggestion =
-                        if (amountInput == null) {
-                            ReceiptSuggestion.TOTAL_NOT_FOUND
-                        } else {
-                            ReceiptSuggestion.TOTAL_ADDED
-                        },
-                )
-            }
-        }
-    LaunchedEffect(Unit) {
-        if (receiptText != null) onReceiptConsumed()
-    }
-    var nameInput by rememberSaveable { mutableStateOf(receiptDraft?.nameInput.orEmpty()) }
-    var amountInput by rememberSaveable { mutableStateOf(receiptDraft?.amountInput.orEmpty()) }
+    var nameInput by rememberSaveable { mutableStateOf("") }
+    var amountInput by rememberSaveable { mutableStateOf("") }
     var accountIdValue by rememberSaveable { mutableStateOf(seed.selectedAccountId.value) }
     var direction by rememberSaveable { mutableStateOf(Direction.EXPENSE) }
     var state by rememberSaveable { mutableStateOf(ActivityState.CONFIRMED) }
@@ -162,11 +153,23 @@ private fun OneOffActivityReadyRoute(
     var showDatePicker by remember { mutableStateOf(false) }
     var categoryIdValue by rememberSaveable { mutableStateOf<String?>(null) }
     var tags by rememberTagState(emptySet())
+    var receiptSuggestion by remember { mutableStateOf<ReceiptSuggestion?>(null) }
     var issue by remember { mutableStateOf<EntrySaveResult?>(null) }
     var saving by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val plannedDate = LocalDate.ofEpochDay(plannedDateEpochDay)
     val plannedDateLabel = remember(plannedDate) { RegionalFormatter().formatDate(plannedDate) }
+
+    LaunchedEffect(receiptText) {
+        val recognizedText = receiptText ?: return@LaunchedEffect
+        val receiptDraft = receiptDraft(recognizedText, seed.currencyCode, editor::formatInput)
+        nameInput = receiptDraft.nameInput.orEmpty()
+        amountInput = receiptDraft.amountInput.orEmpty()
+        direction = Direction.EXPENSE
+        receiptSuggestion = receiptDraft.suggestion
+        issue = null
+        onReceiptConsumed()
+    }
 
     if (showDatePicker) {
         OneOffDatePickerDialog(
@@ -195,7 +198,10 @@ private fun OneOffActivityReadyRoute(
         categoryId = categoryIdValue?.let(::CategoryId),
         categoryManager = categoryManager,
         tags = tags,
-        receiptSuggestion = receiptDraft?.suggestion,
+        receiptSuggestion = receiptSuggestion,
+        onScanReceipt = onScanReceipt,
+        receiptScanInProgress = receiptScanInProgress,
+        receiptScanMessage = receiptScanMessage,
         onNameChange = {
             nameInput = it
             issue = null
@@ -271,6 +277,9 @@ internal fun OneOffActivityScreen(
     categoryManager: CategoryManager? = null,
     tags: Set<Tag> = emptySet(),
     receiptSuggestion: ReceiptSuggestion? = null,
+    onScanReceipt: (() -> Unit)? = null,
+    receiptScanInProgress: Boolean = false,
+    receiptScanMessage: String? = null,
     onNameChange: (String) -> Unit,
     onAmountChange: (String) -> Unit,
     onAccountChange: (AccountId) -> Unit = {},
@@ -286,7 +295,28 @@ internal fun OneOffActivityScreen(
         title = stringResource(R.string.activity_add_title),
         onBack = onBack,
         backEnabled = !saving,
+        titleAction =
+            onScanReceipt?.let { scanReceipt ->
+                {
+                    ReceiptScanButton(
+                        onClick = scanReceipt,
+                        inProgress = receiptScanInProgress,
+                        enabled = !saving,
+                    )
+                }
+            },
     ) {
+        if (receiptScanMessage != null) {
+            Text(
+                text = receiptScanMessage,
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .semantics { liveRegion = LiveRegionMode.Polite },
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         if (receiptSuggestion != null) {
             Text(
                 text =
@@ -435,6 +465,53 @@ private data class ReceiptDraft(
     val suggestion: ReceiptSuggestion,
 )
 
+private fun receiptDraft(
+    recognizedText: String,
+    currencyCode: io.github.kamui2040.vectorint.core.CurrencyCode,
+    formatInput: (io.github.kamui2040.vectorint.core.Money) -> String,
+): ReceiptDraft {
+    val amountInput = ReceiptTotalExtractor.extract(recognizedText, currencyCode)?.let(formatInput)
+    return ReceiptDraft(
+        nameInput = ReceiptVendorMatcher.match(recognizedText)?.displayName,
+        amountInput = amountInput,
+        suggestion =
+            if (amountInput == null) {
+                ReceiptSuggestion.TOTAL_NOT_FOUND
+            } else {
+                ReceiptSuggestion.TOTAL_ADDED
+            },
+    )
+}
+
+@Composable
+private fun ReceiptScanButton(
+    onClick: () -> Unit,
+    inProgress: Boolean,
+    enabled: Boolean,
+) {
+    val label = stringResource(R.string.home_scan_receipt)
+    FilledIconButton(
+        onClick = onClick,
+        enabled = enabled && !inProgress,
+        modifier =
+            Modifier
+                .size(56.dp)
+                .semantics { contentDescription = label },
+    ) {
+        if (inProgress) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(24.dp),
+                strokeWidth = 3.dp,
+            )
+        } else {
+            Icon(
+                imageVector = Icons.Rounded.PhotoCamera,
+                contentDescription = null,
+            )
+        }
+    }
+}
+
 @Composable
 private fun SelectionHeading(text: String) {
     Text(
@@ -562,6 +639,7 @@ private fun EntryScaffold(
     title: String,
     onBack: () -> Unit,
     backEnabled: Boolean = true,
+    titleAction: (@Composable () -> Unit)? = null,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Surface(
@@ -584,12 +662,22 @@ private fun EntryScaffold(
             ) {
                 Text(stringResource(R.string.entry_back))
             }
-            Text(
-                text = title,
-                modifier = Modifier.semantics { heading() },
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold,
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = title,
+                    modifier =
+                        Modifier
+                            .weight(1f)
+                            .semantics { heading() },
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                )
+                titleAction?.invoke()
+            }
             content()
         }
     }

@@ -53,6 +53,7 @@ class BudgetEntryScreensTest {
         }
 
         compose.onNodeWithText("Add activity").assertIsDisplayed()
+        compose.onNodeWithContentDescription("Scan receipt").assertDoesNotExist()
         compose.onNodeWithText("Groceries").assertIsDisplayed()
         compose.onNodeWithText("Income").performScrollTo().performClick()
         compose.onNodeWithText("Planned for a date").performScrollTo().performClick()
@@ -64,6 +65,38 @@ class BudgetEntryScreensTest {
         compose.onNodeWithText("Close").performClick()
         compose.onNodeWithText("Save activity").performScrollTo().performClick()
         compose.runOnIdle { assertEquals(1, saves) }
+    }
+
+    @Test
+    fun `one-off activity offers the receipt camera when scanning is available`() {
+        var scanCount = 0
+        compose.setContent {
+            VectorintTheme {
+                OneOffActivityScreen(
+                    nameInput = "",
+                    amountInput = "",
+                    currencyCode = "EUR",
+                    direction = Direction.EXPENSE,
+                    state = ActivityState.CONFIRMED,
+                    plannedDateLabel = "28 Sept 2026",
+                    saving = false,
+                    issue = null,
+                    onScanReceipt = { scanCount++ },
+                    receiptScanMessage = "Scanning receipt…",
+                    onNameChange = {},
+                    onAmountChange = {},
+                    onDirectionChange = {},
+                    onStateChange = {},
+                    onSelectPlannedDate = {},
+                    onSave = {},
+                    onBack = {},
+                )
+            }
+        }
+
+        compose.onNodeWithContentDescription("Scan receipt").assertIsDisplayed().performClick()
+        compose.onNodeWithText("Scanning receipt…").assertIsDisplayed()
+        compose.runOnIdle { assertEquals(1, scanCount) }
     }
 
     @Test

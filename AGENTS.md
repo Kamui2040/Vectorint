@@ -125,7 +125,9 @@ Treat every tracked file as suitable for public release.
   or expose Google Play services or ML Kit receipt-scanning code.
 - Receipt scanning may propose only an editable one-off expense amount and vendor
   name. Never save an expense automatically, and never retain the receipt image
-  or recognized receipt text after the draft flow ends.
+  or recognized receipt text after the draft flow ends. When the scanner is
+  available, keep its camera action available inside the one-off editor so entry
+  flows opened from the quick-add widget can use the same receipt draft path.
 - A planned one-off entry may use today or a future date. Assign it to the month
   containing that date, keep it planned until the user confirms it, and never
   silently turn existing planned entries into automatically booked activity.
