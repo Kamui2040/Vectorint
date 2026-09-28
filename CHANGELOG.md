@@ -4,6 +4,10 @@ All notable user-facing changes will be recorded here.
 
 ## 0.0.12 - Unreleased
 
+- Add an optional Google Play receipt scanner that proposes an editable expense
+  total and vendor, including from the quick-add entry screen.
+- Allow one-time entries to be planned for a future date without creating a
+  recurring item.
 - Tighten About into a smaller, easier-to-scan card with a current-version
   changelog, clear licence details, and labelled links for the repository, app
   website, main website, and Ko-fi support.
@@ -14,6 +18,7 @@ All notable user-facing changes will be recorded here.
   lock-screen reminder privacy.
 - Add an accessible sign control to Current funds so a negative balance can be
   entered even when the device keyboard does not provide a minus key.
+- Add complete Portuguese, Spanish, Italian, and French interface translations.
 
 ## 0.0.11 - Tagged 2026-09-16
 

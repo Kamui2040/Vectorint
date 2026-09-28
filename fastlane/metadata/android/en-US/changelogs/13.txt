@@ -1,1 +1,0 @@
-Refresh About with a current-version changelog, clearer licence and source links, Ko-fi support, and an in-app Privacy page covering local data, backups, reminders, and data removal. Current funds now has an accessible sign control, so negative balances can be entered even when the keyboard has no minus key.

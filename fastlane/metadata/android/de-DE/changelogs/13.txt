@@ -1,1 +1,0 @@
-Der kompaktere „Über Vectorint“-Dialog bietet einen Changelog, klarere Lizenz- und Quellenlinks, Ko-fi-Unterstützung sowie eine neue Datenschutzseite. Beim aktuellen Guthaben lassen sich negative Werte jetzt über ein barrierefreies Vorzeichen-Steuerelement eingeben, auch wenn die Tastatur kein Minuszeichen anbietet.

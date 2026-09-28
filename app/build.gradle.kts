@@ -15,7 +15,7 @@ android {
         applicationId = "io.github.kamui2040.vectorint"
         minSdk = 23
         targetSdk = 37
-        versionCode = 13
+        versionCode = 14
         versionName = "0.0.12"
     }
 
