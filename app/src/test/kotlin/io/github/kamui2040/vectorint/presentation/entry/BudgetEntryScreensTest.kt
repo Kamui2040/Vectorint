@@ -38,12 +38,14 @@ class BudgetEntryScreensTest {
                     currencyCode = "USD",
                     direction = direction,
                     state = state,
+                    plannedDateLabel = "Sep 15, 2026",
                     saving = false,
                     issue = null,
                     onNameChange = {},
                     onAmountChange = {},
                     onDirectionChange = { direction = it },
                     onStateChange = { state = it },
+                    onSelectPlannedDate = {},
                     onSave = { saves++ },
                     onBack = {},
                 )
@@ -53,10 +55,11 @@ class BudgetEntryScreensTest {
         compose.onNodeWithText("Add activity").assertIsDisplayed()
         compose.onNodeWithText("Groceries").assertIsDisplayed()
         compose.onNodeWithText("Income").performScrollTo().performClick()
-        compose.onNodeWithText("Planned this month").performScrollTo().performClick()
+        compose.onNodeWithText("Planned for a date").performScrollTo().performClick()
+        compose.onNodeWithText("Planned for Sep 15, 2026").performScrollTo().assertIsDisplayed()
         compose.onNodeWithContentDescription("More about When").performScrollTo().performClick()
         compose
-            .onNodeWithText("Included in Available now only when expected income is on.")
+            .onNodeWithText("Included for the selected date’s month only when expected income is on.")
             .assertIsDisplayed()
         compose.onNodeWithText("Close").performClick()
         compose.onNodeWithText("Save activity").performScrollTo().performClick()
@@ -73,12 +76,14 @@ class BudgetEntryScreensTest {
                     currencyCode = "USD",
                     direction = Direction.EXPENSE,
                     state = ActivityState.PLANNED,
+                    plannedDateLabel = "Sep 15, 2026",
                     saving = false,
                     issue = EntrySaveResult.AmountMustBePositive,
                     onNameChange = {},
                     onAmountChange = {},
                     onDirectionChange = {},
                     onStateChange = {},
+                    onSelectPlannedDate = {},
                     onSave = {},
                     onBack = {},
                 )
@@ -98,6 +103,7 @@ class BudgetEntryScreensTest {
                     currencyCode = "USD",
                     direction = Direction.EXPENSE,
                     state = ActivityState.CONFIRMED,
+                    plannedDateLabel = "Sep 15, 2026",
                     saving = false,
                     issue = null,
                     receiptSuggestion = ReceiptSuggestion.TOTAL_ADDED,
@@ -105,6 +111,7 @@ class BudgetEntryScreensTest {
                     onAmountChange = {},
                     onDirectionChange = {},
                     onStateChange = {},
+                    onSelectPlannedDate = {},
                     onSave = {},
                     onBack = {},
                 )

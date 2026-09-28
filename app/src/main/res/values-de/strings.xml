@@ -192,11 +192,12 @@
     <string name="activity_income">Einnahme</string>
     <string name="activity_timing">Zeitpunkt</string>
     <string name="activity_confirmed_now">Jetzt bestätigt</string>
-    <string name="activity_planned_month">Für diesen Monat geplant</string>
+    <string name="activity_planned_month">Für ein Datum geplant</string>
     <string name="activity_effect_confirmed_expense">Wird einmal vom ausgewählten Konto abgezogen.</string>
     <string name="activity_effect_confirmed_income">Wird einmal zum ausgewählten Konto addiert.</string>
-    <string name="activity_effect_planned_expense">Wird für diesen Monat von „Jetzt verfügbar“ reserviert.</string>
-    <string name="activity_effect_planned_income">Zählt nur zu „Jetzt verfügbar“, wenn erwartete Einnahmen aktiviert sind.</string>
+    <string name="activity_effect_planned_expense">Wird im Monat des ausgewählten Datums von „Jetzt verfügbar“ reserviert.</string>
+    <string name="activity_effect_planned_income">Zählt im Monat des ausgewählten Datums nur bei aktivierten erwarteten Einnahmen.</string>
+    <string name="activity_date_must_not_be_past">Wähle das heutige oder ein zukünftiges Datum.</string>
     <string name="activity_save">Eintrag speichern</string>
     <string name="activity_current_funds_needed">Konto erforderlich</string>
     <string name="activity_current_funds_needed_body">Richte ein Konto ein, bevor du Einträge hinzufügst.</string>

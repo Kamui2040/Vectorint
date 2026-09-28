@@ -18,9 +18,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -58,12 +62,14 @@ import io.github.kamui2040.vectorint.presentation.account.AccountSelector
 import io.github.kamui2040.vectorint.presentation.category.CategoryManager
 import io.github.kamui2040.vectorint.presentation.category.CategorySelector
 import io.github.kamui2040.vectorint.presentation.component.InfoHeading
+import io.github.kamui2040.vectorint.presentation.format.RegionalFormatter
 import io.github.kamui2040.vectorint.presentation.tag.TagEditor
 import io.github.kamui2040.vectorint.presentation.tag.rememberTagState
 import io.github.kamui2040.vectorint.presentation.theme.directionColors
 import io.github.kamui2040.vectorint.receipt.ReceiptTotalExtractor
 import io.github.kamui2040.vectorint.receipt.ReceiptVendorMatcher
 import kotlinx.coroutines.launch
+import java.time.LocalDate
 
 @Composable
 internal fun OneOffActivityRoute(
@@ -152,11 +158,27 @@ private fun OneOffActivityReadyRoute(
     var accountIdValue by rememberSaveable { mutableStateOf(seed.selectedAccountId.value) }
     var direction by rememberSaveable { mutableStateOf(Direction.EXPENSE) }
     var state by rememberSaveable { mutableStateOf(ActivityState.CONFIRMED) }
+    var plannedDateEpochDay by rememberSaveable { mutableStateOf(seed.today.toEpochDay()) }
+    var showDatePicker by remember { mutableStateOf(false) }
     var categoryIdValue by rememberSaveable { mutableStateOf<String?>(null) }
     var tags by rememberTagState(emptySet())
     var issue by remember { mutableStateOf<EntrySaveResult?>(null) }
     var saving by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
+    val plannedDate = LocalDate.ofEpochDay(plannedDateEpochDay)
+    val plannedDateLabel = remember(plannedDate) { RegionalFormatter().formatDate(plannedDate) }
+
+    if (showDatePicker) {
+        OneOffDatePickerDialog(
+            initialDate = plannedDate,
+            onDismiss = { showDatePicker = false },
+            onDateSelected = {
+                plannedDateEpochDay = it.toEpochDay()
+                issue = null
+                showDatePicker = false
+            },
+        )
+    }
 
     BackHandler(enabled = !saving, onBack = onBack)
     OneOffActivityScreen(
@@ -167,6 +189,7 @@ private fun OneOffActivityReadyRoute(
         currencyCode = seed.currencyCode.value,
         direction = direction,
         state = state,
+        plannedDateLabel = plannedDateLabel,
         saving = saving,
         issue = issue,
         categoryId = categoryIdValue?.let(::CategoryId),
@@ -193,6 +216,7 @@ private fun OneOffActivityReadyRoute(
             state = it
             issue = null
         },
+        onSelectPlannedDate = { showDatePicker = true },
         onCategoryChange = {
             categoryIdValue = it?.value
             issue = null
@@ -214,6 +238,7 @@ private fun OneOffActivityReadyRoute(
                             accountId = AccountId(accountIdValue),
                             direction = direction,
                             state = state,
+                            plannedOn = plannedDate,
                             categoryId = categoryIdValue?.let(::CategoryId),
                             tags = tags,
                         )
@@ -239,6 +264,7 @@ internal fun OneOffActivityScreen(
     accountId: AccountId = io.github.kamui2040.vectorint.core.LEGACY_DEFAULT_ACCOUNT_ID,
     direction: Direction,
     state: ActivityState,
+    plannedDateLabel: String,
     saving: Boolean,
     issue: EntrySaveResult?,
     categoryId: CategoryId? = null,
@@ -250,6 +276,7 @@ internal fun OneOffActivityScreen(
     onAccountChange: (AccountId) -> Unit = {},
     onDirectionChange: (Direction) -> Unit,
     onStateChange: (ActivityState) -> Unit,
+    onSelectPlannedDate: () -> Unit,
     onCategoryChange: (CategoryId?) -> Unit = {},
     onTagsChange: (Set<Tag>) -> Unit = {},
     onSave: () -> Unit,
@@ -357,6 +384,15 @@ internal fun OneOffActivityScreen(
             modifier = Modifier.fillMaxWidth(),
             enabled = !saving,
         )
+        if (state == ActivityState.PLANNED) {
+            OutlinedButton(
+                onClick = onSelectPlannedDate,
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !saving,
+            ) {
+                Text(stringResource(R.string.activity_timing_planned_date, plannedDateLabel))
+            }
+        }
         categoryManager?.let { manager ->
             CategorySelector(
                 selectedCategoryId = categoryId,
@@ -436,6 +472,7 @@ private fun EntryIssue(issue: EntrySaveResult?) {
             EntrySaveResult.InvalidCurrency -> stringResource(R.string.entry_invalid_currency)
             EntrySaveResult.InvalidAmount -> stringResource(R.string.entry_invalid_amount)
             EntrySaveResult.AmountMustBePositive -> stringResource(R.string.entry_amount_positive)
+            EntrySaveResult.DateMustNotBePast -> stringResource(R.string.activity_date_must_not_be_past)
             EntrySaveResult.StorageFailed -> stringResource(R.string.entry_save_failed)
         }
     if (message != null) {
@@ -446,6 +483,46 @@ private fun EntryIssue(issue: EntrySaveResult?) {
         )
     }
 }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun OneOffDatePickerDialog(
+    initialDate: LocalDate,
+    onDismiss: () -> Unit,
+    onDateSelected: (LocalDate) -> Unit,
+) {
+    key(initialDate) {
+        val pickerState =
+            androidx.compose.material3.rememberDatePickerState(
+                initialSelectedDateMillis = Math.multiplyExact(initialDate.toEpochDay(), MILLIS_PER_DAY),
+            )
+        DatePickerDialog(
+            onDismissRequest = onDismiss,
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val selected = pickerState.selectedDateMillis ?: return@TextButton
+                        onDateSelected(LocalDate.ofEpochDay(Math.floorDiv(selected, MILLIS_PER_DAY)))
+                    },
+                ) {
+                    Text(stringResource(R.string.recurring_set_date))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.activity_delete_cancel))
+                }
+            },
+        ) {
+            DatePicker(
+                state = pickerState,
+                showModeToggle = false,
+            )
+        }
+    }
+}
+
+private const val MILLIS_PER_DAY = 86_400_000L
 
 @Composable
 private fun EntryLoadingScreen(onBack: () -> Unit) {

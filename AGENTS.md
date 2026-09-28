@@ -126,6 +126,9 @@ Treat every tracked file as suitable for public release.
 - Receipt scanning may propose only an editable one-off expense amount and vendor
   name. Never save an expense automatically, and never retain the receipt image
   or recognized receipt text after the draft flow ends.
+- A planned one-off entry may use today or a future date. Assign it to the month
+  containing that date, keep it planned until the user confirms it, and never
+  silently turn existing planned entries into automatically booked activity.
 
 ## Persistence integrity
 

@@ -192,11 +192,12 @@
     <string name="activity_income">Revenu</string>
     <string name="activity_timing">Quand</string>
     <string name="activity_confirmed_now">Confirmée maintenant</string>
-    <string name="activity_planned_month">Prévue ce mois-ci</string>
+    <string name="activity_planned_month">Prévue à une date</string>
     <string name="activity_effect_confirmed_expense">Le montant est déduit une fois du compte sélectionné.</string>
     <string name="activity_effect_confirmed_income">Le montant est ajouté une fois au compte sélectionné.</string>
-    <string name="activity_effect_planned_expense">Le montant est réservé dans « Disponible maintenant » pour ce mois.</string>
-    <string name="activity_effect_planned_income">Le montant n’est inclus dans « Disponible maintenant » que si les revenus prévus sont activés.</string>
+    <string name="activity_effect_planned_expense">Le montant est réservé dans « Disponible maintenant » pour le mois de la date choisie.</string>
+    <string name="activity_effect_planned_income">Le montant n’est inclus pour le mois de la date choisie que si les revenus prévus sont activés.</string>
+    <string name="activity_date_must_not_be_past">Choisissez aujourd’hui ou une date future.</string>
     <string name="activity_save">Enregistrer l’opération</string>
     <string name="activity_current_funds_needed">Compte requis</string>
     <string name="activity_current_funds_needed_body">Créez un compte avant d’ajouter des opérations.</string>

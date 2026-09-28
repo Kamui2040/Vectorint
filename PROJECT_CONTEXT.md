@@ -30,8 +30,9 @@ The initial foundation is deliberately small:
   both use fail-closed setup, unsafe-data, and load-failure states;
 - local account setup and editing with a name, exact-time Current funds baseline,
   and an Available now inclusion choice;
-- named one-off income and expense creation for confirmed-now or
-  planned-current-month activity;
+- named one-off income and expense creation for confirmed-now activity or
+  planned activity on an explicit today-or-future date assigned to that date’s
+  month;
 - a permanent app header with the tappable raven, centered Vectorint title, and
   Settings action, plus persistent Home, History, and Overview bottom navigation
   on every in-app screen; creation and editing stay in focused secondary flows
