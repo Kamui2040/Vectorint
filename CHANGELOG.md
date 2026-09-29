@@ -4,6 +4,8 @@ All notable user-facing changes will be recorded here.
 
 ## 0.0.12 - Unreleased
 
+- Prevent optional Google Play receipt-scanner initialization failures from
+  crashing Vectorint during startup.
 - Add an optional Google Play receipt scanner that proposes an editable expense
   total and vendor, including from the quick-add entry screen.
 - Allow one-time entries to be planned for a future date without creating a

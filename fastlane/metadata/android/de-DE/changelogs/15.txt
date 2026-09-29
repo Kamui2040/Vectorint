@@ -1,0 +1,1 @@
+Behebt einen Absturz beim Start auf einigen Geräten, wenn das Belegscannen über Google Play nicht verfügbar ist.

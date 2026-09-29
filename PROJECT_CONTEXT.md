@@ -291,8 +291,11 @@ device, reproducibility, signing, and publication gates before publishing any
 later production release.
 
 Version 0.0.11 with Android version code 12 is the most recent tagged source
-baseline. Version 0.0.12 with Android version code 14 is the next release
-candidate; code 13 was an earlier tester candidate. Its delta from 0.0.11 is the
+baseline. Version 0.0.12 with Android version code 15 is the next Google Play
+tester candidate; codes 13 and 14 were earlier tester candidates. Code 15 defers
+optional Google receipt-scanner initialization until the user requests a scan and
+treats provider initialization failures as unavailable, so they cannot block app
+startup. Its delta from 0.0.11 is the
 tightened About card, current-version changelog and licence/source/support links,
 dedicated in-app Privacy page, clarified public privacy policy, an accessible
 Current funds sign control for keyboards without a minus key, complete
