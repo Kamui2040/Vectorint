@@ -20,16 +20,6 @@ internal class PlayReceiptScanner(
     private val activity: AppCompatActivity,
     private val onOutcome: (ReceiptScanOutcome) -> Unit,
 ) : ReceiptScanner {
-    private val scanner =
-        GmsDocumentScanning.getClient(
-            GmsDocumentScannerOptions
-                .Builder()
-                .setGalleryImportAllowed(false)
-                .setPageLimit(1)
-                .setResultFormats(GmsDocumentScannerOptions.RESULT_FORMAT_JPEG)
-                .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL)
-                .build(),
-        )
     private val launcher =
         activity.registerForActivityResult(ActivityResultContracts.StartIntentSenderForResult()) { result ->
             when (result.resultCode) {
@@ -40,21 +30,33 @@ internal class PlayReceiptScanner(
         }
 
     override fun launch() {
-        scanner
-            .getStartScanIntent(activity)
-            .addOnSuccessListener { intentSender ->
-                launcher.launch(IntentSenderRequest.Builder(intentSender).build())
-            }.addOnFailureListener { error ->
-                onOutcome(
-                    if (error is MlKitException &&
-                        error.errorCode == MlKitException.UNSUPPORTED
-                    ) {
-                        ReceiptScanOutcome.Unavailable
-                    } else {
-                        ReceiptScanOutcome.Failed
-                    },
-                )
-            }
+        try {
+            GmsDocumentScanning
+                .getClient(
+                    GmsDocumentScannerOptions
+                        .Builder()
+                        .setGalleryImportAllowed(false)
+                        .setPageLimit(1)
+                        .setResultFormats(GmsDocumentScannerOptions.RESULT_FORMAT_JPEG)
+                        .setScannerMode(GmsDocumentScannerOptions.SCANNER_MODE_FULL)
+                        .build(),
+                ).getStartScanIntent(activity)
+                .addOnSuccessListener { intentSender ->
+                    launcher.launch(IntentSenderRequest.Builder(intentSender).build())
+                }.addOnFailureListener { error ->
+                    onOutcome(
+                        if (error is MlKitException &&
+                            error.errorCode == MlKitException.UNSUPPORTED
+                        ) {
+                            ReceiptScanOutcome.Unavailable
+                        } else {
+                            ReceiptScanOutcome.Failed
+                        },
+                    )
+                }
+        } catch (_: RuntimeException) {
+            onOutcome(ReceiptScanOutcome.Unavailable)
+        }
     }
 
     private fun recognize(resultIntent: Intent?) {
