@@ -1,0 +1,1 @@
+Durchsuche und filtere den Verlauf und wiederkehrende Einträge. Optional zeigt die Startseite unter „Jetzt verfügbar“ die nächsten drei geplanten Einträge in zeitlicher Reihenfolge. Prüfe in „Über Vectorint“ auf Updates. Enthält die Fehlerbehebung für den Belegscanner beim Start.
