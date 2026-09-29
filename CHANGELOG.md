@@ -4,6 +4,7 @@ All notable user-facing changes will be recorded here.
 
 ## 0.0.12 - Unreleased
 
+- Add History search across entry details plus type and status filters.
 - Prevent optional Google Play receipt-scanner initialization failures from
   crashing Vectorint during startup.
 - Add a Check for updates action in About, using Google Play's update flow in

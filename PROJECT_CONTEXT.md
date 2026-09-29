@@ -40,9 +40,9 @@ The initial foundation is deliberately small:
 - reusable accessible info controls that keep optional explanations out of the
   main flow while leaving errors, destructive consequences, and recovery
   warnings visible;
-- a newest-first History view that displays each entry name, with name, amount,
-  and direction editing, guarded deletion, planned-to-confirmed transitions,
-  and optional tag metadata;
+- a newest-first History view with search across visible entry details and
+  independent type and status filters, plus name, amount, and direction editing,
+  guarded deletion, planned-to-confirmed transitions, and optional tag metadata;
 - a recurring-item list and editor for income or expenses with a specific date,
   date range, or anytime-within-month plan, every-N day/week/month/year
   intervals, optional manual confirmation, optional end and reminder dates,
@@ -227,8 +227,10 @@ an existing economic event.
 
 Activity history orders entries from newest to oldest by their confirmed or
 planned timing, displays the persisted name, and keeps month-only timing imprecise
-in presentation. History and recurring lists show the assigned account. Detail
-editing changes name, amount, direction, category, and
+in presentation. Search matches visible entry details, while independent filters
+narrow results by income or expense and planned or confirmed status without
+changing stored data or calculations. History and recurring lists show the
+assigned account. Detail editing changes name, amount, direction, category, and
 optional tags on the current stored row. Confirmation can include
 those edits in the same database transaction, preserves the activity identity,
 and cannot overlap a planned reservation with a second confirmed event. Tags are
@@ -298,8 +300,9 @@ baseline. Version 0.0.12 with Android version code 15 was uploaded to a Google
 Play tester track and awaits Google's confirmation; codes 13 and 14 were earlier
 tester candidates. Code 15 defers optional Google receipt-scanner initialization
 until the user requests a scan and treats provider initialization failures as
-unavailable, so they cannot block app startup. A later tester build adds in-app
-update checking. The 0.0.12 delta from 0.0.11 is the
+unavailable, so they cannot block app startup. Version code 16 is the next tester
+candidate; it retains that fix and adds in-app update checking plus History search
+and filters. The 0.0.12 delta from 0.0.11 is the
 tightened About card, current-version changelog and licence/source/support links,
 dedicated in-app Privacy page, clarified public privacy policy, an accessible
 Current funds sign control for keyboards without a minus key, complete

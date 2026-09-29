@@ -1,0 +1,1 @@
+Search and filter History, and check for updates from About. Includes the receipt-scanner startup fix.

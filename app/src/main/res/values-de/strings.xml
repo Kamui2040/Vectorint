@@ -206,6 +206,16 @@
     <string name="activity_history_empty">Noch keine Einträge</string>
     <string name="activity_history_empty_body">Füge eine Einnahme oder Ausgabe hinzu, sobald sie passiert oder geplant ist.</string>
     <string name="activity_history_load_failed">Einträge konnten nicht geladen werden</string>
+    <string name="activity_history_search">Verlauf durchsuchen</string>
+    <string name="activity_history_search_hint">Name, Betrag, Kategorie, Tag oder Konto</string>
+    <string name="activity_history_clear_search">Suche löschen</string>
+    <string name="activity_history_filter_type">Art</string>
+    <string name="activity_history_filter_status">Status</string>
+    <string name="activity_history_filter_all_types">Alle Arten</string>
+    <string name="activity_history_filter_all_statuses">Alle Statuswerte</string>
+    <string name="activity_history_no_matches">Keine passenden Einträge</string>
+    <string name="activity_history_no_matches_body">Versuche eine andere Suche oder setze einen Filter zurück.</string>
+    <string name="activity_history_clear_all">Suche und Filter zurücksetzen</string>
     <string name="activity_unnamed">Eintrag ohne Namen</string>
     <string name="activity_edit_title">Eintrag bearbeiten</string>
     <string name="activity_edit_load_failed">Dieser Eintrag konnte nicht geladen werden</string>

@@ -206,6 +206,16 @@
     <string name="activity_history_empty">Aún no hay movimientos</string>
     <string name="activity_history_empty_body">Añade un ingreso o un gasto cuando suceda o cuando lo planifiques.</string>
     <string name="activity_history_load_failed">No se pudo cargar el historial</string>
+    <string name="activity_history_search">Buscar en el historial</string>
+    <string name="activity_history_search_hint">Nombre, importe, categoría, etiqueta o cuenta</string>
+    <string name="activity_history_clear_search">Borrar búsqueda</string>
+    <string name="activity_history_filter_type">Tipo</string>
+    <string name="activity_history_filter_status">Estado</string>
+    <string name="activity_history_filter_all_types">Todos los tipos</string>
+    <string name="activity_history_filter_all_statuses">Todos los estados</string>
+    <string name="activity_history_no_matches">No hay movimientos coincidentes</string>
+    <string name="activity_history_no_matches_body">Prueba otra búsqueda o borra un filtro.</string>
+    <string name="activity_history_clear_all">Borrar búsqueda y filtros</string>
     <string name="activity_unnamed">Movimiento sin nombre</string>
     <string name="activity_edit_title">Editar movimiento</string>
     <string name="activity_edit_load_failed">No se pudo cargar esta actividad</string>

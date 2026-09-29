@@ -9,12 +9,19 @@ import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performTextInput
 import io.github.kamui2040.vectorint.core.ActivityEntry
 import io.github.kamui2040.vectorint.core.ActivityId
 import io.github.kamui2040.vectorint.core.ActivityState
@@ -81,18 +88,92 @@ class ActivityScreensTest {
             .assertExists()
         compose.onNodeWithText("Back").assertDoesNotExist()
         compose.onNodeWithText("Groceries").assertIsDisplayed()
-        compose.onNodeWithText("Expense").assertIsDisplayed()
+        compose.onAllNodesWithText("Expense").assertCountEquals(2)
         compose.onNodeWithText("Planned for Sep 18, 2026").assertIsDisplayed()
-        compose.onAllNodesWithText("Account: Main").assertCountEquals(2)
+        compose.onNodeWithText("Account: Main").assertIsDisplayed()
         compose.onNodeWithText("Groceries").assertIsDisplayed()
         compose.onNodeWithText("Tags: household, shared").assertIsDisplayed()
         compose.onNodeWithText("Add activity").performClick()
-        compose.onNodeWithText("Confirmed on Sep 17, 2026").performScrollTo().assertIsDisplayed()
+        compose
+            .onNodeWithTag("activity_history_list")
+            .performScrollToNode(hasText("Confirmed on Sep 17, 2026"))
+        compose.onNodeWithText("Confirmed on Sep 17, 2026").assertIsDisplayed()
         compose.onNodeWithText("€25.00").performClick()
         compose.runOnIdle {
             assertEquals(firstId, selected)
             assertEquals(1, adds)
         }
+    }
+
+    @Test
+    fun `history searches entry details and combines type and status filters`() {
+        compose.setContent {
+            VectorintTheme {
+                ActivityHistoryScreen(
+                    state =
+                        ActivityHistoryUiState.Ready(
+                            listOf(
+                                ActivityHistoryItemUi(
+                                    id = ActivityId("rent"),
+                                    name = "Rent payment",
+                                    direction = Direction.EXPENSE,
+                                    amount = "€750.00",
+                                    timing = ActivityTimingUi.PlannedDate("Oct 1, 2026"),
+                                    accountName = "Main",
+                                    categoryId = PredefinedCategory.HOUSING.id,
+                                    tags = listOf("household"),
+                                ),
+                                ActivityHistoryItemUi(
+                                    id = ActivityId("salary"),
+                                    name = "Monthly pay",
+                                    direction = Direction.INCOME,
+                                    amount = "€2,000.00",
+                                    timing = ActivityTimingUi.ConfirmedDate("Sep 28, 2026"),
+                                    accountName = "Savings",
+                                    categoryId = PredefinedCategory.SALARY.id,
+                                ),
+                            ),
+                        ),
+                    onActivitySelected = {},
+                    onAddActivity = {},
+                    onRetry = {},
+                )
+            }
+        }
+
+        compose.onNodeWithText("Search history").performTextInput("household")
+        compose.onNodeWithTag("activity_history_list").performScrollToNode(hasText("Rent payment"))
+        compose.onNodeWithText("Rent payment").assertIsDisplayed()
+        compose.onNodeWithText("Monthly pay").assertDoesNotExist()
+
+        compose.onNodeWithTag("activity_history_list").performScrollToNode(hasContentDescription("Clear search"))
+        compose.onNodeWithContentDescription("Clear search").performClick()
+        compose.onNodeWithTag("activity_history_list").performScrollToNode(hasText("Monthly pay"))
+        compose.onNodeWithText("Monthly pay").assertIsDisplayed()
+
+        compose.onNodeWithTag("activity_history_list").performScrollToIndex(2)
+        compose.onNodeWithTag("activity_history_direction:EXPENSE").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("activity_history_direction:EXPENSE").assertIsSelected()
+        compose.onNodeWithTag("activity_history_list").performScrollToNode(hasText("Rent payment"))
+        compose.onNodeWithText("Rent payment").assertIsDisplayed()
+        compose.onNodeWithText("Monthly pay").assertDoesNotExist()
+
+        compose.onNodeWithTag("activity_history_list").performScrollToIndex(2)
+        compose.onNodeWithTag("activity_history_status:CONFIRMED").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("activity_history_status:CONFIRMED").assertIsSelected()
+        compose.onNodeWithTag("activity_history_list").performScrollToNode(hasText("No matching activity"))
+        compose
+            .onNodeWithText("No matching activity")
+            .assert(SemanticsMatcher.expectValue(SemanticsProperties.LiveRegion, LiveRegionMode.Polite))
+
+        compose.onNodeWithTag("activity_history_list").performScrollToNode(hasText("Clear search and filters"))
+        compose.onAllNodesWithText("Clear search and filters")[0].performClick()
+        compose.onNodeWithTag("activity_history_list").performScrollToNode(hasText("Rent payment"))
+        compose.onNodeWithText("Rent payment").assertIsDisplayed()
+        compose.onNodeWithTag("activity_history_list").performScrollToNode(hasText("Monthly pay"))
+        compose.onNodeWithText("Monthly pay").assertIsDisplayed()
     }
 
     @Test

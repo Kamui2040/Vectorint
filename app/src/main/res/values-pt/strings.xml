@@ -206,6 +206,16 @@
     <string name="activity_history_empty">Nenhuma movimentação ainda</string>
     <string name="activity_history_empty_body">Adicione uma receita ou despesa quando ela acontecer ou quando você a planejar.</string>
     <string name="activity_history_load_failed">Não foi possível carregar o histórico</string>
+    <string name="activity_history_search">Pesquisar no histórico</string>
+    <string name="activity_history_search_hint">Nome, valor, categoria, etiqueta ou conta</string>
+    <string name="activity_history_clear_search">Limpar pesquisa</string>
+    <string name="activity_history_filter_type">Tipo</string>
+    <string name="activity_history_filter_status">Estado</string>
+    <string name="activity_history_filter_all_types">Todos os tipos</string>
+    <string name="activity_history_filter_all_statuses">Todos os estados</string>
+    <string name="activity_history_no_matches">Nenhuma movimentação correspondente</string>
+    <string name="activity_history_no_matches_body">Tente outra pesquisa ou limpe um filtro.</string>
+    <string name="activity_history_clear_all">Limpar pesquisa e filtros</string>
     <string name="activity_unnamed">Movimentação sem nome</string>
     <string name="activity_edit_title">Editar movimentação</string>
     <string name="activity_edit_load_failed">Não foi possível carregar esta movimentação</string>

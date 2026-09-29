@@ -1,6 +1,7 @@
 package io.github.kamui2040.vectorint.presentation.activity
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,12 +21,17 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -44,8 +50,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.paneTitle
@@ -61,10 +70,12 @@ import io.github.kamui2040.vectorint.core.ActivityState
 import io.github.kamui2040.vectorint.core.CategoryId
 import io.github.kamui2040.vectorint.core.CustomCategory
 import io.github.kamui2040.vectorint.core.Direction
+import io.github.kamui2040.vectorint.core.PredefinedCategory
 import io.github.kamui2040.vectorint.core.Tag
 import io.github.kamui2040.vectorint.presentation.category.CategoryManager
 import io.github.kamui2040.vectorint.presentation.category.CategorySelector
 import io.github.kamui2040.vectorint.presentation.category.CategorySummary
+import io.github.kamui2040.vectorint.presentation.category.labelResource
 import io.github.kamui2040.vectorint.presentation.component.InfoHeading
 import io.github.kamui2040.vectorint.presentation.tag.TagEditor
 import io.github.kamui2040.vectorint.presentation.tag.TagSummary
@@ -106,6 +117,10 @@ internal fun ActivityHistoryScreen(
     onRetry: () -> Unit,
 ) {
     val screenTitle = stringResource(R.string.activity_history_title)
+    val resources = LocalResources.current
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var directionFilter by rememberSaveable { mutableStateOf(ActivityDirectionFilter.ALL) }
+    var statusFilter by rememberSaveable { mutableStateOf(ActivityStatusFilter.ALL) }
     Surface(
         modifier =
             Modifier
@@ -117,6 +132,7 @@ internal fun ActivityHistoryScreen(
             modifier =
                 Modifier
                     .fillMaxSize()
+                    .testTag("activity_history_list")
                     .windowInsetsPadding(
                         WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
                     ),
@@ -170,6 +186,25 @@ internal fun ActivityHistoryScreen(
                 }
 
                 is ActivityHistoryUiState.Ready -> {
+                    val filteredItems =
+                        state.items.filter { item ->
+                            val categoryName =
+                                item.categoryId
+                                    ?.let(PredefinedCategory::fromId)
+                                    ?.let { resources.getString(it.labelResource()) }
+                                    ?: state.customCategories.singleOrNull { it.id == item.categoryId }?.name
+                                    ?: resources.getString(R.string.category_other)
+                            item.matchesHistoryFilters(
+                                query = searchQuery,
+                                directionFilter = directionFilter,
+                                statusFilter = statusFilter,
+                                categoryName = categoryName,
+                                directionName = resources.getString(item.direction.labelResource()),
+                                statusName = resources.getString(item.statusLabelResource()),
+                                timingName = item.timing.searchText(resources::getString),
+                                unnamedName = resources.getString(R.string.activity_unnamed),
+                            )
+                        }
                     item {
                         Button(
                             onClick = onAddActivity,
@@ -178,21 +213,244 @@ internal fun ActivityHistoryScreen(
                             Text(stringResource(R.string.home_add_activity))
                         }
                     }
-                    items(
-                        items = state.items,
-                        key = { item -> item.id.value },
-                    ) { item ->
-                        ActivityHistoryCard(
-                            item = item,
-                            customCategories = state.customCategories,
-                            onClick = { onActivitySelected(item.id) },
+                    item {
+                        ActivityHistorySearchAndFilters(
+                            searchQuery = searchQuery,
+                            directionFilter = directionFilter,
+                            statusFilter = statusFilter,
+                            onSearchQueryChange = { searchQuery = it },
+                            onDirectionFilterChange = { directionFilter = it },
+                            onStatusFilterChange = { statusFilter = it },
+                            onClear = {
+                                searchQuery = ""
+                                directionFilter = ActivityDirectionFilter.ALL
+                                statusFilter = ActivityStatusFilter.ALL
+                            },
                         )
+                    }
+                    if (filteredItems.isEmpty()) {
+                        item {
+                            ActivityNoMatches(
+                                onClear = {
+                                    searchQuery = ""
+                                    directionFilter = ActivityDirectionFilter.ALL
+                                    statusFilter = ActivityStatusFilter.ALL
+                                },
+                            )
+                        }
+                    } else {
+                        items(
+                            items = filteredItems,
+                            key = { item -> item.id.value },
+                        ) { item ->
+                            ActivityHistoryCard(
+                                item = item,
+                                customCategories = state.customCategories,
+                                onClick = { onActivitySelected(item.id) },
+                            )
+                        }
                     }
                 }
             }
         }
     }
 }
+
+private enum class ActivityDirectionFilter {
+    ALL,
+    EXPENSE,
+    INCOME,
+}
+
+private enum class ActivityStatusFilter {
+    ALL,
+    PLANNED,
+    CONFIRMED,
+}
+
+@Composable
+private fun ActivityHistorySearchAndFilters(
+    searchQuery: String,
+    directionFilter: ActivityDirectionFilter,
+    statusFilter: ActivityStatusFilter,
+    onSearchQueryChange: (String) -> Unit,
+    onDirectionFilterChange: (ActivityDirectionFilter) -> Unit,
+    onStatusFilterChange: (ActivityStatusFilter) -> Unit,
+    onClear: () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = onSearchQueryChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(R.string.activity_history_search)) },
+            placeholder = { Text(stringResource(R.string.activity_history_search_hint)) },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Rounded.Search,
+                    contentDescription = null,
+                )
+            },
+            trailingIcon =
+                if (searchQuery.isNotEmpty()) {
+                    {
+                        IconButton(onClick = { onSearchQueryChange("") }) {
+                            Icon(
+                                imageVector = Icons.Rounded.Close,
+                                contentDescription = stringResource(R.string.activity_history_clear_search),
+                            )
+                        }
+                    }
+                } else {
+                    null
+                },
+            singleLine = true,
+        )
+        HistoryFilterRow(
+            label = stringResource(R.string.activity_history_filter_type),
+            tagPrefix = "activity_history_direction",
+            options =
+                listOf(
+                    ActivityDirectionFilter.ALL to stringResource(R.string.activity_history_filter_all_types),
+                    ActivityDirectionFilter.EXPENSE to stringResource(R.string.activity_expense),
+                    ActivityDirectionFilter.INCOME to stringResource(R.string.activity_income),
+                ),
+            selected = directionFilter,
+            onSelected = onDirectionFilterChange,
+        )
+        HistoryFilterRow(
+            label = stringResource(R.string.activity_history_filter_status),
+            tagPrefix = "activity_history_status",
+            options =
+                listOf(
+                    ActivityStatusFilter.ALL to stringResource(R.string.activity_history_filter_all_statuses),
+                    ActivityStatusFilter.PLANNED to stringResource(R.string.activity_status_planned),
+                    ActivityStatusFilter.CONFIRMED to stringResource(R.string.activity_status_confirmed),
+                ),
+            selected = statusFilter,
+            onSelected = onStatusFilterChange,
+        )
+        if (
+            searchQuery.isNotEmpty() ||
+            directionFilter != ActivityDirectionFilter.ALL ||
+            statusFilter != ActivityStatusFilter.ALL
+        ) {
+            TextButton(onClick = onClear) {
+                Text(stringResource(R.string.activity_history_clear_all))
+            }
+        }
+    }
+}
+
+@Composable
+private fun <T> HistoryFilterRow(
+    label: String,
+    tagPrefix: String,
+    options: List<Pair<T, String>>,
+    selected: T,
+    onSelected: (T) -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelLarge,
+        )
+        Row(
+            modifier = Modifier.horizontalScroll(rememberScrollState()),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            options.forEach { (option, optionLabel) ->
+                FilterChip(
+                    selected = selected == option,
+                    onClick = { onSelected(option) },
+                    modifier =
+                        Modifier
+                            .testTag("$tagPrefix:$option")
+                            .semantics { contentDescription = "$label: $optionLabel" },
+                    label = { Text(optionLabel) },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun ActivityNoMatches(onClear: () -> Unit) {
+    Column(
+        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        ActivityMessageCard(
+            title = stringResource(R.string.activity_history_no_matches),
+            body = stringResource(R.string.activity_history_no_matches_body),
+        )
+        OutlinedButton(
+            onClick = onClear,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            Text(stringResource(R.string.activity_history_clear_all))
+        }
+    }
+}
+
+private fun ActivityHistoryItemUi.matchesHistoryFilters(
+    query: String,
+    directionFilter: ActivityDirectionFilter,
+    statusFilter: ActivityStatusFilter,
+    categoryName: String,
+    directionName: String,
+    statusName: String,
+    timingName: String,
+    unnamedName: String,
+): Boolean {
+    val directionMatches =
+        when (directionFilter) {
+            ActivityDirectionFilter.ALL -> true
+            ActivityDirectionFilter.EXPENSE -> direction == Direction.EXPENSE
+            ActivityDirectionFilter.INCOME -> direction == Direction.INCOME
+        }
+    val confirmed = timing is ActivityTimingUi.ConfirmedDate
+    val statusMatches =
+        when (statusFilter) {
+            ActivityStatusFilter.ALL -> true
+            ActivityStatusFilter.PLANNED -> !confirmed
+            ActivityStatusFilter.CONFIRMED -> confirmed
+        }
+    val trimmedQuery = query.trim()
+    val searchMatches =
+        trimmedQuery.isEmpty() ||
+            listOf(
+                name.ifBlank { unnamedName },
+                amount,
+                accountName,
+                categoryName,
+                directionName,
+                statusName,
+                timingName,
+                *tags.toTypedArray(),
+            ).any { value -> value.contains(trimmedQuery, ignoreCase = true) }
+    return directionMatches && statusMatches && searchMatches
+}
+
+private fun Direction.labelResource(): Int =
+    when (this) {
+        Direction.EXPENSE -> R.string.activity_expense
+        Direction.INCOME -> R.string.activity_income
+    }
+
+private fun ActivityHistoryItemUi.statusLabelResource(): Int =
+    if (timing is ActivityTimingUi.ConfirmedDate) {
+        R.string.activity_status_confirmed
+    } else {
+        R.string.activity_status_planned
+    }
+
+private fun ActivityTimingUi.searchText(getString: (Int) -> String): String =
+    when (this) {
+        is ActivityTimingUi.PlannedDate -> getString(R.string.activity_status_planned) + " " + date
+        is ActivityTimingUi.PlannedMonth -> getString(R.string.activity_status_planned) + " " + month
+        is ActivityTimingUi.ConfirmedDate -> getString(R.string.activity_status_confirmed) + " " + date
+    }
 
 @Composable
 private fun ActivityHistoryCard(

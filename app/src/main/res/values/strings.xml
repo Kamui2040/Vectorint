@@ -207,6 +207,16 @@
     <string name="activity_history_empty">No activity yet</string>
     <string name="activity_history_empty_body">Add income or an expense when it happens or when you plan it.</string>
     <string name="activity_history_load_failed">Couldn’t load activity</string>
+    <string name="activity_history_search">Search history</string>
+    <string name="activity_history_search_hint">Name, amount, category, tag, or account</string>
+    <string name="activity_history_clear_search">Clear search</string>
+    <string name="activity_history_filter_type">Type</string>
+    <string name="activity_history_filter_status">Status</string>
+    <string name="activity_history_filter_all_types">All types</string>
+    <string name="activity_history_filter_all_statuses">All statuses</string>
+    <string name="activity_history_no_matches">No matching activity</string>
+    <string name="activity_history_no_matches_body">Try another search or clear a filter.</string>
+    <string name="activity_history_clear_all">Clear search and filters</string>
     <string name="activity_unnamed">Unnamed entry</string>
     <string name="activity_edit_title">Edit activity</string>
     <string name="activity_edit_load_failed">Couldn’t load this activity</string>

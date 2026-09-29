@@ -206,6 +206,16 @@
     <string name="activity_history_empty">Ancora nessun movimento</string>
     <string name="activity_history_empty_body">Aggiungi un\'entrata o una spesa quando accade o quando la pianifichi.</string>
     <string name="activity_history_load_failed">Impossibile caricare la cronologia</string>
+    <string name="activity_history_search">Cerca nella cronologia</string>
+    <string name="activity_history_search_hint">Nome, importo, categoria, etichetta o conto</string>
+    <string name="activity_history_clear_search">Cancella ricerca</string>
+    <string name="activity_history_filter_type">Tipo</string>
+    <string name="activity_history_filter_status">Stato</string>
+    <string name="activity_history_filter_all_types">Tutti i tipi</string>
+    <string name="activity_history_filter_all_statuses">Tutti gli stati</string>
+    <string name="activity_history_no_matches">Nessun movimento corrispondente</string>
+    <string name="activity_history_no_matches_body">Prova un’altra ricerca o cancella un filtro.</string>
+    <string name="activity_history_clear_all">Cancella ricerca e filtri</string>
     <string name="activity_unnamed">Movimento senza nome</string>
     <string name="activity_edit_title">Modifica movimento</string>
     <string name="activity_edit_load_failed">Impossibile caricare questo movimento</string>

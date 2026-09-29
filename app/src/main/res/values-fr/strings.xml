@@ -206,6 +206,16 @@
     <string name="activity_history_empty">Aucune opération pour le moment</string>
     <string name="activity_history_empty_body">Ajoutez un revenu ou une dépense lorsque cela se produit ou lorsque vous le planifiez.</string>
     <string name="activity_history_load_failed">Impossible de charger l’historique</string>
+    <string name="activity_history_search">Rechercher dans l’historique</string>
+    <string name="activity_history_search_hint">Nom, montant, catégorie, étiquette ou compte</string>
+    <string name="activity_history_clear_search">Effacer la recherche</string>
+    <string name="activity_history_filter_type">Type</string>
+    <string name="activity_history_filter_status">Statut</string>
+    <string name="activity_history_filter_all_types">Tous les types</string>
+    <string name="activity_history_filter_all_statuses">Tous les statuts</string>
+    <string name="activity_history_no_matches">Aucune opération correspondante</string>
+    <string name="activity_history_no_matches_body">Essayez une autre recherche ou effacez un filtre.</string>
+    <string name="activity_history_clear_all">Effacer la recherche et les filtres</string>
     <string name="activity_unnamed">Opération sans nom</string>
     <string name="activity_edit_title">Modifier l’opération</string>
     <string name="activity_edit_load_failed">Impossible de charger cette opération</string>

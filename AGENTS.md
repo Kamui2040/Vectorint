@@ -137,6 +137,9 @@ Treat every tracked file as suitable for public release.
 - A planned one-off entry may use today or a future date. Assign it to the month
   containing that date, keep it planned until the user confirms it, and never
   silently turn existing planned entries into automatically booked activity.
+- History search and filters are presentation-only. They may narrow entries by
+  visible details, direction, and planned or confirmed status, but must never
+  change stored activity or accounting results.
 
 ## Persistence integrity
 
