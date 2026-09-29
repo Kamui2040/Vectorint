@@ -10,6 +10,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import io.github.kamui2040.vectorint.core.Direction
 import io.github.kamui2040.vectorint.core.UnsafeReason
 import io.github.kamui2040.vectorint.presentation.theme.VectorintTheme
 import org.junit.Assert.assertEquals
@@ -63,6 +64,7 @@ class HomeScreenTest {
         compose.onNodeWithText("€650.00").assertIsDisplayed()
         compose.onNodeWithText("September 2026").assertIsDisplayed()
         compose.onNodeWithText("Add activity").assertIsDisplayed()
+        compose.onNodeWithText("Upcoming entries").assertDoesNotExist()
         compose.onNodeWithText("Included account funds").assertDoesNotExist()
         compose.onNodeWithContentDescription("Show This month details").performClick()
         compose.onNodeWithText("Included account funds").performScrollTo().assertIsDisplayed()
@@ -74,6 +76,40 @@ class HomeScreenTest {
         compose.onNodeWithContentDescription("Hide This month details").performScrollTo().performClick()
         compose.onNodeWithText("Included account funds").assertDoesNotExist()
         compose.onNodeWithText("Try again").assertDoesNotExist()
+    }
+
+    @Test
+    fun `enabled upcoming section shows three entries in supplied chronological order`() {
+        compose.setContent {
+            VectorintTheme {
+                HomeScreen(
+                    state =
+                        HomeUiState.Ready(
+                            monthLabel = "September 2026",
+                            availableNow = "€650.00",
+                            currentFunds = "€900.00",
+                            reservedExpenses = "€250.00",
+                            expectedIncome = ExpectedIncomeUi.Excluded,
+                            showUpcomingEntries = true,
+                            upcomingEntries =
+                                listOf(
+                                    UpcomingEntryUi("Groceries", "€40.00", "18 Sept 2026", Direction.EXPENSE),
+                                    UpcomingEntryUi("Salary", "€2,000.00", "19 Sept 2026", Direction.INCOME),
+                                    UpcomingEntryUi("Rent", "€500.00", "20 Sept 2026", Direction.EXPENSE),
+                                ),
+                        ),
+                    onRetry = {},
+                )
+            }
+        }
+
+        compose.onNodeWithText("Upcoming entries").assertIsDisplayed()
+        compose.onNodeWithText("Groceries").assertIsDisplayed()
+        compose.onNodeWithText("Salary").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Rent").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("18 Sept 2026").assertIsDisplayed()
+        compose.onNodeWithText("19 Sept 2026").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("20 Sept 2026").performScrollTo().assertIsDisplayed()
     }
 
     @Test

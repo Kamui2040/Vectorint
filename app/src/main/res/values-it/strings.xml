@@ -8,6 +8,8 @@
     <string name="home_available_now">Disponibile ora</string>
     <string name="home_available_now_supporting">Dopo le spese pianificate di questo mese</string>
     <string name="home_breakdown">Questo mese</string>
+    <string name="home_upcoming_entries">Prossime voci</string>
+    <string name="home_upcoming_empty">Non ci sono voci pianificate in arrivo.</string>
     <string name="home_show_breakdown">Mostra i dettagli di questo mese</string>
     <string name="home_hide_breakdown">Nascondi i dettagli di questo mese</string>
     <string name="home_current_funds">Saldo dei conti inclusi</string>
@@ -65,6 +67,9 @@
     <string name="settings_title">Impostazioni</string>
     <string name="settings_close">Chiudi</string>
     <string name="settings_appearance">Aspetto</string>
+    <string name="settings_home">Home</string>
+    <string name="settings_home_upcoming">Mostra le prossime voci</string>
+    <string name="settings_home_upcoming_body">Quando è attivo, la Home mostra le prossime tre voci pianificate in ordine cronologico sotto Disponibile ora.</string>
     <string name="settings_theme">Tema</string>
     <string name="settings_theme_system">Usa impostazione del dispositivo</string>
     <string name="settings_theme_light">Chiaro</string>
@@ -237,6 +242,12 @@
     <string name="activity_delete_confirm">Elimina</string>
     <string name="activity_delete_cancel">Annulla</string>
     <string name="recurring_title">Elementi ricorrenti</string>
+    <string name="recurring_search">Cerca elementi ricorrenti</string>
+    <string name="recurring_search_hint">Nome, importo, categoria, etichetta o conto</string>
+    <string name="recurring_clear_search">Cancella ricerca</string>
+    <string name="recurring_no_matches">Nessun elemento ricorrente corrispondente</string>
+    <string name="recurring_no_matches_body">Prova un’altra ricerca o rimuovi il filtro.</string>
+    <string name="recurring_clear_all">Cancella ricerca e filtro</string>
     <string name="recurring_explanation">Aggiungi entrate e spese ricorrenti per rendere più preciso «Disponibile ora».</string>
     <string name="recurring_add">Aggiungi elemento ricorrente</string>
     <string name="recurring_empty">Nessun elemento ricorrente ancora</string>

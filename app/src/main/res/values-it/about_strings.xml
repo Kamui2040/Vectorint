@@ -11,7 +11,7 @@
     <string name="about_check_updates_page_opened">La pagina di download di Vectorint è stata aperta.</string>
     <string name="about_check_updates_failed">Impossibile cercare aggiornamenti. Riprova più tardi.</string>
     <string name="about_changelog_version">Versione %1$s</string>
-    <string name="about_changelog_current_body">• Scheda Informazioni più compatta, con navigazione più chiara e registro della versione corrente.\n• Sezioni dedicate a licenze e fonti, con link al repository, al sito dell’app, al sito principale e a Ko-fi.\n• Nuova pagina Privacy con l’informativa pubblica all’interno dell’app.\n• Testo più chiaro su dati locali, backup, promemoria e rimozione dei dati.\n• Controllo accessibile del segno del saldo attuale per inserire saldi negativi quando la tastiera non ha il tasto meno.</string>
+    <string name="about_changelog_current_body">• Ricerca e filtri per tipo nella Cronologia e negli elementi ricorrenti.\n• Sezione Home facoltativa con le prossime tre voci pianificate in ordine cronologico.\n• Controllo degli aggiornamenti nell’app tramite Google Play o la pagina pubblica dei download.</string>
     <string name="about_license_source_name">Codice sorgente di Vectorint</string>
     <string name="about_license_source_value">GPL-3.0-only</string>
     <string name="about_license_raven_name">Vectorint Raven</string>

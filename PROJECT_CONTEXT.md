@@ -141,7 +141,9 @@ included `Main` account.
 
 Settings use a full-page layout reached from the permanent top-right controls
 action. The root menu is compact and grouped while individual setting rows retain
-accessible touch targets. They contain one calculation choice—whether expected income contributes
+accessible touch targets. They contain a Home choice for optionally showing the
+next three planned entries chronologically below Available now, and one calculation
+choice—whether expected income contributes
 to Available now—device, light, or dark appearance using the Orbit, Nova, or
 Nebula palette, device/English/German/Portuguese/Spanish/Italian/French app-language selection, data and backup,
 and About. Expected income defaults to off; appearance follows the device and
@@ -153,9 +155,9 @@ appearance.
 
 Manual backup exports accounts, Activity, recurring items, categories, tags, and
 saved settings to a versioned, bounded JSON file chosen by the user. Backup format
-version 7 adds account balances, inclusion choices, and record assignments on top
-of version 6 persisted activity names. It continues to import version-1 through
-version-6 files through deterministic conversion into one included `Main` account;
+version 8 adds the portable Home upcoming-display preference on top of version 7
+account balances, inclusion choices, and record assignments. It continues to
+import version-1 through version-7 files through deterministic conversion into one included `Main` account;
 an older backup
 changes its saved calculation choice without replacing appearance information it
 did not contain.
@@ -166,7 +168,7 @@ reminder-delivery acknowledgements, and other device-local runtime state are not
 portable data; reminders are reconciled from the restored definitions instead.
 Platform cloud backup and device transfer remain disabled.
 
-Automatic backup reuses the same bounded, readable version-7 JSON snapshot. The
+Automatic backup reuses the same bounded, readable version-8 JSON snapshot. The
 user grants one folder through Android's Storage Access Framework and can choose
 backups after saved portable-data changes, when the app starts, when it moves to
 the background, daily, or weekly. Change-triggered work is coalesced, scheduled
@@ -302,7 +304,9 @@ tester candidates. Code 15 defers optional Google receipt-scanner initialization
 until the user requests a scan and treats provider initialization failures as
 unavailable, so they cannot block app startup. Version code 16 is the next tester
 candidate; it retains that fix and adds in-app update checking plus History search
-and filters. The 0.0.12 delta from 0.0.11 is the
+and filters. Version 0.1.0 with Android version code 17 is now the development
+version; it adds recurring-item search and type filters plus an opt-in Home section
+for the next three planned entries. The 0.0.12 delta from 0.0.11 is the
 tightened About card, current-version changelog and licence/source/support links,
 dedicated in-app Privacy page, clarified public privacy policy, an accessible
 Current funds sign control for keyboards without a minus key, complete

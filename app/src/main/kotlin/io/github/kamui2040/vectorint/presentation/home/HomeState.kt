@@ -3,13 +3,16 @@ package io.github.kamui2040.vectorint.presentation.home
 import io.github.kamui2040.vectorint.core.ActivityEntry
 import io.github.kamui2040.vectorint.core.ActivityId
 import io.github.kamui2040.vectorint.core.ActivitySource
+import io.github.kamui2040.vectorint.core.ActivityState
 import io.github.kamui2040.vectorint.core.AvailableFundsCalculator
 import io.github.kamui2040.vectorint.core.AvailableFundsResult
 import io.github.kamui2040.vectorint.core.BudgetMonth
 import io.github.kamui2040.vectorint.core.CurrencyCode
+import io.github.kamui2040.vectorint.core.Direction
 import io.github.kamui2040.vectorint.core.Money
 import io.github.kamui2040.vectorint.core.MonthlyFlowCalculator
 import io.github.kamui2040.vectorint.core.MonthlyFlowResult
+import io.github.kamui2040.vectorint.core.RecurringItem
 import io.github.kamui2040.vectorint.core.RecurringItemId
 import io.github.kamui2040.vectorint.core.RecurringOccurrenceGenerator
 import io.github.kamui2040.vectorint.core.UnsafeReason
@@ -22,6 +25,7 @@ import kotlinx.coroutines.flow.first
 import java.time.Clock
 import java.time.LocalDate
 import java.time.YearMonth
+import java.util.Locale
 import java.util.UUID
 
 internal sealed interface HomeUiState {
@@ -39,6 +43,8 @@ internal sealed interface HomeUiState {
         val currentFunds: String,
         val reservedExpenses: String,
         val expectedIncome: ExpectedIncomeUi,
+        val showUpcomingEntries: Boolean = false,
+        val upcomingEntries: List<UpcomingEntryUi> = emptyList(),
     ) : HomeUiState
 
     data class MonthOverview(
@@ -73,10 +79,19 @@ internal sealed interface ExpectedIncomeUi {
     ) : ExpectedIncomeUi
 }
 
+internal data class UpcomingEntryUi(
+    val name: String,
+    val amount: String,
+    val date: String,
+    val direction: Direction,
+)
+
 internal interface HomeValueFormatter {
     fun formatMoney(money: Money): String
 
     fun formatMonth(month: BudgetMonth): String
+
+    fun formatDate(date: LocalDate): String
 }
 
 internal class RegionalHomeValueFormatter(
@@ -85,6 +100,8 @@ internal class RegionalHomeValueFormatter(
     override fun formatMoney(money: Money): String = regionalFormatter.formatMoney(money)
 
     override fun formatMonth(month: BudgetMonth): String = regionalFormatter.formatMonth(month)
+
+    override fun formatDate(date: LocalDate): String = regionalFormatter.formatDate(date)
 }
 
 internal class HomeStateLoader(
@@ -136,6 +153,16 @@ internal class HomeStateLoader(
                         .distinctBy { it.id },
             )
         val currentSettings = checkNotNull(settings)
+        val upcomingEntries =
+            if (currentSettings.showUpcomingEntries) {
+                loadUpcomingEntries(
+                    activities = snapshot.activities,
+                    recurringItems = budgetRepository.loadRecurringItems(),
+                    today = LocalDate.now(clock),
+                )
+            } else {
+                emptyList()
+            }
 
         return when (
             val result =
@@ -158,6 +185,8 @@ internal class HomeStateLoader(
                         } else {
                             ExpectedIncomeUi.Excluded
                         },
+                    showUpcomingEntries = currentSettings.showUpcomingEntries,
+                    upcomingEntries = upcomingEntries,
                 )
 
             is AvailableFundsResult.Unsafe ->
@@ -166,6 +195,59 @@ internal class HomeStateLoader(
                     reasons = result.reasons,
                 )
         }
+    }
+
+    private fun loadUpcomingEntries(
+        activities: List<ActivityEntry>,
+        recurringItems: List<RecurringItem>,
+        today: LocalDate,
+    ): List<UpcomingEntryUi> {
+        val recordedRecurringDates =
+            activities
+                .mapNotNull { entry ->
+                    val source = entry.source as? ActivitySource.Recurring ?: return@mapNotNull null
+                    source.itemId to entry.upcomingDate()
+                }.toSet()
+        val storedCandidates =
+            activities
+                .asSequence()
+                .filter { it.state == ActivityState.PLANNED }
+                .map { entry -> UpcomingCandidate(entry, entry.upcomingDate(), entry.id.value) }
+                .filter { candidate -> !candidate.date.isBefore(today) }
+                .toList()
+        val previewCandidates =
+            recurringItems.flatMap { item ->
+                buildList {
+                    var searchFrom = today
+                    while (size < UPCOMING_ENTRY_LIMIT) {
+                        val date = item.schedule.nextOccurrenceOnOrAfter(searchFrom) ?: break
+                        if ((item.id to date) !in recordedRecurringDates) {
+                            add(
+                                UpcomingCandidate(
+                                    name = item.name,
+                                    amount = item.amount,
+                                    direction = item.direction,
+                                    date = date,
+                                    stableKey = "${item.id.value}:$date",
+                                ),
+                            )
+                        }
+                        if (date == LocalDate.MAX) break
+                        searchFrom = date.plusDays(1)
+                    }
+                }
+            }
+        return (storedCandidates + previewCandidates)
+            .sortedWith(compareBy<UpcomingCandidate>({ it.date }, { it.name.lowercase(Locale.ROOT) }, { it.stableKey }))
+            .take(UPCOMING_ENTRY_LIMIT)
+            .map { candidate ->
+                UpcomingEntryUi(
+                    name = candidate.name,
+                    amount = formatter.formatMoney(candidate.amount),
+                    date = formatter.formatDate(candidate.date),
+                    direction = candidate.direction,
+                )
+            }
     }
 
     private suspend fun loadMonthOverview(
@@ -214,6 +296,26 @@ internal class HomeStateLoader(
         }
     }
 }
+
+private const val UPCOMING_ENTRY_LIMIT = 3
+
+private data class UpcomingCandidate(
+    val name: String,
+    val amount: Money,
+    val direction: Direction,
+    val date: LocalDate,
+    val stableKey: String,
+) {
+    constructor(entry: ActivityEntry, date: LocalDate, stableKey: String) : this(
+        name = entry.name,
+        amount = entry.amount,
+        direction = entry.direction,
+        date = date,
+        stableKey = stableKey,
+    )
+}
+
+private fun ActivityEntry.upcomingDate(): LocalDate = expectedOn ?: budgetMonth.value.atEndOfMonth()
 
 private fun ActivityEntry.recurringKey(): Pair<RecurringItemId, String>? =
     (source as? ActivitySource.Recurring)?.let { it.itemId to it.occurrenceKey }

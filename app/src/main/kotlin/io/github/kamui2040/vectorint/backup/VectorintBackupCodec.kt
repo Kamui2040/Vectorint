@@ -128,6 +128,7 @@ internal class VectorintBackupCodec {
 private fun JsonWriter.writeSettings(settings: UserSettings) {
     beginObject()
     name("includeExpectedIncome").value(settings.includeExpectedIncome)
+    name("showUpcomingEntries").value(settings.showUpcomingEntries)
     name("themeMode").value(settings.themeMode.storedValue())
     name("colorPalette").value(settings.colorPalette.storedValue())
     endObject()
@@ -368,24 +369,29 @@ private fun JsonReader.readBackup(versionToRead: Int): VectorintBackup {
 
 private fun JsonReader.readSettings(version: Int): UserSettings {
     var includeExpectedIncome: Boolean? = null
+    var showUpcomingEntries: Boolean? = null
     var themeMode: ThemeMode? = null
     var colorPalette: ColorPalette? = null
     val fields =
         readObject { field ->
             when (field) {
                 "includeExpectedIncome" -> includeExpectedIncome = readBooleanValue()
+                "showUpcomingEntries" -> showUpcomingEntries = readBooleanValue()
                 "themeMode" -> themeMode = readThemeMode()
                 "colorPalette" -> colorPalette = readColorPalette()
                 else -> invalid("Unknown settings field: $field")
             }
         }
-    if (version >= 4) {
+    if (version >= 8) {
+        fields.requireExactly(setOf("includeExpectedIncome", "showUpcomingEntries", "themeMode", "colorPalette"))
+    } else if (version >= 4) {
         fields.requireExactly(setOf("includeExpectedIncome", "themeMode", "colorPalette"))
     } else {
         fields.requireExactly(setOf("includeExpectedIncome"))
     }
     return UserSettings(
         includeExpectedIncome = requireNotNull(includeExpectedIncome),
+        showUpcomingEntries = showUpcomingEntries ?: false,
         themeMode = themeMode ?: ThemeMode.FOLLOW_SYSTEM,
         colorPalette = colorPalette ?: ColorPalette.ORBIT,
     )

@@ -9,6 +9,8 @@
     <string name="home_available_now">Available now</string>
     <string name="home_available_now_supporting">After this month’s planned expenses</string>
     <string name="home_breakdown">This month</string>
+    <string name="home_upcoming_entries">Upcoming entries</string>
+    <string name="home_upcoming_empty">No planned entries are coming up.</string>
     <string name="home_show_breakdown">Show This month details</string>
     <string name="home_hide_breakdown">Hide This month details</string>
     <string name="home_current_funds">Included account funds</string>
@@ -66,6 +68,9 @@
     <string name="settings_title">Settings</string>
     <string name="settings_close">Close</string>
     <string name="settings_appearance">Appearance</string>
+    <string name="settings_home">Home</string>
+    <string name="settings_home_upcoming">Show upcoming entries</string>
+    <string name="settings_home_upcoming_body">When on, Home shows the next three planned entries in chronological order beneath Available now.</string>
     <string name="settings_theme">Theme</string>
     <string name="settings_theme_system">Use device setting</string>
     <string name="settings_theme_light">Light</string>
@@ -238,6 +243,12 @@
     <string name="activity_delete_confirm">Delete</string>
     <string name="activity_delete_cancel">Cancel</string>
     <string name="recurring_title">Recurring items</string>
+    <string name="recurring_search">Search recurring items</string>
+    <string name="recurring_search_hint">Name, amount, category, tag, or account</string>
+    <string name="recurring_clear_search">Clear search</string>
+    <string name="recurring_no_matches">No matching recurring items</string>
+    <string name="recurring_no_matches_body">Try another search or clear the filter.</string>
+    <string name="recurring_clear_all">Clear search and filter</string>
     <string name="recurring_explanation">Add recurring income and expenses to make Available now more accurate.</string>
     <string name="recurring_add">Add recurring item</string>
     <string name="recurring_empty">No recurring items yet</string>

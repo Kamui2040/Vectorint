@@ -17,6 +17,7 @@ internal enum class ColorPalette {
 
 internal data class UserSettings(
     val includeExpectedIncome: Boolean = false,
+    val showUpcomingEntries: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.FOLLOW_SYSTEM,
     val colorPalette: ColorPalette = ColorPalette.ORBIT,
 ) {

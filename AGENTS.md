@@ -140,6 +140,14 @@ Treat every tracked file as suitable for public release.
 - History search and filters are presentation-only. They may narrow entries by
   visible details, direction, and planned or confirmed status, but must never
   change stored activity or accounting results.
+- Recurring-item search and type filters are presentation-only. They may narrow
+  definitions by visible details and direction, but must never change stored
+  definitions, generated occurrences, or accounting results.
+- The optional Home upcoming section shows at most the next three still-planned
+  entries dated today or later, ordered chronologically. It may combine stored
+  activity with non-persisted recurring previews, must not duplicate recorded
+  recurring occurrences, and must never create or confirm activity merely by
+  being displayed.
 
 ## Persistence integrity
 
@@ -173,6 +181,8 @@ Treat every tracked file as suitable for public release.
   DataStore directly.
 - A missing expected-income preference means `false`. Never include expected
   income because a setting is absent, unreadable, or malformed.
+- A missing Home upcoming preference means `false`. Showing upcoming entries is
+  always an explicit user choice.
 - Keep preference writes atomic and preserve unrelated keys. Do not hide storage
   or corruption failures by emitting a permissive fallback.
 - Provide app-language selection inside Settings with device default, English,

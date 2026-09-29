@@ -8,6 +8,8 @@
     <string name="home_available_now">Disponível agora</string>
     <string name="home_available_now_supporting">Após as despesas planejadas deste mês</string>
     <string name="home_breakdown">Este mês</string>
+    <string name="home_upcoming_entries">Próximos lançamentos</string>
+    <string name="home_upcoming_empty">Não há lançamentos planeados próximos.</string>
     <string name="home_show_breakdown">Mostrar detalhes deste mês</string>
     <string name="home_hide_breakdown">Ocultar detalhes deste mês</string>
     <string name="home_current_funds">Saldo das contas incluídas</string>
@@ -65,6 +67,9 @@
     <string name="settings_title">Configurações</string>
     <string name="settings_close">Fechar</string>
     <string name="settings_appearance">Aparência</string>
+    <string name="settings_home">Ecrã principal</string>
+    <string name="settings_home_upcoming">Mostrar próximos lançamentos</string>
+    <string name="settings_home_upcoming_body">Quando ativado, o ecrã principal mostra os próximos três lançamentos planeados por ordem cronológica abaixo de Disponível agora.</string>
     <string name="settings_theme">Tema</string>
     <string name="settings_theme_system">Usar configuração do dispositivo</string>
     <string name="settings_theme_light">Claro</string>
@@ -237,6 +242,12 @@
     <string name="activity_delete_confirm">Excluir</string>
     <string name="activity_delete_cancel">Cancelar</string>
     <string name="recurring_title">Itens recorrentes</string>
+    <string name="recurring_search">Pesquisar itens recorrentes</string>
+    <string name="recurring_search_hint">Nome, valor, categoria, etiqueta ou conta</string>
+    <string name="recurring_clear_search">Limpar pesquisa</string>
+    <string name="recurring_no_matches">Nenhum item recorrente correspondente</string>
+    <string name="recurring_no_matches_body">Tente outra pesquisa ou limpe o filtro.</string>
+    <string name="recurring_clear_all">Limpar pesquisa e filtro</string>
     <string name="recurring_explanation">Adicione receitas e despesas recorrentes para deixar “Disponível agora” mais preciso.</string>
     <string name="recurring_add">Adicionar item recorrente</string>
     <string name="recurring_empty">Ainda não há itens recorrentes</string>

@@ -49,6 +49,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.kamui2040.vectorint.R
+import io.github.kamui2040.vectorint.core.Direction
 import io.github.kamui2040.vectorint.presentation.component.MonthBrowser
 import io.github.kamui2040.vectorint.presentation.theme.flowColors
 
@@ -347,6 +348,10 @@ private fun ReadyContent(
             }
         }
 
+        if (state.showUpcomingEntries) {
+            UpcomingEntriesCard(state.upcomingEntries)
+        }
+
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(12.dp),
@@ -492,6 +497,84 @@ private fun ReadyContent(
                 Text(stringResource(R.string.home_edit_current_funds))
             }
         }
+    }
+}
+
+@Composable
+private fun UpcomingEntriesCard(entries: List<UpcomingEntryUi>) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(24.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Column(modifier = Modifier.padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Text(
+                text = stringResource(R.string.home_upcoming_entries),
+                modifier = Modifier.semantics { heading() },
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+            if (entries.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.home_upcoming_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            } else {
+                entries.forEachIndexed { index, entry ->
+                    if (index > 0) HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    UpcomingEntryRow(entry)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UpcomingEntryRow(entry: UpcomingEntryUi) {
+    val flowColors = MaterialTheme.flowColors
+    val valueColor =
+        if (entry.direction == Direction.EXPENSE) {
+            flowColors.onExpenseContainer
+        } else {
+            flowColors.onIncomeContainer
+        }
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                text = entry.name.ifBlank { stringResource(R.string.activity_unnamed) },
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = entry.date,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Text(
+                text =
+                    stringResource(
+                        if (entry.direction == Direction.EXPENSE) {
+                            R.string.activity_expense
+                        } else {
+                            R.string.activity_income
+                        },
+                    ),
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
+        Text(
+            text = entry.amount,
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.End,
+            color = valueColor,
+        )
     }
 }
 

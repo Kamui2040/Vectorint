@@ -17,6 +17,7 @@ import kotlinx.coroutines.flow.map
 
 private const val SETTINGS_DATA_STORE_NAME = "vectorint_settings"
 private val INCLUDE_EXPECTED_INCOME = booleanPreferencesKey("include_expected_income")
+private val SHOW_UPCOMING_ENTRIES = booleanPreferencesKey("show_upcoming_entries")
 private val THEME_MODE = stringPreferencesKey("theme_mode")
 private val COLOR_PALETTE = stringPreferencesKey("color_palette")
 
@@ -33,6 +34,7 @@ internal class DataStoreSettingsRepository(
             .map { preferences ->
                 UserSettings(
                     includeExpectedIncome = preferences[INCLUDE_EXPECTED_INCOME] ?: false,
+                    showUpcomingEntries = preferences[SHOW_UPCOMING_ENTRIES] ?: false,
                     themeMode = preferences[THEME_MODE].toThemeMode(),
                     colorPalette = preferences[COLOR_PALETTE].toColorPalette(),
                 )
@@ -52,9 +54,11 @@ internal class DataStoreSettingsRepository(
         dataStore.edit { preferences ->
             changed =
                 (preferences[INCLUDE_EXPECTED_INCOME] ?: false) != settings.includeExpectedIncome ||
+                (preferences[SHOW_UPCOMING_ENTRIES] ?: false) != settings.showUpcomingEntries ||
                 preferences[THEME_MODE].toThemeMode() != settings.themeMode ||
                 preferences[COLOR_PALETTE].toColorPalette() != settings.colorPalette
             preferences[INCLUDE_EXPECTED_INCOME] = settings.includeExpectedIncome
+            preferences[SHOW_UPCOMING_ENTRIES] = settings.showUpcomingEntries
             preferences[THEME_MODE] = settings.themeMode.name
             preferences[COLOR_PALETTE] = settings.colorPalette.name
         }

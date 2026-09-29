@@ -1,6 +1,7 @@
 package io.github.kamui2040.vectorint.presentation.recurring
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -18,11 +19,16 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -42,9 +48,14 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalResources
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -55,6 +66,7 @@ import io.github.kamui2040.vectorint.core.BudgetMonthAssignment
 import io.github.kamui2040.vectorint.core.CategoryId
 import io.github.kamui2040.vectorint.core.CustomCategory
 import io.github.kamui2040.vectorint.core.Direction
+import io.github.kamui2040.vectorint.core.PredefinedCategory
 import io.github.kamui2040.vectorint.core.RecurrenceUnit
 import io.github.kamui2040.vectorint.core.RecurringItemId
 import io.github.kamui2040.vectorint.core.Tag
@@ -62,6 +74,7 @@ import io.github.kamui2040.vectorint.presentation.account.AccountSelector
 import io.github.kamui2040.vectorint.presentation.category.CategoryManager
 import io.github.kamui2040.vectorint.presentation.category.CategorySelector
 import io.github.kamui2040.vectorint.presentation.category.CategorySummary
+import io.github.kamui2040.vectorint.presentation.category.labelResource
 import io.github.kamui2040.vectorint.presentation.component.InfoHeading
 import io.github.kamui2040.vectorint.presentation.tag.TagEditor
 import io.github.kamui2040.vectorint.presentation.tag.TagSummary
@@ -99,6 +112,9 @@ internal fun RecurringListScreen(
     onAdd: () -> Unit,
     onBack: () -> Unit,
 ) {
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    var directionFilter by rememberSaveable { mutableStateOf(RecurringDirectionFilter.ALL) }
+    val resources = LocalResources.current
     BackHandler(onBack = onBack)
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -108,6 +124,7 @@ internal fun RecurringListScreen(
             modifier =
                 Modifier
                     .fillMaxSize()
+                    .testTag("recurring_list")
                     .windowInsetsPadding(
                         WindowInsets.safeDrawing.only(WindowInsetsSides.Horizontal),
                     ).padding(horizontal = 24.dp, vertical = 12.dp),
@@ -161,20 +178,178 @@ internal fun RecurringListScreen(
                         )
                     }
 
-                is RecurringListUiState.Ready ->
-                    items(
-                        items = state.items,
-                        key = { it.id.value },
-                    ) { item ->
-                        RecurringItemCard(
-                            item = item,
-                            customCategories = state.customCategories,
-                            onClick = { onItemSelected(item.id) },
+                is RecurringListUiState.Ready -> {
+                    val filteredItems =
+                        state.items.filter { item ->
+                            val categoryName =
+                                item.categoryId
+                                    ?.let(PredefinedCategory::fromId)
+                                    ?.let { resources.getString(it.labelResource()) }
+                                    ?: state.customCategories.singleOrNull { it.id == item.categoryId }?.name
+                                    ?: resources.getString(R.string.category_other)
+                            item.matchesRecurringFilters(
+                                query = searchQuery,
+                                directionFilter = directionFilter,
+                                categoryName = categoryName,
+                                directionName =
+                                    resources.getString(
+                                        if (item.direction == Direction.EXPENSE) {
+                                            R.string.activity_expense
+                                        } else {
+                                            R.string.activity_income
+                                        },
+                                    ),
+                            )
+                        }
+                    item {
+                        RecurringSearchAndFilters(
+                            searchQuery = searchQuery,
+                            directionFilter = directionFilter,
+                            onSearchQueryChange = { searchQuery = it },
+                            onDirectionFilterChange = { directionFilter = it },
+                            onClear = {
+                                searchQuery = ""
+                                directionFilter = RecurringDirectionFilter.ALL
+                            },
                         )
                     }
+                    if (filteredItems.isEmpty()) {
+                        item {
+                            RecurringNoMatches(
+                                onClear = {
+                                    searchQuery = ""
+                                    directionFilter = RecurringDirectionFilter.ALL
+                                },
+                            )
+                        }
+                    } else {
+                        items(
+                            items = filteredItems,
+                            key = { it.id.value },
+                        ) { item ->
+                            RecurringItemCard(
+                                item = item,
+                                customCategories = state.customCategories,
+                                onClick = { onItemSelected(item.id) },
+                            )
+                        }
+                    }
+                }
             }
         }
     }
+}
+
+private enum class RecurringDirectionFilter {
+    ALL,
+    EXPENSE,
+    INCOME,
+}
+
+@Composable
+private fun RecurringSearchAndFilters(
+    searchQuery: String,
+    directionFilter: RecurringDirectionFilter,
+    onSearchQueryChange: (String) -> Unit,
+    onDirectionFilterChange: (RecurringDirectionFilter) -> Unit,
+    onClear: () -> Unit,
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        OutlinedTextField(
+            value = searchQuery,
+            onValueChange = onSearchQueryChange,
+            modifier = Modifier.fillMaxWidth(),
+            label = { Text(stringResource(R.string.recurring_search)) },
+            placeholder = { Text(stringResource(R.string.recurring_search_hint)) },
+            leadingIcon = { Icon(imageVector = Icons.Rounded.Search, contentDescription = null) },
+            trailingIcon =
+                if (searchQuery.isNotEmpty()) {
+                    {
+                        IconButton(onClick = { onSearchQueryChange("") }) {
+                            Icon(
+                                imageVector = Icons.Rounded.Close,
+                                contentDescription = stringResource(R.string.recurring_clear_search),
+                            )
+                        }
+                    }
+                } else {
+                    null
+                },
+            singleLine = true,
+        )
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            val label = stringResource(R.string.activity_history_filter_type)
+            Text(text = label, style = MaterialTheme.typography.labelLarge)
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                listOf(
+                    RecurringDirectionFilter.ALL to stringResource(R.string.activity_history_filter_all_types),
+                    RecurringDirectionFilter.EXPENSE to stringResource(R.string.activity_expense),
+                    RecurringDirectionFilter.INCOME to stringResource(R.string.activity_income),
+                ).forEach { (option, optionLabel) ->
+                    FilterChip(
+                        selected = directionFilter == option,
+                        onClick = { onDirectionFilterChange(option) },
+                        modifier =
+                            Modifier
+                                .testTag("recurring_direction:$option")
+                                .semantics { contentDescription = "$label: $optionLabel" },
+                        label = { Text(optionLabel) },
+                    )
+                }
+            }
+        }
+        if (searchQuery.isNotEmpty() || directionFilter != RecurringDirectionFilter.ALL) {
+            TextButton(onClick = onClear) {
+                Text(stringResource(R.string.recurring_clear_all))
+            }
+        }
+    }
+}
+
+@Composable
+private fun RecurringNoMatches(onClear: () -> Unit) {
+    Column(
+        modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite },
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        RecurringMessageCard(
+            title = stringResource(R.string.recurring_no_matches),
+            body = stringResource(R.string.recurring_no_matches_body),
+        )
+        OutlinedButton(onClick = onClear, modifier = Modifier.fillMaxWidth()) {
+            Text(stringResource(R.string.recurring_clear_all))
+        }
+    }
+}
+
+private fun RecurringListItemUi.matchesRecurringFilters(
+    query: String,
+    directionFilter: RecurringDirectionFilter,
+    categoryName: String,
+    directionName: String,
+): Boolean {
+    val directionMatches =
+        when (directionFilter) {
+            RecurringDirectionFilter.ALL -> true
+            RecurringDirectionFilter.EXPENSE -> direction == Direction.EXPENSE
+            RecurringDirectionFilter.INCOME -> direction == Direction.INCOME
+        }
+    val trimmedQuery = query.trim()
+    val searchMatches =
+        trimmedQuery.isEmpty() ||
+            listOf(
+                name,
+                amount,
+                firstOccurrenceLabel,
+                accountName,
+                categoryName,
+                directionName,
+                *tags.toTypedArray(),
+            ).any { value -> value.contains(trimmedQuery, ignoreCase = true) }
+    return directionMatches && searchMatches
 }
 
 @Composable

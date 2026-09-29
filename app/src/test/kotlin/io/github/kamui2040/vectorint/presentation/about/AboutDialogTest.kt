@@ -88,7 +88,7 @@ class AboutDialogTest {
         compose.onNodeWithText("Changelog").performClick()
         compose.onNodeWithText("Version ${BuildConfig.VERSION_NAME}").assertIsDisplayed()
         compose
-            .onNodeWithText("Tighter About card", substring = true)
+            .onNodeWithText("Search and type filters", substring = true)
             .assertIsDisplayed()
     }
 

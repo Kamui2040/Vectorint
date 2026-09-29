@@ -59,6 +59,7 @@ class SettingsScreensTest {
             .assertExists()
         compose.onNodeWithText("Appearance").assertIsDisplayed()
         compose.onNodeWithText("Language").assertIsDisplayed()
+        compose.onNodeWithText("Home").assertIsDisplayed()
         compose.onNodeWithText("Calculation").assertIsDisplayed()
         compose.onNodeWithText("Data & Backup").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Use device setting · Orbit").assertDoesNotExist()
@@ -73,6 +74,38 @@ class SettingsScreensTest {
         compose.runOnIdle {
             assertEquals(1, aboutOpens)
             assertEquals(1, closes)
+        }
+    }
+
+    @Test
+    fun `home page saves the upcoming entries choice`() {
+        var page by mutableStateOf(SettingsPage.ROOT)
+        var showUpcomingEntries by mutableStateOf(false)
+        var saves = 0
+        compose.setContent {
+            VectorintTheme {
+                SettingsScreen(
+                    includeExpectedIncome = false,
+                    showUpcomingEntries = showUpcomingEntries,
+                    page = page,
+                    saving = false,
+                    saveFailed = false,
+                    onPageChange = { page = it },
+                    onIncludeExpectedIncomeChange = {},
+                    onShowUpcomingEntriesChange = { showUpcomingEntries = it },
+                    onSave = { saves++ },
+                )
+            }
+        }
+
+        compose.onNodeWithText("Home").performClick()
+        compose.onNodeWithText("Show upcoming entries").assertIsOff()
+        compose.onNodeWithText("Show upcoming entries").performClick()
+        compose.onNodeWithText("Show upcoming entries").assertIsOn()
+        compose.onNodeWithText("Save settings").performClick()
+        compose.runOnIdle {
+            assertEquals(true, showUpcomingEntries)
+            assertEquals(1, saves)
         }
     }
 

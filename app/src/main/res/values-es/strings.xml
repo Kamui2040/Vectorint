@@ -8,6 +8,8 @@
     <string name="home_available_now">Disponible ahora</string>
     <string name="home_available_now_supporting">Después de los gastos planificados de este mes</string>
     <string name="home_breakdown">este mes</string>
+    <string name="home_upcoming_entries">Próximos movimientos</string>
+    <string name="home_upcoming_empty">No hay movimientos planificados próximos.</string>
     <string name="home_show_breakdown">Mostrar detalles de este mes</string>
     <string name="home_hide_breakdown">Ocultar detalles de este mes</string>
     <string name="home_current_funds">Saldo de las cuentas incluidas</string>
@@ -65,6 +67,9 @@
     <string name="settings_title">Ajustes</string>
     <string name="settings_close">Cerrar</string>
     <string name="settings_appearance">Apariencia</string>
+    <string name="settings_home">Inicio</string>
+    <string name="settings_home_upcoming">Mostrar próximos movimientos</string>
+    <string name="settings_home_upcoming_body">Al activarlo, Inicio muestra los tres próximos movimientos planificados en orden cronológico debajo de Disponible ahora.</string>
     <string name="settings_theme">Tema</string>
     <string name="settings_theme_system">Usar configuración del dispositivo</string>
     <string name="settings_theme_light">Claro</string>
@@ -237,6 +242,12 @@
     <string name="activity_delete_confirm">Eliminar</string>
     <string name="activity_delete_cancel">Cancelar</string>
     <string name="recurring_title">Elementos recurrentes</string>
+    <string name="recurring_search">Buscar elementos recurrentes</string>
+    <string name="recurring_search_hint">Nombre, importe, categoría, etiqueta o cuenta</string>
+    <string name="recurring_clear_search">Borrar búsqueda</string>
+    <string name="recurring_no_matches">No hay elementos recurrentes coincidentes</string>
+    <string name="recurring_no_matches_body">Prueba otra búsqueda o quita el filtro.</string>
+    <string name="recurring_clear_all">Borrar búsqueda y filtro</string>
     <string name="recurring_explanation">Añade ingresos y gastos recurrentes para que «Disponible ahora» sea más preciso.</string>
     <string name="recurring_add">Agregar elemento recurrente</string>
     <string name="recurring_empty">Aún no hay elementos recurrentes</string>

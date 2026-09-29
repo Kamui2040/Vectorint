@@ -8,6 +8,8 @@
     <string name="home_available_now">Disponible maintenant</string>
     <string name="home_available_now_supporting">Après les dépenses prévues de ce mois</string>
     <string name="home_breakdown">Ce mois-ci</string>
+    <string name="home_upcoming_entries">Prochaines opérations</string>
+    <string name="home_upcoming_empty">Aucune opération planifiée à venir.</string>
     <string name="home_show_breakdown">Afficher les détails de ce mois-ci</string>
     <string name="home_hide_breakdown">Masquer les détails de ce mois</string>
     <string name="home_current_funds">Solde des comptes inclus</string>
@@ -65,6 +67,9 @@
     <string name="settings_title">Paramètres</string>
     <string name="settings_close">Fermer</string>
     <string name="settings_appearance">Apparence</string>
+    <string name="settings_home">Accueil</string>
+    <string name="settings_home_upcoming">Afficher les prochaines opérations</string>
+    <string name="settings_home_upcoming_body">Lorsque cette option est activée, l’accueil affiche les trois prochaines opérations planifiées dans l’ordre chronologique sous Disponible maintenant.</string>
     <string name="settings_theme">Thème</string>
     <string name="settings_theme_system">Utiliser les paramètres de l\'appareil</string>
     <string name="settings_theme_light">Clair</string>
@@ -237,6 +242,12 @@
     <string name="activity_delete_confirm">Supprimer</string>
     <string name="activity_delete_cancel">Annuler</string>
     <string name="recurring_title">Éléments récurrents</string>
+    <string name="recurring_search">Rechercher des éléments récurrents</string>
+    <string name="recurring_search_hint">Nom, montant, catégorie, étiquette ou compte</string>
+    <string name="recurring_clear_search">Effacer la recherche</string>
+    <string name="recurring_no_matches">Aucun élément récurrent correspondant</string>
+    <string name="recurring_no_matches_body">Essayez une autre recherche ou retirez le filtre.</string>
+    <string name="recurring_clear_all">Effacer la recherche et le filtre</string>
     <string name="recurring_explanation">Ajoutez des revenus et des dépenses récurrents pour rendre « Disponible maintenant » plus précis.</string>
     <string name="recurring_add">Ajouter un élément récurrent</string>
     <string name="recurring_empty">Aucun élément récurrent pour l\'instant</string>

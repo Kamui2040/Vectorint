@@ -8,6 +8,8 @@
     <string name="home_available_now">Jetzt verfügbar</string>
     <string name="home_available_now_supporting">Nach den geplanten Ausgaben dieses Monats</string>
     <string name="home_breakdown">Dieser Monat</string>
+    <string name="home_upcoming_entries">Nächste Einträge</string>
+    <string name="home_upcoming_empty">Es stehen keine geplanten Einträge an.</string>
     <string name="home_show_breakdown">Details zu „Dieser Monat“ anzeigen</string>
     <string name="home_hide_breakdown">Details zu „Dieser Monat“ ausblenden</string>
     <string name="home_current_funds">Guthaben einbezogener Konten</string>
@@ -65,6 +67,9 @@
     <string name="settings_title">Einstellungen</string>
     <string name="settings_close">Schließen</string>
     <string name="settings_appearance">Darstellung</string>
+    <string name="settings_home">Startseite</string>
+    <string name="settings_home_upcoming">Nächste Einträge anzeigen</string>
+    <string name="settings_home_upcoming_body">Wenn aktiviert, zeigt die Startseite unter „Jetzt verfügbar“ die nächsten drei geplanten Einträge in zeitlicher Reihenfolge.</string>
     <string name="settings_theme">Design</string>
     <string name="settings_theme_system">Geräteeinstellung verwenden</string>
     <string name="settings_theme_light">Hell</string>
@@ -237,6 +242,12 @@
     <string name="activity_delete_confirm">Löschen</string>
     <string name="activity_delete_cancel">Abbrechen</string>
     <string name="recurring_title">Wiederkehrende Posten</string>
+    <string name="recurring_search">Wiederkehrende Posten durchsuchen</string>
+    <string name="recurring_search_hint">Name, Betrag, Kategorie, Schlagwort oder Konto</string>
+    <string name="recurring_clear_search">Suche löschen</string>
+    <string name="recurring_no_matches">Keine passenden wiederkehrenden Posten</string>
+    <string name="recurring_no_matches_body">Versuche eine andere Suche oder entferne den Filter.</string>
+    <string name="recurring_clear_all">Suche und Filter löschen</string>
     <string name="recurring_explanation">Füge wiederkehrende Einnahmen und Ausgaben hinzu, damit „Jetzt verfügbar“ genauer wird.</string>
     <string name="recurring_add">Wiederkehrenden Posten hinzufügen</string>
     <string name="recurring_empty">Noch keine wiederkehrenden Posten</string>

@@ -4,9 +4,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
+import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performTextInput
 import io.github.kamui2040.vectorint.core.BudgetMonthAssignment
 import io.github.kamui2040.vectorint.core.CategoryIcon
 import io.github.kamui2040.vectorint.core.CategoryId
@@ -115,6 +118,63 @@ class RecurringScreensTest {
         }
 
         compose.onNodeWithText("Every month · first Sep 30, 2026").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun `recurring list searches visible details and filters by direction`() {
+        compose.setContent {
+            VectorintTheme {
+                RecurringListScreen(
+                    state =
+                        RecurringListUiState.Ready(
+                            listOf(
+                                RecurringListItemUi(
+                                    id = RecurringItemId("rent"),
+                                    name = "Rent",
+                                    direction = Direction.EXPENSE,
+                                    amount = "€500.00",
+                                    schedule = RecurringSchedule(LocalDate.of(2026, 9, 20)),
+                                    firstOccurrenceLabel = "Sep 20, 2026",
+                                    tags = listOf("housing"),
+                                ),
+                                RecurringListItemUi(
+                                    id = RecurringItemId("salary"),
+                                    name = "Salary",
+                                    direction = Direction.INCOME,
+                                    amount = "€2,000.00",
+                                    schedule = RecurringSchedule(LocalDate.of(2026, 9, 19)),
+                                    firstOccurrenceLabel = "Sep 19, 2026",
+                                    tags = listOf("work"),
+                                ),
+                            ),
+                        ),
+                    onRetry = {},
+                    onItemSelected = {},
+                    onAdd = {},
+                    onBack = {},
+                )
+            }
+        }
+
+        compose.onNodeWithText("Search recurring items").performTextInput("salary")
+        compose.waitForIdle()
+        compose.onNodeWithTag("recurring_list").performScrollToIndex(5)
+        compose.onNodeWithText("Salary").assertIsDisplayed()
+        compose.onNodeWithText("Rent").assertDoesNotExist()
+        compose.onNodeWithTag("recurring_list").performScrollToIndex(4)
+        compose.onNodeWithContentDescription("Clear search").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("recurring_direction:EXPENSE").performScrollTo().performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("recurring_list").performScrollToIndex(5)
+        compose.onNodeWithText("Rent").assertIsDisplayed()
+        compose.onNodeWithText("Salary").assertDoesNotExist()
+        compose.onNodeWithTag("recurring_list").performScrollToIndex(4)
+        compose.onNodeWithTag("recurring_direction:INCOME").performScrollTo().performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("recurring_list").performScrollToIndex(5)
+        compose.onNodeWithText("Salary").assertIsDisplayed()
+        compose.onNodeWithText("Rent").assertDoesNotExist()
     }
 
     @Test

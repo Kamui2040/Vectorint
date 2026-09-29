@@ -63,6 +63,7 @@ class DataStoreSettingsRepositoryTest {
 
             assertEquals(UserSettings(), settings)
             assertFalse(settings.includeExpectedIncome)
+            assertFalse(settings.showUpcomingEntries)
             assertEquals(CalculationPolicy(includeExpectedIncome = false), settings.calculationPolicy)
         }
 
@@ -93,6 +94,7 @@ class DataStoreSettingsRepositoryTest {
             val changed =
                 UserSettings(
                     includeExpectedIncome = true,
+                    showUpcomingEntries = true,
                     themeMode = ThemeMode.DARK,
                     colorPalette = ColorPalette.NEBULA,
                 )

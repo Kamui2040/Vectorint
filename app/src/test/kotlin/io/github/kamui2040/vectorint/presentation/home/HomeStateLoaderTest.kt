@@ -97,6 +97,53 @@ class HomeStateLoaderTest {
         }
 
     @Test
+    fun `upcoming entries stay hidden by default`() =
+        runBlocking {
+            val state =
+                loader(
+                    snapshot = snapshot(plannedEntry("Rent", LocalDate.of(2026, 9, 20), 50_000)),
+                ).load() as HomeUiState.Ready
+
+            assertEquals(false, state.showUpcomingEntries)
+            assertEquals(emptyList<UpcomingEntryUi>(), state.upcomingEntries)
+        }
+
+    @Test
+    fun `upcoming entries combine planned and recurring activity in chronological order and stop at three`() =
+        runBlocking {
+            val salary =
+                RecurringItem.monthly(
+                    id = RecurringItemId("salary"),
+                    name = "Salary",
+                    direction = Direction.INCOME,
+                    amount = Money(200_000, eur),
+                    firstOccurrence = LocalDate.of(2026, 9, 19),
+                )
+            val state =
+                loader(
+                    snapshot =
+                        snapshot(
+                            plannedEntry("Groceries", LocalDate.of(2026, 9, 18), 4_000),
+                            plannedEntry("Rent", LocalDate.of(2026, 9, 20), 50_000),
+                            plannedEntry("Later", LocalDate.of(2026, 10, 1), 1_000),
+                            plannedEntry("Past", LocalDate.of(2026, 9, 14), 1_000),
+                        ),
+                    settings = UserSettings(showUpcomingEntries = true),
+                    recurringItems = listOf(salary),
+                ).load() as HomeUiState.Ready
+
+            assertEquals(true, state.showUpcomingEntries)
+            assertEquals(
+                listOf(
+                    UpcomingEntryUi("Groceries", "EUR:4000", "date:2026-09-18", Direction.EXPENSE),
+                    UpcomingEntryUi("Salary", "EUR:200000", "date:2026-09-19", Direction.INCOME),
+                    UpcomingEntryUi("Rent", "EUR:50000", "date:2026-09-20", Direction.EXPENSE),
+                ),
+                state.upcomingEntries,
+            )
+        }
+
+    @Test
     fun `negative Available now remains visible when calculation is safe`() =
         runBlocking {
             val loader = loader(snapshot = snapshot(plannedExpense(125_000)))
@@ -319,12 +366,28 @@ class HomeStateLoaderTest {
     private fun loader(
         snapshot: BudgetSnapshot?,
         settings: UserSettings = UserSettings(),
+        recurringItems: List<RecurringItem> = emptyList(),
     ): HomeStateLoader =
         HomeStateLoader(
-            budgetRepository = FakeBudgetRepository(snapshot),
+            budgetRepository = FakeBudgetRepository(snapshot, recurringItems = recurringItems),
             settingsRepository = FakeSettingsRepository(flowOf(settings)),
             formatter = formatter,
             clock = clock,
+        )
+
+    private fun plannedEntry(
+        name: String,
+        expectedOn: LocalDate,
+        minorUnits: Long,
+    ): ActivityEntry =
+        ActivityEntry(
+            id = ActivityId("planned-$name"),
+            name = name,
+            direction = Direction.EXPENSE,
+            amount = Money(minorUnits, eur),
+            state = ActivityState.PLANNED,
+            budgetMonth = BudgetMonth(YearMonth.from(expectedOn)),
+            expectedOn = expectedOn,
         )
 
     private fun snapshot(vararg activities: ActivityEntry): BudgetSnapshot =
@@ -372,12 +435,16 @@ private class FakeHomeValueFormatter : HomeValueFormatter {
     override fun formatMoney(money: Money): String = "${money.currency.value}:${money.minorUnits}".also(formattedMoney::add)
 
     override fun formatMonth(month: BudgetMonth): String = "month:${month.value}"
+
+    override fun formatDate(date: LocalDate): String = "date:$date"
 }
 
 private data object FailingHomeValueFormatter : HomeValueFormatter {
     override fun formatMoney(money: Money): String = throw IllegalArgumentException("synthetic format failure")
 
     override fun formatMonth(month: BudgetMonth): String = "month:${month.value}"
+
+    override fun formatDate(date: LocalDate): String = "date:$date"
 }
 
 private class FakeSettingsRepository(

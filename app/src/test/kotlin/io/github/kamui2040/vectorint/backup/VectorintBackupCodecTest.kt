@@ -205,7 +205,7 @@ class VectorintBackupCodecTest {
         assertInvalid(text.replaceFirst("{", "{\"format\":\"${VectorintBackupContract.FORMAT}\","))
         assertInvalid(
             text.replace(
-                "\"settings\":{\"includeExpectedIncome\":true,\"themeMode\":\"dark\",\"colorPalette\":\"nebula\"},",
+                "\"settings\":{\"includeExpectedIncome\":true,\"showUpcomingEntries\":true,\"themeMode\":\"dark\",\"colorPalette\":\"nebula\"},",
                 "",
             ),
         )
@@ -219,6 +219,7 @@ class VectorintBackupCodecTest {
 
         assertInvalid(text.replaceFirst("\"minorUnits\":100000", "\"minorUnits\":1.0"))
         assertInvalid(text.replace("\"includeExpectedIncome\":true", "\"includeExpectedIncome\":\"true\""))
+        assertInvalid(text.replace("\"showUpcomingEntries\":true", "\"showUpcomingEntries\":\"true\""))
         assertInvalid(text.replace("\"themeMode\":\"dark\"", "\"themeMode\":\"automatic\""))
         assertInvalid(text.replace("\"colorPalette\":\"nebula\"", "\"colorPalette\":\"unknown\""))
         assertInvalid(text.replaceFirst("\"requireManualConfirmation\":true", "\"requireManualConfirmation\":1"))
@@ -392,7 +393,9 @@ class VectorintBackupCodecTest {
         val currentFundsJson = accountsJson.substring(currentFundsStart, currentFundsEnd)
         return replaceRange(accountsStart, categoriesStart, "\"currentFunds\":$currentFundsJson")
             .replace("\"version\":${VectorintBackupContract.VERSION}", "\"version\":$version")
-            .replace(",\"accountId\":\"legacy-main\"", "")
+            .let { legacy ->
+                if (version < 8) legacy.replace(",\"showUpcomingEntries\":true", "") else legacy
+            }.replace(",\"accountId\":\"legacy-main\"", "")
     }
 
     private fun completeBackup(): VectorintBackup {
@@ -501,6 +504,7 @@ class VectorintBackupCodecTest {
             settings =
                 UserSettings(
                     includeExpectedIncome = true,
+                    showUpcomingEntries = true,
                     themeMode = ThemeMode.DARK,
                     colorPalette = ColorPalette.NEBULA,
                 ),

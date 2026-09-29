@@ -115,6 +115,7 @@ class BackupCoordinatorTest {
             val restoredSettings =
                 UserSettings(
                     includeExpectedIncome = true,
+                    showUpcomingEntries = true,
                     themeMode = ThemeMode.DARK,
                     colorPalette = ColorPalette.NOVA,
                 )
@@ -124,6 +125,26 @@ class BackupCoordinatorTest {
                 coordinator(data, settings).restore(newBackupBytes(restoredSettings)),
             )
             assertEquals(restoredSettings, settings.value)
+        }
+
+    @Test
+    fun `version seven backup preserves the current upcoming entries preference`() =
+        runBlocking {
+            val data = FakeDataRepository(oldData)
+            val currentSettings = UserSettings(showUpcomingEntries = true)
+            val settings = FakeSettingsRepository(currentSettings)
+            val versionSevenBytes =
+                newBackupBytes()
+                    .toString(Charsets.UTF_8)
+                    .replace("\"version\":${VectorintBackupContract.VERSION}", "\"version\":7")
+                    .replace(",\"showUpcomingEntries\":false", "")
+                    .toByteArray(Charsets.UTF_8)
+
+            assertEquals(BackupRestoreResult.Restored, coordinator(data, settings).restore(versionSevenBytes))
+            assertEquals(
+                UserSettings(includeExpectedIncome = true, showUpcomingEntries = true),
+                settings.value,
+            )
         }
 
     @Test
@@ -162,7 +183,9 @@ class BackupCoordinatorTest {
         val currentFundsJson = accountsJson.substring(currentFundsStart, currentFundsEnd)
         return replaceRange(accountsStart, categoriesStart, "\"currentFunds\":$currentFundsJson")
             .replace("\"version\":${VectorintBackupContract.VERSION}", "\"version\":$version")
-            .replace(",\"accountId\":\"legacy-main\"", "")
+            .let { legacy ->
+                if (version < 8) legacy.replace(",\"showUpcomingEntries\":false", "") else legacy
+            }.replace(",\"accountId\":\"legacy-main\"", "")
     }
 
     @Test

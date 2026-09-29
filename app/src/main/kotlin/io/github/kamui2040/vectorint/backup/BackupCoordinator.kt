@@ -75,10 +75,12 @@ internal class BackupCoordinator(
 
         return withContext(NonCancellable) {
             val settingsToRestore =
-                if (candidate.sourceVersion >= 4) {
-                    candidate.settings
-                } else {
-                    previousSettings.copy(includeExpectedIncome = candidate.settings.includeExpectedIncome)
+                when {
+                    candidate.sourceVersion >= 8 -> candidate.settings
+                    candidate.sourceVersion >= 4 ->
+                        candidate.settings.copy(showUpcomingEntries = previousSettings.showUpcomingEntries)
+                    else ->
+                        previousSettings.copy(includeExpectedIncome = candidate.settings.includeExpectedIncome)
                 }
             try {
                 dataRepository.replaceBackupData(candidate.data)

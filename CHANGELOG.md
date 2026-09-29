@@ -2,13 +2,19 @@
 
 All notable user-facing changes will be recorded here.
 
-## 0.0.12 - Unreleased
+## 0.1.0 - Unreleased
+
+- Add search and type filters to recurring items as well as History.
+- Add an optional Home section showing the next three planned entries in
+  chronological order beneath Available now.
+- Add a user-triggered update check in About, using Google Play's update flow in
+  Play builds and the public Vectorint download page in Google-free builds.
+
+## 0.0.12 - Tester candidate
 
 - Add History search across entry details plus type and status filters.
 - Prevent optional Google Play receipt-scanner initialization failures from
   crashing Vectorint during startup.
-- Add a Check for updates action in About, using Google Play's update flow in
-  Play builds and the public Vectorint download page in Google-free builds.
 - Keep the optional Play receipt scanner from restricting installation to
   portrait-capable devices.
 - Add an optional Google Play receipt scanner that proposes an editable expense

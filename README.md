@@ -11,6 +11,7 @@ income only when you choose to.
 ## What it does
 
 - Shows **Available now** for the selected month.
+- Can optionally show the next three planned entries below **Available now**.
 - Keeps bank, PayPal, cash, savings, and other same-currency money sources
   separate, with an explicit choice to include each one in **Available now**.
 - Offers detailed and compact home-screen widgets for the current month's
@@ -18,6 +19,7 @@ income only when you choose to.
 - Uses the same predictable model for income and expenses.
 - Supports one-off and recurring entries, flexible intervals, optional end dates,
   reminders, and assignment to the occurrence month or following month.
+- Supports search and type filters in both History and recurring-item lists.
 - Groups expenses by category in a monthly overview.
 - Keeps tags as visual organization only.
 - Stores a newest-first history and supports manual or automatic local JSON
