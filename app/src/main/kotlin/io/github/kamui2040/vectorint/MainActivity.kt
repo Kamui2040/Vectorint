@@ -10,6 +10,7 @@ import android.provider.Settings
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -22,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.ViewModel
 import io.github.kamui2040.vectorint.backup.AndroidBackupDocumentGateway
 import io.github.kamui2040.vectorint.backup.AutoBackupTrigger
 import io.github.kamui2040.vectorint.backup.BackupCoordinator
@@ -80,7 +82,17 @@ class MainActivity : AppCompatActivity() {
     private var pendingReminderItemId by mutableStateOf<String?>(null)
     private var pendingQuickAddRequest by mutableStateOf(false)
     private var resumeGeneration by mutableIntStateOf(0)
-    private var receiptScanState by mutableStateOf<ReceiptScanState>(ReceiptScanState.Idle)
+    private val receiptScanSession by viewModels<ReceiptScanSession>()
+    private var receiptScanState: ReceiptScanState
+        get() = receiptScanSession.scanState
+        set(value) {
+            receiptScanSession.scanState = value
+        }
+    private var receiptDraftText: String?
+        get() = receiptScanSession.draftText
+        set(value) {
+            receiptScanSession.draftText = value
+        }
     private var updateCheckState by mutableStateOf<AppUpdateState>(AppUpdateState.Idle)
     private var receiptScanner: ReceiptScanner? = null
     private var appUpdateChecker: AppUpdateChecker? = null
@@ -113,6 +125,9 @@ class MainActivity : AppCompatActivity() {
                         ReceiptScanOutcome.Failed -> ReceiptScanState.Failed
                     }
             }
+        if (receiptScanner?.isInProgress == true) {
+            receiptScanState = ReceiptScanState.Scanning
+        }
         appUpdateChecker =
             createAppUpdateChecker(
                 activity = this,
@@ -202,7 +217,6 @@ class MainActivity : AppCompatActivity() {
             var activityReturnDestination by rememberSaveable { mutableStateOf(AppDestination.HOME) }
             var selectedActivityId by rememberSaveable { mutableStateOf<String?>(null) }
             var selectedRecurringItemId by rememberSaveable { mutableStateOf<String?>(null) }
-            var receiptDraftText by remember { mutableStateOf<String?>(null) }
             var showSettings by rememberSaveable { mutableStateOf(false) }
             var showAbout by rememberSaveable { mutableStateOf(false) }
 
@@ -528,7 +542,12 @@ class MainActivity : AppCompatActivity() {
     }
 }
 
-private sealed interface ReceiptScanState {
+internal class ReceiptScanSession : ViewModel() {
+    var scanState by mutableStateOf<ReceiptScanState>(ReceiptScanState.Idle)
+    var draftText by mutableStateOf<String?>(null)
+}
+
+internal sealed interface ReceiptScanState {
     data object Idle : ReceiptScanState
 
     data object Scanning : ReceiptScanState

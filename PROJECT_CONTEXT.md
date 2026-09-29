@@ -285,7 +285,8 @@ from it.
 - Room 2.8.4 with KSP 2.3.11
 - Preferences DataStore 1.2.1
 - Kotlin Coroutines Android 1.11.0
-- Google Play-only ML Kit document scanner 16.0.0 and text recognition 19.0.1
+- AndroidX ExifInterface 1.4.2 for bounded receipt-image orientation handling
+- Google Play-only ML Kit text recognition 19.0.1
 - Google Play-only In-App Update Library 2.1.0
 - Android SDK Platform 37.0 and Build-Tools 37.0.0
 - compile SDK 37, target SDK 37, minimum SDK 23
@@ -304,9 +305,14 @@ tester candidates. Code 15 defers optional Google receipt-scanner initialization
 until the user requests a scan and treats provider initialization failures as
 unavailable, so they cannot block app startup. Version code 16 is the next tester
 candidate; it retains that fix and adds in-app update checking plus History search
-and filters. Version 0.1.0 with Android version code 17 is now the development
-version; it adds recurring-item search and type filters plus an opt-in Home section
-for the next three planned entries. The 0.0.12 delta from 0.0.11 is the
+and filters. Version 0.1.0 with Android version code 18 is now the development and
+next tester candidate; code 17 was the preceding Google Play tester artifact.
+Version 0.1.0 adds recurring-item search and type filters plus an opt-in Home
+section for the next three planned entries. Its Play edition captures receipts
+through the installed camera into a private temporary file and sends only the
+bounded decoded image to on-device text recognition, avoiding the unsupported
+Google document scanner path on otherwise camera-capable devices. The 0.0.12 delta
+from 0.0.11 is the
 tightened About card, current-version changelog and licence/source/support links,
 dedicated in-app Privacy page, clarified public privacy policy, an accessible
 Current funds sign control for keyboards without a minus key, complete

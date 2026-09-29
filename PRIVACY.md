@@ -26,18 +26,19 @@ entries and reminders are managed within the app.
 
 ## Receipt scanning in the Google Play edition
 
-The Google Play edition can scan a receipt and suggest its total in an editable
-expense form. Scanning and text recognition use Google Play services and run on
-the device. Vectorint does not upload the receipt or recognized text to K2040 or
-to a Vectorint-operated service.
+The Google Play edition can photograph a receipt with an installed camera app and
+suggest its total in an editable expense form. Vectorint passes the private
+temporary image to Google Play services text recognition on the device. Vectorint
+does not upload the receipt or recognized text to K2040 or to a
+Vectorint-operated service.
 
 The receipt image is held temporarily in Vectorint's private cache, read once,
 and deleted after text recognition. Recognized receipt text stays in memory only
 while preparing the editable expense draft. Nothing is recorded until you review
 the draft and choose to save it.
 
-Google Play services may download the scanner and text-recognition components to
-the device. Google states that ML Kit does not send receipt images, recognized
+Google Play services may download the text-recognition component to the device.
+Google states that ML Kit does not send receipt images, recognized
 text, or recognition results to its servers, but may collect device and app
 information, performance and usage metrics, API configuration, event types, and
 error codes for diagnostics, analytics, maintenance, and abuse prevention. This
