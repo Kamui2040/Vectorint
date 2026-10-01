@@ -33,6 +33,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -114,6 +115,7 @@ internal fun RecurringListScreen(
 ) {
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var directionFilter by rememberSaveable { mutableStateOf(RecurringDirectionFilter.ALL) }
+    var assignmentFilter by rememberSaveable { mutableStateOf(RecurringAssignmentFilter.ALL) }
     val resources = LocalResources.current
     BackHandler(onBack = onBack)
     Surface(
@@ -190,6 +192,7 @@ internal fun RecurringListScreen(
                             item.matchesRecurringFilters(
                                 query = searchQuery,
                                 directionFilter = directionFilter,
+                                assignmentFilter = assignmentFilter,
                                 categoryName = categoryName,
                                 directionName =
                                     resources.getString(
@@ -199,17 +202,21 @@ internal fun RecurringListScreen(
                                             R.string.activity_income
                                         },
                                     ),
+                                unassignedName = resources.getString(R.string.account_unassigned),
                             )
                         }
                     item {
                         RecurringSearchAndFilters(
                             searchQuery = searchQuery,
                             directionFilter = directionFilter,
+                            assignmentFilter = assignmentFilter,
                             onSearchQueryChange = { searchQuery = it },
                             onDirectionFilterChange = { directionFilter = it },
+                            onAssignmentFilterChange = { assignmentFilter = it },
                             onClear = {
                                 searchQuery = ""
                                 directionFilter = RecurringDirectionFilter.ALL
+                                assignmentFilter = RecurringAssignmentFilter.ALL
                             },
                         )
                     }
@@ -219,6 +226,7 @@ internal fun RecurringListScreen(
                                 onClear = {
                                     searchQuery = ""
                                     directionFilter = RecurringDirectionFilter.ALL
+                                    assignmentFilter = RecurringAssignmentFilter.ALL
                                 },
                             )
                         }
@@ -246,12 +254,20 @@ private enum class RecurringDirectionFilter {
     INCOME,
 }
 
+private enum class RecurringAssignmentFilter {
+    ALL,
+    ASSIGNED,
+    UNASSIGNED,
+}
+
 @Composable
 private fun RecurringSearchAndFilters(
     searchQuery: String,
     directionFilter: RecurringDirectionFilter,
+    assignmentFilter: RecurringAssignmentFilter,
     onSearchQueryChange: (String) -> Unit,
     onDirectionFilterChange: (RecurringDirectionFilter) -> Unit,
+    onAssignmentFilterChange: (RecurringAssignmentFilter) -> Unit,
     onClear: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -301,7 +317,35 @@ private fun RecurringSearchAndFilters(
                 }
             }
         }
-        if (searchQuery.isNotEmpty() || directionFilter != RecurringDirectionFilter.ALL) {
+        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            val label = stringResource(R.string.account_assignment_filter)
+            Text(text = label, style = MaterialTheme.typography.labelLarge)
+            Row(
+                modifier = Modifier.horizontalScroll(rememberScrollState()),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                listOf(
+                    RecurringAssignmentFilter.ALL to stringResource(R.string.account_assignment_all),
+                    RecurringAssignmentFilter.ASSIGNED to stringResource(R.string.account_assigned),
+                    RecurringAssignmentFilter.UNASSIGNED to stringResource(R.string.account_unassigned),
+                ).forEach { (option, optionLabel) ->
+                    FilterChip(
+                        selected = assignmentFilter == option,
+                        onClick = { onAssignmentFilterChange(option) },
+                        modifier =
+                            Modifier
+                                .testTag("recurring_assignment:$option")
+                                .semantics { contentDescription = "$label: $optionLabel" },
+                        label = { Text(optionLabel) },
+                    )
+                }
+            }
+        }
+        if (
+            searchQuery.isNotEmpty() ||
+            directionFilter != RecurringDirectionFilter.ALL ||
+            assignmentFilter != RecurringAssignmentFilter.ALL
+        ) {
             TextButton(onClick = onClear) {
                 Text(stringResource(R.string.recurring_clear_all))
             }
@@ -328,14 +372,22 @@ private fun RecurringNoMatches(onClear: () -> Unit) {
 private fun RecurringListItemUi.matchesRecurringFilters(
     query: String,
     directionFilter: RecurringDirectionFilter,
+    assignmentFilter: RecurringAssignmentFilter,
     categoryName: String,
     directionName: String,
+    unassignedName: String,
 ): Boolean {
     val directionMatches =
         when (directionFilter) {
             RecurringDirectionFilter.ALL -> true
             RecurringDirectionFilter.EXPENSE -> direction == Direction.EXPENSE
             RecurringDirectionFilter.INCOME -> direction == Direction.INCOME
+        }
+    val assignmentMatches =
+        when (assignmentFilter) {
+            RecurringAssignmentFilter.ALL -> true
+            RecurringAssignmentFilter.ASSIGNED -> accountName != null
+            RecurringAssignmentFilter.UNASSIGNED -> accountName == null
         }
     val trimmedQuery = query.trim()
     val searchMatches =
@@ -344,12 +396,12 @@ private fun RecurringListItemUi.matchesRecurringFilters(
                 name,
                 amount,
                 firstOccurrenceLabel,
-                accountName,
+                accountName ?: unassignedName,
                 categoryName,
                 directionName,
                 *tags.toTypedArray(),
             ).any { value -> value.contains(trimmedQuery, ignoreCase = true) }
-    return directionMatches && searchMatches
+    return directionMatches && assignmentMatches && searchMatches
 }
 
 @Composable
@@ -394,7 +446,11 @@ private fun RecurringItemCard(
                 color = directionColors.onContainer.copy(alpha = 0.78f),
             )
             Text(
-                text = stringResource(R.string.account_assignment_label, item.accountName),
+                text =
+                    stringResource(
+                        R.string.account_assignment_label,
+                        item.accountName ?: stringResource(R.string.account_unassigned),
+                    ),
                 style = MaterialTheme.typography.labelMedium,
                 color = directionColors.onContainer.copy(alpha = 0.9f),
             )
@@ -490,8 +546,9 @@ private fun RecurringItemReadyRoute(
 ) {
     var nameInput by rememberSaveable { mutableStateOf(seed.nameInput) }
     var amountInput by rememberSaveable { mutableStateOf(seed.amountInput) }
-    var accountIdValue by rememberSaveable { mutableStateOf(seed.accountId.value) }
+    var accountIdValue by rememberSaveable { mutableStateOf(seed.accountId?.value) }
     var direction by rememberSaveable { mutableStateOf(seed.direction) }
+    var includeExpectedIncome by rememberSaveable { mutableStateOf(seed.includeExpectedIncome) }
     var firstOccurrenceEpochDay by rememberSaveable { mutableLongStateOf(seed.firstOccurrence.toEpochDay()) }
     var timingChoice by rememberSaveable { mutableStateOf(seed.timingChoice) }
     var firstPeriodEndsOnEpochDay by rememberSaveable { mutableStateOf(seed.firstPeriodEndsOn?.toEpochDay()) }
@@ -525,7 +582,7 @@ private fun RecurringItemReadyRoute(
         seed = seed,
         nameInput = nameInput,
         amountInput = amountInput,
-        accountId = AccountId(accountIdValue),
+        accountId = accountIdValue?.let(::AccountId),
         direction = direction,
         timingChoice = timingChoice,
         firstOccurrenceLabel =
@@ -539,6 +596,7 @@ private fun RecurringItemReadyRoute(
         repeatUnit = repeatUnit,
         countsToward = countsToward,
         requireManualConfirmation = requireManualConfirmation,
+        includeExpectedIncome = includeExpectedIncome,
         endsOnLabel = endsOn?.let(scheduleAdapter::formatDate),
         remindOnLabel = remindOn?.let(scheduleAdapter::formatDate),
         occurrenceReminder = RecurringReminderInput(occurrenceReminderEnabled, occurrenceReminderInput),
@@ -602,6 +660,10 @@ private fun RecurringItemReadyRoute(
             requireManualConfirmation = it
             clearIssue()
         },
+        onIncludeExpectedIncomeChange = {
+            includeExpectedIncome = it
+            clearIssue()
+        },
         onSelectEndsOn = { selectedDateField = RecurringDateField.ENDS_ON },
         onClearEndsOn = {
             endsOnEpochDay = null
@@ -659,7 +721,7 @@ private fun RecurringItemReadyRoute(
                         seed = seed,
                         nameInput = nameInput,
                         amountInput = amountInput,
-                        accountId = AccountId(accountIdValue),
+                        accountId = accountIdValue?.let(::AccountId),
                         direction = direction,
                         firstOccurrence = firstOccurrence,
                         timingChoice = timingChoice,
@@ -668,6 +730,7 @@ private fun RecurringItemReadyRoute(
                         repeatUnit = repeatUnit,
                         countsToward = countsToward,
                         requireManualConfirmation = requireManualConfirmation,
+                        includeExpectedIncome = includeExpectedIncome,
                         endsOn = endsOn,
                         remindOn = remindOn,
                         occurrenceReminder =
@@ -777,7 +840,7 @@ internal fun RecurringItemEditorScreen(
     seed: RecurringItemFormSeed,
     nameInput: String,
     amountInput: String,
-    accountId: AccountId = seed.accountId,
+    accountId: AccountId? = seed.accountId,
     direction: Direction,
     timingChoice: RecurringTimingChoice = RecurringTimingChoice.SPECIFIC_DATE,
     firstOccurrenceLabel: String,
@@ -786,6 +849,7 @@ internal fun RecurringItemEditorScreen(
     repeatUnit: RecurrenceUnit,
     countsToward: BudgetMonthAssignment,
     requireManualConfirmation: Boolean = false,
+    includeExpectedIncome: Boolean = false,
     endsOnLabel: String?,
     remindOnLabel: String?,
     occurrenceReminder: RecurringReminderInput,
@@ -808,6 +872,7 @@ internal fun RecurringItemEditorScreen(
     onRepeatUnitChange: (RecurrenceUnit) -> Unit,
     onCountsTowardChange: (BudgetMonthAssignment) -> Unit,
     onRequireManualConfirmationChange: (Boolean) -> Unit = {},
+    onIncludeExpectedIncomeChange: (Boolean) -> Unit = {},
     onSelectEndsOn: () -> Unit,
     onClearEndsOn: () -> Unit,
     onSelectRemindOn: () -> Unit,
@@ -975,6 +1040,30 @@ internal fun RecurringItemEditorScreen(
                 enabled = !saving,
                 onClick = { onCountsTowardChange(BudgetMonthAssignment.FOLLOWING_MONTH) },
             )
+            if (direction == Direction.INCOME) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = stringResource(R.string.recurring_include_expected_income),
+                            fontWeight = FontWeight.Medium,
+                        )
+                        Text(
+                            text = stringResource(R.string.recurring_include_expected_income_help),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(
+                        checked = includeExpectedIncome,
+                        onCheckedChange = onIncludeExpectedIncomeChange,
+                        enabled = !saving,
+                    )
+                }
+            }
             RecurringConfirmationControl(
                 requireManualConfirmation = requireManualConfirmation,
                 enabled = !saving,

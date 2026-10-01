@@ -50,6 +50,7 @@ private const val YEARS = "years"
 private const val SPECIFIC_DATE = "specific_date"
 private const val DATE_RANGE = "date_range"
 private const val ANY_TIME_IN_MONTH = "any_time_in_month"
+internal const val UNASSIGNED_ACCOUNT_STORAGE_ID = "__unassigned__"
 
 internal data class ActivityRecord(
     @Embedded val activity: ActivityEntity,
@@ -113,7 +114,7 @@ internal fun ActivityEntry.toRecord(): ActivityRecord {
             ActivityEntity(
                 id = id.value,
                 name = name,
-                accountId = accountId.value,
+                accountId = accountId?.value ?: UNASSIGNED_ACCOUNT_STORAGE_ID,
                 direction = direction.toStoredValue(),
                 minorUnits = amount.minorUnits,
                 currencyCode = amount.currency.value,
@@ -154,7 +155,7 @@ internal fun ActivityRecord.toDomain(): ActivityEntry {
     return ActivityEntry(
         id = ActivityId(activity.id),
         name = activity.name,
-        accountId = AccountId(activity.accountId),
+        accountId = activity.accountId.toDomainAccountId(),
         direction = activity.direction.toDirection(),
         amount = Money(activity.minorUnits, CurrencyCode.of(activity.currencyCode)),
         state = activity.state.toActivityState(),
@@ -173,7 +174,7 @@ internal fun RecurringItem.toRecord(): RecurringItemRecord =
             RecurringItemEntity(
                 id = id.value,
                 name = name,
-                accountId = accountId.value,
+                accountId = accountId?.value ?: UNASSIGNED_ACCOUNT_STORAGE_ID,
                 direction = direction.toStoredValue(),
                 minorUnits = amount.minorUnits,
                 currencyCode = amount.currency.value,
@@ -188,6 +189,7 @@ internal fun RecurringItem.toRecord(): RecurringItemRecord =
                 scheduleTimingKind = schedule.timing.toStoredValue(),
                 periodEndOffsetDays = (schedule.timing as? OccurrenceTiming.DateRange)?.endOffsetDays,
                 requireManualConfirmation = schedule.requireManualConfirmation,
+                includeExpectedIncome = includeExpectedIncome,
                 endsOnEpochDay = schedule.endsOn?.toEpochDay(),
                 remindOnEpochDay = schedule.remindOn?.toEpochDay(),
                 occurrenceReminderDays = reminders.occurrence?.daysBefore,
@@ -203,7 +205,7 @@ internal fun RecurringItemRecord.toDomain(): RecurringItem {
     return RecurringItem(
         id = RecurringItemId(item.id),
         name = item.name,
-        accountId = AccountId(item.accountId),
+        accountId = item.accountId.toDomainAccountId(),
         direction = item.direction.toDirection(),
         amount = Money(item.minorUnits, CurrencyCode.of(item.currencyCode)),
         schedule =
@@ -220,6 +222,7 @@ internal fun RecurringItemRecord.toDomain(): RecurringItem {
                 endsOn = item.endsOnEpochDay?.let(LocalDate::ofEpochDay),
                 remindOn = item.remindOnEpochDay?.let(LocalDate::ofEpochDay),
             ),
+        includeExpectedIncome = item.includeExpectedIncome,
         reminders =
             ReminderSettings(
                 occurrence = item.occurrenceReminderDays?.let(::ReminderLead),
@@ -230,6 +233,8 @@ internal fun RecurringItemRecord.toDomain(): RecurringItem {
         tags = tags.map { Tag(it.name) }.toSet(),
     )
 }
+
+private fun String.toDomainAccountId(): AccountId? = takeUnless { it == UNASSIGNED_ACCOUNT_STORAGE_ID }?.let(::AccountId)
 
 internal fun CustomCategory.toEntity(): CustomCategoryEntity =
     CustomCategoryEntity(

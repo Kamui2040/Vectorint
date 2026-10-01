@@ -9,6 +9,7 @@ import io.github.kamui2040.vectorint.core.BudgetMonth
 import io.github.kamui2040.vectorint.core.CurrencyCode
 import io.github.kamui2040.vectorint.core.Direction
 import io.github.kamui2040.vectorint.core.Money
+import io.github.kamui2040.vectorint.data.AccountDeletionAction
 import io.github.kamui2040.vectorint.data.local.RoomBudgetRepository
 import io.github.kamui2040.vectorint.data.local.VectorintDatabase
 import io.github.kamui2040.vectorint.presentation.entry.RegionalEntryMoneyAdapter
@@ -106,7 +107,7 @@ class AccountWorkflowsTest {
         }
 
     @Test
-    fun `names are unique and accounts in use cannot be deleted`() =
+    fun `names are unique and account deletion can keep activity unassigned`() =
         runBlocking {
             manager.save(null, "Bank", "100,00", "EUR", true)
             manager.save(null, "Cash", "20,00", "EUR", true)
@@ -132,8 +133,18 @@ class AccountWorkflowsTest {
                 ),
             )
 
-            assertEquals(AccountMutationResult.InUse, manager.delete(bank.id))
-            assertEquals(AccountMutationResult.Deleted, manager.delete(cash.id))
-            assertEquals(listOf(bank), repository.loadAccounts())
+            assertEquals(
+                AccountMutationResult.Deleted,
+                manager.delete(bank.id, AccountDeletionAction.KeepUnassigned),
+            )
+            assertEquals(listOf(cash), repository.loadAccounts())
+            assertEquals(null, repository.loadActivities().single().accountId)
+
+            assertEquals(
+                AccountMutationResult.Deleted,
+                manager.delete(cash.id, AccountDeletionAction.DeleteAssociated),
+            )
+            assertEquals(emptyList<io.github.kamui2040.vectorint.core.Account>(), repository.loadAccounts())
+            assertEquals(null, repository.loadActivities().single().accountId)
         }
 }

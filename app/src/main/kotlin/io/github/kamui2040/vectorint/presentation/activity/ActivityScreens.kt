@@ -65,6 +65,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.kamui2040.vectorint.R
+import io.github.kamui2040.vectorint.core.AccountId
 import io.github.kamui2040.vectorint.core.ActivityId
 import io.github.kamui2040.vectorint.core.ActivityState
 import io.github.kamui2040.vectorint.core.CategoryId
@@ -72,6 +73,7 @@ import io.github.kamui2040.vectorint.core.CustomCategory
 import io.github.kamui2040.vectorint.core.Direction
 import io.github.kamui2040.vectorint.core.PredefinedCategory
 import io.github.kamui2040.vectorint.core.Tag
+import io.github.kamui2040.vectorint.presentation.account.AccountSelector
 import io.github.kamui2040.vectorint.presentation.category.CategoryManager
 import io.github.kamui2040.vectorint.presentation.category.CategorySelector
 import io.github.kamui2040.vectorint.presentation.category.CategorySummary
@@ -121,6 +123,7 @@ internal fun ActivityHistoryScreen(
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var directionFilter by rememberSaveable { mutableStateOf(ActivityDirectionFilter.ALL) }
     var statusFilter by rememberSaveable { mutableStateOf(ActivityStatusFilter.ALL) }
+    var assignmentFilter by rememberSaveable { mutableStateOf(ActivityAssignmentFilter.ALL) }
     Surface(
         modifier =
             Modifier
@@ -198,11 +201,13 @@ internal fun ActivityHistoryScreen(
                                 query = searchQuery,
                                 directionFilter = directionFilter,
                                 statusFilter = statusFilter,
+                                assignmentFilter = assignmentFilter,
                                 categoryName = categoryName,
                                 directionName = resources.getString(item.direction.labelResource()),
                                 statusName = resources.getString(item.statusLabelResource()),
                                 timingName = item.timing.searchText(resources::getString),
                                 unnamedName = resources.getString(R.string.activity_unnamed),
+                                unassignedName = resources.getString(R.string.account_unassigned),
                             )
                         }
                     item {
@@ -218,13 +223,16 @@ internal fun ActivityHistoryScreen(
                             searchQuery = searchQuery,
                             directionFilter = directionFilter,
                             statusFilter = statusFilter,
+                            assignmentFilter = assignmentFilter,
                             onSearchQueryChange = { searchQuery = it },
                             onDirectionFilterChange = { directionFilter = it },
                             onStatusFilterChange = { statusFilter = it },
+                            onAssignmentFilterChange = { assignmentFilter = it },
                             onClear = {
                                 searchQuery = ""
                                 directionFilter = ActivityDirectionFilter.ALL
                                 statusFilter = ActivityStatusFilter.ALL
+                                assignmentFilter = ActivityAssignmentFilter.ALL
                             },
                         )
                     }
@@ -235,6 +243,7 @@ internal fun ActivityHistoryScreen(
                                     searchQuery = ""
                                     directionFilter = ActivityDirectionFilter.ALL
                                     statusFilter = ActivityStatusFilter.ALL
+                                    assignmentFilter = ActivityAssignmentFilter.ALL
                                 },
                             )
                         }
@@ -268,14 +277,22 @@ private enum class ActivityStatusFilter {
     CONFIRMED,
 }
 
+private enum class ActivityAssignmentFilter {
+    ALL,
+    ASSIGNED,
+    UNASSIGNED,
+}
+
 @Composable
 private fun ActivityHistorySearchAndFilters(
     searchQuery: String,
     directionFilter: ActivityDirectionFilter,
     statusFilter: ActivityStatusFilter,
+    assignmentFilter: ActivityAssignmentFilter,
     onSearchQueryChange: (String) -> Unit,
     onDirectionFilterChange: (ActivityDirectionFilter) -> Unit,
     onStatusFilterChange: (ActivityStatusFilter) -> Unit,
+    onAssignmentFilterChange: (ActivityAssignmentFilter) -> Unit,
     onClear: () -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -330,10 +347,23 @@ private fun ActivityHistorySearchAndFilters(
             selected = statusFilter,
             onSelected = onStatusFilterChange,
         )
+        HistoryFilterRow(
+            label = stringResource(R.string.account_assignment_filter),
+            tagPrefix = "activity_history_assignment",
+            options =
+                listOf(
+                    ActivityAssignmentFilter.ALL to stringResource(R.string.account_assignment_all),
+                    ActivityAssignmentFilter.ASSIGNED to stringResource(R.string.account_assigned),
+                    ActivityAssignmentFilter.UNASSIGNED to stringResource(R.string.account_unassigned),
+                ),
+            selected = assignmentFilter,
+            onSelected = onAssignmentFilterChange,
+        )
         if (
             searchQuery.isNotEmpty() ||
             directionFilter != ActivityDirectionFilter.ALL ||
-            statusFilter != ActivityStatusFilter.ALL
+            statusFilter != ActivityStatusFilter.ALL ||
+            assignmentFilter != ActivityAssignmentFilter.ALL
         ) {
             TextButton(onClick = onClear) {
                 Text(stringResource(R.string.activity_history_clear_all))
@@ -397,11 +427,13 @@ private fun ActivityHistoryItemUi.matchesHistoryFilters(
     query: String,
     directionFilter: ActivityDirectionFilter,
     statusFilter: ActivityStatusFilter,
+    assignmentFilter: ActivityAssignmentFilter,
     categoryName: String,
     directionName: String,
     statusName: String,
     timingName: String,
     unnamedName: String,
+    unassignedName: String,
 ): Boolean {
     val directionMatches =
         when (directionFilter) {
@@ -416,20 +448,26 @@ private fun ActivityHistoryItemUi.matchesHistoryFilters(
             ActivityStatusFilter.PLANNED -> !confirmed
             ActivityStatusFilter.CONFIRMED -> confirmed
         }
+    val assignmentMatches =
+        when (assignmentFilter) {
+            ActivityAssignmentFilter.ALL -> true
+            ActivityAssignmentFilter.ASSIGNED -> accountName != null
+            ActivityAssignmentFilter.UNASSIGNED -> accountName == null
+        }
     val trimmedQuery = query.trim()
     val searchMatches =
         trimmedQuery.isEmpty() ||
             listOf(
                 name.ifBlank { unnamedName },
                 amount,
-                accountName,
+                accountName ?: unassignedName,
                 categoryName,
                 directionName,
                 statusName,
                 timingName,
                 *tags.toTypedArray(),
             ).any { value -> value.contains(trimmedQuery, ignoreCase = true) }
-    return directionMatches && statusMatches && searchMatches
+    return directionMatches && statusMatches && assignmentMatches && searchMatches
 }
 
 private fun Direction.labelResource(): Int =
@@ -491,7 +529,11 @@ private fun ActivityHistoryCard(
                     color = directionColors.onContainer.copy(alpha = 0.78f),
                 )
                 Text(
-                    text = stringResource(R.string.account_assignment_label, item.accountName),
+                    text =
+                        stringResource(
+                            R.string.account_assignment_label,
+                            item.accountName ?: stringResource(R.string.account_unassigned),
+                        ),
                     style = MaterialTheme.typography.labelMedium,
                     color = directionColors.onContainer.copy(alpha = 0.9f),
                 )
@@ -568,6 +610,7 @@ private fun ActivityEditReadyRoute(
     var nameInput by rememberSaveable { mutableStateOf(seed.activity.name) }
     var amountInput by rememberSaveable { mutableStateOf(seed.amountInput) }
     var direction by rememberSaveable { mutableStateOf(seed.activity.direction) }
+    var accountIdValue by rememberSaveable { mutableStateOf(seed.activity.accountId?.value) }
     var categoryIdValue by rememberSaveable { mutableStateOf(seed.activity.categoryId?.value) }
     var tags by rememberTagState(seed.activity.tags)
     var issue by remember { mutableStateOf<ActivityEditIssue?>(null) }
@@ -601,6 +644,7 @@ private fun ActivityEditReadyRoute(
         nameInput = nameInput,
         amountInput = amountInput,
         direction = direction,
+        accountId = accountIdValue?.let(::AccountId),
         busy = busy,
         issue = issue,
         categoryId = categoryIdValue?.let(::CategoryId),
@@ -617,6 +661,10 @@ private fun ActivityEditReadyRoute(
         },
         onDirectionChange = {
             direction = it
+            issue = null
+        },
+        onAccountChange = {
+            accountIdValue = it.value
             issue = null
         },
         onCategoryChange = {
@@ -636,6 +684,7 @@ private fun ActivityEditReadyRoute(
                     direction = direction,
                     tags = tags,
                     categoryId = categoryIdValue?.let(::CategoryId),
+                    accountId = accountIdValue?.let(::AccountId),
                 )
             }
         },
@@ -648,6 +697,7 @@ private fun ActivityEditReadyRoute(
                     direction = direction,
                     tags = tags,
                     categoryId = categoryIdValue?.let(::CategoryId),
+                    accountId = accountIdValue?.let(::AccountId),
                 )
             }
         },
@@ -667,6 +717,7 @@ internal fun ActivityEditScreen(
     nameInput: String,
     amountInput: String,
     direction: Direction,
+    accountId: AccountId? = seed.activity.accountId,
     busy: Boolean,
     issue: ActivityEditIssue?,
     categoryId: CategoryId? = seed.activity.categoryId,
@@ -676,6 +727,7 @@ internal fun ActivityEditScreen(
     onNameChange: (String) -> Unit,
     onAmountChange: (String) -> Unit,
     onDirectionChange: (Direction) -> Unit,
+    onAccountChange: (AccountId) -> Unit = {},
     onCategoryChange: (CategoryId?) -> Unit = {},
     onTagsChange: (Set<Tag>) -> Unit = {},
     onSave: () -> Unit,
@@ -715,6 +767,12 @@ internal fun ActivityEditScreen(
             isError =
                 issue == ActivityEditIssue.InvalidAmount ||
                     issue == ActivityEditIssue.AmountMustBePositive,
+        )
+        AccountSelector(
+            accounts = seed.accounts,
+            selectedAccountId = accountId,
+            enabled = !busy,
+            onAccountChange = onAccountChange,
         )
         Text(
             text = stringResource(R.string.activity_direction),

@@ -14,9 +14,11 @@ import kotlinx.coroutines.runBlocking
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertThrows
 import org.junit.Test
+import java.time.Clock
 import java.time.Instant
 import java.time.LocalDate
 import java.time.YearMonth
+import java.time.ZoneOffset
 
 class RecurringOccurrenceCoordinatorTest {
     private val eur = CurrencyCode.of("EUR")
@@ -38,6 +40,28 @@ class RecurringOccurrenceCoordinatorTest {
             assertEquals(listOf("activity-0", "activity-1"), refreshed.map { it.id.value })
             assertEquals(1, repository.ensureCalls)
             assertEquals(refreshed, repository.lastEnsured)
+        }
+
+    @Test
+    fun `occurrence due today is booked at the current instant`() =
+        runBlocking {
+            val now = Instant.parse("2026-09-15T12:34:56.123456789Z")
+            val dueToday =
+                item("salary", Direction.INCOME).copy(
+                    schedule = RecurringSchedule(firstOccurrence = LocalDate.of(2026, 9, 15)),
+                )
+            val repository = FakeRecurringOccurrenceRepository(listOf(dueToday))
+            val coordinator =
+                RecurringOccurrenceCoordinator(
+                    repository = repository,
+                    idFactory = RecurringOccurrenceActivityIdFactory { ActivityId("salary-today") },
+                    clock = Clock.fixed(now, ZoneOffset.UTC),
+                )
+
+            val occurrence = coordinator.refresh(month, eur).single()
+
+            assertEquals(ActivityState.CONFIRMED, occurrence.state)
+            assertEquals(now, occurrence.bookedAt)
         }
 
     @Test

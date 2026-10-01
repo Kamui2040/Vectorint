@@ -30,6 +30,8 @@ internal class RecurringOccurrenceCoordinator(
         month: BudgetMonth,
         currency: CurrencyCode,
     ): List<ActivityEntry> {
+        val today = LocalDate.now(clock)
+        val now = clock.instant()
         val occurrences =
             repository.loadRecurringItems().flatMap { item ->
                 require(item.amount.currency == currency) {
@@ -38,8 +40,10 @@ internal class RecurringOccurrenceCoordinator(
                 RecurringOccurrenceGenerator.generate(
                     item = item,
                     month = month,
-                    today = LocalDate.now(clock),
-                    autoBookedAt = { date -> date.atStartOfDay(clock.zone).toInstant() },
+                    today = today,
+                    autoBookedAt = { date ->
+                        if (date == today) now else date.atStartOfDay(clock.zone).toInstant()
+                    },
                     activityId = idFactory::create,
                 )
             }

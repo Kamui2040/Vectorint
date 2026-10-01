@@ -12,7 +12,7 @@ The initial foundation is deliberately small:
 
 - one Android application module using Kotlin and Jetpack Compose;
 - a plain-Kotlin accounting domain with pure unit tests;
-- a version-6 Room persistence layer with exported schemas and host-side database
+- a version-7 Room persistence layer with exported schemas and host-side database
   tests;
 - a suspending application repository that keeps blocking database work off the
   Android main thread;
@@ -57,8 +57,8 @@ The initial foundation is deliberately small:
   once under Other;
 - a full-page Settings experience with compact grouped navigation for
   system/light/dark appearance, Orbit/Nova/Nebula palettes, in-app
-  device/English/German/Portuguese/Spanish/Italian/French language selection, the expected-income calculation
-  choice, data and backup, and About;
+  device/English/German/Portuguese/Spanish/Italian/French language selection,
+  Home display choices, data and backup, and About;
 - a branded compact About card opened from the raven or Settings, with the K2040
   creator logo, app version, short purpose, current-version changelog, licences,
   labelled repository and website links, Ko-fi support, and a dedicated Privacy
@@ -100,7 +100,8 @@ Confirmed activity after its assigned account's capture changes that balance onc
 earlier confirmed activity is already represented by the baseline and is not
 replayed. An excluded account's balance and assigned activity do not affect
 Available now. Planned current-month expenses in included accounts are always
-reserved, while expected income is an explicit opt-in.
+reserved, while each recurring income definition has its own explicit opt-in for
+inclusion before the occurrence date in its assigned budget month.
 Confirmation changes the state of the same occurrence so the planned reservation
 and actual cash movement never overlap.
 
@@ -117,9 +118,10 @@ organizational metadata.
 Each occurrence remains planned until its own effective booking date. It then
 confirms automatically unless that recurring item explicitly requires manual
 confirmation. Manual confirmation records the actual confirmation time. Before
-confirmation, income contributes to Available now only through the saved
-expected-income opt-in; after confirmation it follows the normal confirmed-cash
-rules.
+confirmation, recurring income contributes to Available now only through that
+item's saved pre-occurrence opt-in; after confirmation it follows the normal
+confirmed-cash rules. One-off planned income is never included through this
+recurring-income choice.
 
 Money stays separated by currency and uses integer minor units. Unsafe or
 ambiguous input suppresses the Available now result. Formatting is an Android UI
@@ -129,38 +131,40 @@ The local database stores account baselines, explicit account assignments for
 activities and recurring items, reusable tag relationships, and user-created
 category definitions. Recurring occurrence identity is unique in the schema,
 confirmation updates the same row, and persisted timestamps retain nanosecond
-precision. Account deletion is blocked while records reference it. A single
-application-scoped repository provides background access and keeps confirmation
-atomic. Room schema version 4 adds nullable category
-assignments and custom categories on top of the version-3 occurrence-timing model.
-Version 5 adds persisted activity names and recovers names for existing recurring
-occurrences where their definition is still present. Existing unnamed one-off
-records remain readable and use a localized History fallback. Version 6 replaces
-the pooled balance row with account rows and migrates every existing record to the
-included `Main` account.
+precision. Deleting an account explicitly keeps associated records unassigned,
+reassigns all of them to another account, or deletes them with the account; kept
+records remain editable and can be reassigned later. A single application-scoped
+repository provides background access and keeps these mutations atomic. Room
+schema version 4 adds nullable category assignments and custom categories on top
+of the version-3 occurrence-timing model. Version 5 adds persisted activity names
+and recovers names for existing recurring occurrences where their definition is
+still present. Existing unnamed one-off records remain readable and use a
+localized History fallback. Version 6 replaces the pooled balance row with account
+rows and migrates every existing record to the included `Main` account. Version 7
+adds the per-recurring-item pre-occurrence income flag with a disabled default.
 
 Settings use a full-page layout reached from the permanent top-right controls
 action. The root menu is compact and grouped while individual setting rows retain
 accessible touch targets. They contain a Home choice for optionally showing the
-next three planned entries chronologically below Available now, and one calculation
-choice—whether expected income contributes
-to Available now—device, light, or dark appearance using the Orbit, Nova, or
-Nebula palette, device/English/German/Portuguese/Spanish/Italian/French app-language selection, data and backup,
-and About. Expected income defaults to off; appearance follows the device and
-defaults to Orbit. The app language uses Android's per-app locale support and
-never replaces OS-regional money, number, or date formatting. Calculation and
-appearance settings are exposed as an immutable Flow and saved atomically.
-Storage failures remain visible rather than silently changing calculation or
-appearance.
+next three planned entries chronologically below Available now, device/light/dark
+appearance using the Orbit, Nova, or Nebula palette,
+device/English/German/Portuguese/Spanish/Italian/French app-language selection,
+data and backup, and About. Pre-occurrence income inclusion is configured on each
+recurring income item rather than as a global Settings choice and defaults to off;
+appearance follows the device and defaults to Orbit. The app language uses
+Android's per-app locale support and never replaces OS-regional money, number, or
+date formatting. Portable settings remain exposed as an immutable Flow and saved
+atomically. Storage failures remain visible rather than silently changing saved
+choices or appearance.
 
 Manual backup exports accounts, Activity, recurring items, categories, tags, and
 saved settings to a versioned, bounded JSON file chosen by the user. Backup format
-version 8 adds the portable Home upcoming-display preference on top of version 7
-account balances, inclusion choices, and record assignments. It continues to
-import version-1 through version-7 files through deterministic conversion into one included `Main` account;
-an older backup
-changes its saved calculation choice without replacing appearance information it
-did not contain.
+version 9 adds unassigned account references and the per-recurring-income
+pre-occurrence flag on top of version 8's portable Home upcoming-display
+preference. It continues to import version-1 through version-8 files through
+deterministic conversion; a legacy global expected-income opt-in is migrated to
+all recurring income definitions without replacing appearance information an
+older file did not contain.
 The file is readable and never uploaded by Vectorint. Restore validates the whole
 file before mutation, replaces Room data in one transaction, compensates across
 Room and DataStore on failure, and verifies the final state. Android permissions,
@@ -168,7 +172,7 @@ reminder-delivery acknowledgements, and other device-local runtime state are not
 portable data; reminders are reconciled from the restored definitions instead.
 Platform cloud backup and device transfer remain disabled.
 
-Automatic backup reuses the same bounded, readable version-8 JSON snapshot. The
+Automatic backup reuses the same bounded, readable version-9 JSON snapshot. The
 user grants one folder through Android's Storage Access Framework and can choose
 backups after saved portable-data changes, when the app starts, when it moves to
 the background, daily, or weekly. Change-triggered work is coalesced, scheduled
@@ -188,8 +192,8 @@ minor units, and rejects grouping, foreign separators, excess precision,
 unsupported currency metadata, and overflow. Formatted text remains outside the
 domain and persistence models.
 
-Home loads one budget snapshot and the current calculation setting, delegates all
-accounting to the domain calculator, and formats only a successful result. It
+Home loads one budget snapshot and the current recurring-income choices, delegates
+all accounting to the domain calculator, and formats only a successful result. It
 presents Available now as the primary value with included account funds, reserved
 expenses, and expected-income inclusion underneath. Missing account setup, unsafe
 data, and read failures never display a calculated amount.
@@ -230,9 +234,10 @@ an existing economic event.
 Activity history orders entries from newest to oldest by their confirmed or
 planned timing, displays the persisted name, and keeps month-only timing imprecise
 in presentation. Search matches visible entry details, while independent filters
-narrow results by income or expense and planned or confirmed status without
-changing stored data or calculations. History and recurring lists show the
-assigned account. Detail editing changes name, amount, direction, category, and
+narrow results by income or expense, planned or confirmed status, and assigned or
+unassigned account state without changing stored data or calculations. History
+and recurring lists show the assigned account or an explicit Unassigned state.
+Detail editing changes name, amount, direction, account assignment, category, and
 optional tags on the current stored row. Confirmation can include
 those edits in the same database transaction, preserves the activity identity,
 and cannot overlap a planned reservation with a second confirmed event. Tags are
@@ -244,7 +249,8 @@ creation date. The editor first asks when each occurrence happens: on a specific
 date, during a date range, or anytime within a month. It then accepts every N days,
 weeks, months, or years, an optional inclusive `Ends on`, and an explicit
 occurrence-month or following-month assignment. Automatic confirmation is the
-default, with a per-item manual-confirmation toggle. `Remind me on` sits with the
+default, with a per-item manual-confirmation toggle. Recurring income also has a
+per-item pre-occurrence inclusion choice for Available now. `Remind me on` sits with the
 other notification choices and remains economically neutral. All displayed dates
 follow the current OS region. Reminder timing can be saved for an occurrence,
 reminder date, or end date with the same model for income and expense.
@@ -308,7 +314,10 @@ candidate; it retains that fix and adds in-app update checking plus History sear
 and filters. Version 0.1.0 with Android version code 18 is now the development and
 next tester candidate; code 17 was the preceding Google Play tester artifact.
 Version 0.1.0 adds recurring-item search and type filters plus an opt-in Home
-section for the next three planned entries. Its Play edition captures receipts
+section for the next three planned entries. Draft PR #27 is stacked on the current
+Nubia receipt-camera fix and adds safe account-deletion choices, explicit
+unassigned records, per-recurring-income pre-occurrence inclusion, Room schema v7,
+and backup format v9; it remains unmerged. Its Play edition captures receipts
 through the installed camera into a private temporary file and sends only the
 bounded decoded image to on-device text recognition, avoiding the unsupported
 Google document scanner path on otherwise camera-capable devices. The 0.0.12 delta

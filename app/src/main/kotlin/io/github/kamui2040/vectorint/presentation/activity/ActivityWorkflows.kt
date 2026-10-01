@@ -1,5 +1,7 @@
 package io.github.kamui2040.vectorint.presentation.activity
 
+import io.github.kamui2040.vectorint.core.Account
+import io.github.kamui2040.vectorint.core.AccountId
 import io.github.kamui2040.vectorint.core.ActivityEntry
 import io.github.kamui2040.vectorint.core.ActivityId
 import io.github.kamui2040.vectorint.core.ActivityState
@@ -40,7 +42,7 @@ internal data class ActivityHistoryItemUi(
     val direction: Direction,
     val amount: String,
     val timing: ActivityTimingUi,
-    val accountName: String = "Main",
+    val accountName: String? = "Main",
     val categoryId: CategoryId? = null,
     val tags: List<String> = emptyList(),
 )
@@ -104,7 +106,9 @@ internal class ActivityHistoryLoader(
                 (generatedOccurrences + budgetRepository.loadActivities())
                     .distinctBy { it.id }
             val accountNames = accounts.associate { it.id to it.name }
-            require(activities.all { it.accountId in accountNames }) { "Activity account assignment is unknown" }
+            require(activities.all { it.accountId == null || it.accountId in accountNames }) {
+                "Activity account assignment is unknown"
+            }
             if (activities.isEmpty()) {
                 ActivityHistoryUiState.Empty
             } else {
@@ -122,7 +126,7 @@ internal class ActivityHistoryLoader(
                                     direction = activity.direction,
                                     amount = formatter.formatMoney(activity.amount),
                                     timing = activity.toTimingUi(formatter, zoneId),
-                                    accountName = checkNotNull(accountNames[activity.accountId]),
+                                    accountName = activity.accountId?.let(accountNames::get),
                                     categoryId = activity.categoryId,
                                     tags = activity.tags.toSortedLabels(),
                                 )
@@ -141,6 +145,7 @@ internal data class ActivityEditSeed(
     val activity: ActivityEntry,
     val amountInput: String,
     val timing: ActivityTimingUi,
+    val accounts: List<Account> = emptyList(),
 )
 
 internal sealed interface ActivityEditLoadResult {
@@ -183,11 +188,16 @@ internal class ActivityEditor(
             val activity =
                 budgetRepository.loadActivity(activityId)
                     ?: return ActivityEditLoadResult.Missing
+            val accounts = budgetRepository.loadAccounts()
+            require(activity.accountId == null || activity.accountId in accounts.map(Account::id)) {
+                "Activity account assignment is unknown"
+            }
             ActivityEditLoadResult.Ready(
                 ActivityEditSeed(
                     activity = activity,
                     amountInput = moneyAdapter.formatInput(activity.amount),
                     timing = activity.toTimingUi(formatter, zoneIdProvider()),
+                    accounts = accounts,
                 ),
             )
         } catch (cancellation: CancellationException) {
@@ -203,6 +213,7 @@ internal class ActivityEditor(
         direction: Direction,
         tags: Set<Tag> = seed.activity.tags,
         categoryId: CategoryId? = seed.activity.categoryId,
+        accountId: AccountId? = seed.activity.accountId,
     ): ActivityMutationResult =
         mutate {
             val name = nameInput.trim()
@@ -219,6 +230,7 @@ internal class ActivityEditor(
                             amount = amount.money,
                             categoryId = categoryId,
                             tags = tags,
+                            accountId = accountId,
                         )
                     if (updated != null) {
                         ActivityMutationResult.Saved
@@ -236,6 +248,7 @@ internal class ActivityEditor(
         direction: Direction,
         tags: Set<Tag> = seed.activity.tags,
         categoryId: CategoryId? = seed.activity.categoryId,
+        accountId: AccountId? = seed.activity.accountId,
     ): ActivityMutationResult =
         mutate {
             val name = nameInput.trim()
@@ -253,6 +266,7 @@ internal class ActivityEditor(
                             categoryId = categoryId,
                             tags = tags,
                             bookedAt = clock.instant(),
+                            accountId = accountId,
                         )
                     if (confirmed == null) {
                         ActivityMutationResult.Missing

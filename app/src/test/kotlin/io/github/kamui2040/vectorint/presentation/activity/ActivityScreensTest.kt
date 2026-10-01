@@ -87,17 +87,26 @@ class ActivityScreensTest {
             .onNode(SemanticsMatcher.expectValue(SemanticsProperties.PaneTitle, "History"))
             .assertExists()
         compose.onNodeWithText("Back").assertDoesNotExist()
+        compose
+            .onNodeWithTag("activity_history_list")
+            .performScrollToNode(hasText("Groceries"))
         compose.onNodeWithText("Groceries").assertIsDisplayed()
         compose.onAllNodesWithText("Expense").assertCountEquals(2)
         compose.onNodeWithText("Planned for Sep 18, 2026").assertIsDisplayed()
-        compose.onNodeWithText("Account: Main").assertIsDisplayed()
+        compose.onAllNodesWithText("Account: Main").assertCountEquals(2)
         compose.onNodeWithText("Groceries").assertIsDisplayed()
-        compose.onNodeWithText("Tags: household, shared").assertIsDisplayed()
+        compose.onNodeWithText("Tags: household, shared").performScrollTo().assertIsDisplayed()
+        compose
+            .onNodeWithTag("activity_history_list")
+            .performScrollToNode(hasText("Add activity"))
         compose.onNodeWithText("Add activity").performClick()
         compose
             .onNodeWithTag("activity_history_list")
             .performScrollToNode(hasText("Confirmed on Sep 17, 2026"))
         compose.onNodeWithText("Confirmed on Sep 17, 2026").assertIsDisplayed()
+        compose
+            .onNodeWithTag("activity_history_list")
+            .performScrollToNode(hasText("€25.00"))
         compose.onNodeWithText("€25.00").performClick()
         compose.runOnIdle {
             assertEquals(firstId, selected)
@@ -174,6 +183,60 @@ class ActivityScreensTest {
         compose.onNodeWithText("Rent payment").assertIsDisplayed()
         compose.onNodeWithTag("activity_history_list").performScrollToNode(hasText("Monthly pay"))
         compose.onNodeWithText("Monthly pay").assertIsDisplayed()
+    }
+
+    @Test
+    fun `history filters assigned and unassigned entries`() {
+        compose.setContent {
+            VectorintTheme {
+                ActivityHistoryScreen(
+                    state =
+                        ActivityHistoryUiState.Ready(
+                            listOf(
+                                ActivityHistoryItemUi(
+                                    id = ActivityId("assigned"),
+                                    name = "Assigned purchase",
+                                    direction = Direction.EXPENSE,
+                                    amount = "€10.00",
+                                    timing = ActivityTimingUi.PlannedDate("Sep 20, 2026"),
+                                    accountName = "Main",
+                                ),
+                                ActivityHistoryItemUi(
+                                    id = ActivityId("unassigned"),
+                                    name = "Kept purchase",
+                                    direction = Direction.EXPENSE,
+                                    amount = "€20.00",
+                                    timing = ActivityTimingUi.PlannedDate("Sep 21, 2026"),
+                                    accountName = null,
+                                ),
+                            ),
+                        ),
+                    onActivitySelected = {},
+                    onAddActivity = {},
+                    onRetry = {},
+                )
+            }
+        }
+
+        compose.onNodeWithTag("activity_history_list").performScrollToIndex(2)
+        compose.onNodeWithTag("activity_history_assignment:UNASSIGNED").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("activity_history_assignment:UNASSIGNED").assertIsSelected()
+        compose
+            .onNodeWithTag("activity_history_list")
+            .performScrollToNode(hasText("Kept purchase"))
+        compose.onNodeWithText("Kept purchase").assertIsDisplayed()
+        compose.onNodeWithText("Assigned purchase").assertDoesNotExist()
+        compose.onNodeWithText("Account: Unassigned").assertIsDisplayed()
+
+        compose.onNodeWithTag("activity_history_list").performScrollToIndex(2)
+        compose.onNodeWithTag("activity_history_assignment:ASSIGNED").performClick()
+        compose.waitForIdle()
+        compose
+            .onNodeWithTag("activity_history_list")
+            .performScrollToNode(hasText("Assigned purchase"))
+        compose.onNodeWithText("Assigned purchase").assertIsDisplayed()
+        compose.onNodeWithText("Kept purchase").assertDoesNotExist()
     }
 
     @Test

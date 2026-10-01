@@ -15,6 +15,24 @@ import io.github.kamui2040.vectorint.core.Tag
 import io.github.kamui2040.vectorint.core.asLegacyDefaultAccount
 import java.time.Instant
 
+internal data class AccountUsage(
+    val activityCount: Int,
+    val recurringItemCount: Int,
+) {
+    val hasAssociatedData: Boolean
+        get() = activityCount > 0 || recurringItemCount > 0
+}
+
+internal sealed interface AccountDeletionAction {
+    data object KeepUnassigned : AccountDeletionAction
+
+    data object DeleteAssociated : AccountDeletionAction
+
+    data class Reassign(
+        val targetAccountId: AccountId,
+    ) : AccountDeletionAction
+}
+
 internal data class BudgetSnapshot(
     val accounts: List<Account>,
     val activities: List<ActivityEntry>,
@@ -32,7 +50,12 @@ internal interface BudgetRepository {
 
     suspend fun updateAccount(account: Account): Boolean = error("Account updates are not implemented")
 
-    suspend fun deleteAccount(accountId: AccountId): Boolean = error("Account deletion is not implemented")
+    suspend fun loadAccountUsage(accountId: AccountId): AccountUsage = error("Account usage is not implemented")
+
+    suspend fun deleteAccount(
+        accountId: AccountId,
+        action: AccountDeletionAction,
+    ): Boolean = error("Account deletion is not implemented")
 
     suspend fun loadActivities(): List<ActivityEntry>
 
@@ -51,6 +74,7 @@ internal interface BudgetRepository {
         amount: Money,
         tags: Set<Tag>,
         categoryId: CategoryId? = null,
+        accountId: AccountId?,
     ): ActivityEntry?
 
     suspend fun confirmActivity(
@@ -66,6 +90,7 @@ internal interface BudgetRepository {
         tags: Set<Tag>,
         bookedAt: Instant,
         categoryId: CategoryId? = null,
+        accountId: AccountId?,
     ): ActivityEntry?
 
     suspend fun deleteActivity(activityId: ActivityId)

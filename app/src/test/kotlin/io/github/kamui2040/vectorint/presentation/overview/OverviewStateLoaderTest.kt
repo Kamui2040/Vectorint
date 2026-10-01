@@ -1,5 +1,6 @@
 package io.github.kamui2040.vectorint.presentation.overview
 
+import io.github.kamui2040.vectorint.core.AccountId
 import io.github.kamui2040.vectorint.core.ActivityEntry
 import io.github.kamui2040.vectorint.core.ActivityId
 import io.github.kamui2040.vectorint.core.ActivitySource
@@ -322,6 +323,7 @@ private class FakeOverviewBudgetRepository(
         amount: Money,
         tags: Set<Tag>,
         categoryId: CategoryId?,
+        accountId: AccountId?,
     ): ActivityEntry? = error("Not used by Overview")
 
     override suspend fun confirmActivity(
@@ -337,6 +339,7 @@ private class FakeOverviewBudgetRepository(
         tags: Set<Tag>,
         bookedAt: Instant,
         categoryId: CategoryId?,
+        accountId: AccountId?,
     ): ActivityEntry? = error("Not used by Overview")
 
     override suspend fun deleteActivity(activityId: ActivityId) = error("Not used by Overview")
