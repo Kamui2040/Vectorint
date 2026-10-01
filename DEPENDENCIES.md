@@ -21,9 +21,9 @@ initial repository uses the following public build, runtime, and test components
 
 ## Google Play edition only
 
-- Google Play services ML Kit document scanner 16.0.0 — Google, governed by the
-  Google APIs Terms of Service; used only by `playDebug` and `playRelease` for
-  on-device receipt capture and cleanup.
+- AndroidX ExifInterface 1.4.2 — Android Open Source Project, Apache-2.0; used
+  only by `playDebug` and `playRelease` to apply receipt-photo orientation while
+  decoding a bounded image from Vectorint's private cache.
 - Google Play services ML Kit text recognition 19.0.1 — Google, governed by the
   Google APIs Terms of Service; used only by `playDebug` and `playRelease` to
   read receipt text on-device.
@@ -31,10 +31,10 @@ initial repository uses the following public build, runtime, and test components
   Core Software Development Kit Terms of Service; used only by `playDebug` and
   `playRelease` to check update availability and open Google Play's update flow.
 
-These proprietary optional components are absent from the standard `debug` and
-`release` variants, including the F-Droid build. Their documentation and terms
-are available at <https://developers.google.com/ml-kit/vision/doc-scanner> and
-<https://developers.google.com/ml-kit/terms>. Google Play in-app update behavior
+The proprietary optional components are absent from the standard `debug` and
+`release` variants, including the F-Droid build. ML Kit documentation and terms
+are available at <https://developers.google.com/ml-kit/vision/text-recognition/v2/android>
+and <https://developers.google.com/ml-kit/terms>. Google Play in-app update behavior
 and terms are documented at
 <https://developer.android.com/guide/playcore/in-app-updates>.
 

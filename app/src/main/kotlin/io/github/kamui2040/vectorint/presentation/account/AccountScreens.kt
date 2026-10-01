@@ -27,6 +27,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -58,6 +59,7 @@ import androidx.compose.ui.unit.dp
 import io.github.kamui2040.vectorint.R
 import io.github.kamui2040.vectorint.core.Account
 import io.github.kamui2040.vectorint.core.AccountId
+import io.github.kamui2040.vectorint.data.AccountDeletionAction
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -248,25 +250,87 @@ private fun AccountManagementReadyRoute(
     }
 
     pendingDeleteIdValue?.let { accountIdValue ->
-        val accountName =
-            seed.accounts
-                .singleOrNull { it.account.id.value == accountIdValue }
-                ?.account
-                ?.name
-                .orEmpty()
+        val item = seed.accounts.singleOrNull { it.account.id.value == accountIdValue } ?: return@let
+        val otherAccounts = seed.accounts.filterNot { it.account.id.value == accountIdValue }
         AlertDialog(
             onDismissRequest = { if (!busy) pendingDeleteIdValue = null },
             title = { Text(stringResource(R.string.account_delete_title)) },
-            text = { Text(stringResource(R.string.account_delete_body, accountName)) },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        pendingDeleteIdValue = null
-                        runMutation { manager.delete(AccountId(accountIdValue)) }
+            text = {
+                Text(
+                    if (item.associatedItemCount == 0) {
+                        stringResource(R.string.account_delete_body, item.account.name)
+                    } else {
+                        stringResource(
+                            R.string.account_delete_associated_body,
+                            item.account.name,
+                            item.activityCount,
+                            item.recurringItemCount,
+                        )
                     },
-                    enabled = !busy,
+                )
+            },
+            confirmButton = {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    Text(stringResource(R.string.account_delete_confirm))
+                    if (item.associatedItemCount > 0) {
+                        OutlinedButton(
+                            onClick = {
+                                pendingDeleteIdValue = null
+                                runMutation {
+                                    manager.delete(AccountId(accountIdValue), AccountDeletionAction.KeepUnassigned)
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            enabled = !busy,
+                        ) {
+                            Text(stringResource(R.string.account_delete_keep_unassigned))
+                        }
+                        if (otherAccounts.isNotEmpty()) {
+                            Text(
+                                text = stringResource(R.string.account_delete_reassign_heading),
+                                style = MaterialTheme.typography.labelLarge,
+                            )
+                            otherAccounts.forEach { target ->
+                                OutlinedButton(
+                                    onClick = {
+                                        pendingDeleteIdValue = null
+                                        runMutation {
+                                            manager.delete(
+                                                AccountId(accountIdValue),
+                                                AccountDeletionAction.Reassign(target.account.id),
+                                            )
+                                        }
+                                    },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    enabled = !busy,
+                                ) {
+                                    Text(stringResource(R.string.account_delete_reassign_to, target.account.name))
+                                }
+                            }
+                        }
+                    }
+                    TextButton(
+                        onClick = {
+                            pendingDeleteIdValue = null
+                            runMutation {
+                                manager.delete(AccountId(accountIdValue), AccountDeletionAction.DeleteAssociated)
+                            }
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        enabled = !busy,
+                    ) {
+                        Text(
+                            stringResource(
+                                if (item.associatedItemCount > 0) {
+                                    R.string.account_delete_with_activity
+                                } else {
+                                    R.string.account_delete_confirm
+                                },
+                            ),
+                        )
+                    }
                 }
             },
             dismissButton = {
@@ -491,7 +555,6 @@ private fun accountIssueMessage(issue: AccountMutationResult?): String? =
         AccountMutationResult.DuplicateName -> stringResource(R.string.account_duplicate_name)
         AccountMutationResult.InvalidCurrency -> stringResource(R.string.entry_invalid_currency)
         AccountMutationResult.InvalidAmount -> stringResource(R.string.entry_invalid_amount)
-        AccountMutationResult.InUse -> stringResource(R.string.account_in_use)
         AccountMutationResult.Missing -> stringResource(R.string.account_missing)
         AccountMutationResult.StorageFailed -> stringResource(R.string.account_storage_failed)
         AccountMutationResult.Saved,

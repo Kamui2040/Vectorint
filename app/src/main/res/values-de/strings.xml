@@ -176,7 +176,7 @@
     <string name="account_edit_named">%1$s bearbeiten</string>
     <string name="account_delete_named">%1$s löschen</string>
     <string name="account_delete_title">Konto löschen?</string>
-    <string name="account_delete_body">%1$s löschen? Nur ein Konto ohne Einträge oder wiederkehrende Posten kann gelöscht werden.</string>
+    <string name="account_delete_body">%1$s löschen?</string>
     <string name="account_delete_confirm">Konto löschen</string>
     <string name="account_invalid_name">Gib einen Kontonamen mit höchstens 80 Zeichen ein.</string>
     <string name="account_duplicate_name">Verwende einen anderen Kontonamen.</string>
@@ -188,6 +188,15 @@
     <string name="account_entry_section">Konto</string>
     <string name="account_entry_help">Wähle das Konto für diesen Eintrag. Davon hängt ab, ob er zu „Jetzt verfügbar“ zählt.</string>
     <string name="account_assignment_label">Konto: %1$s</string>
+    <string name="account_delete_associated_body">%1$s hat %2$d Einträge und %3$d wiederkehrende Einträge. Wähle aus, was damit geschehen soll.</string>
+    <string name="account_delete_keep_unassigned">Konto löschen, Einträge nicht zugeordnet behalten</string>
+    <string name="account_delete_reassign_heading">Alle Einträge neu zuordnen zu</string>
+    <string name="account_delete_reassign_to">Neu zuordnen zu %1$s</string>
+    <string name="account_delete_with_activity">Konto und alle Einträge löschen</string>
+    <string name="account_assignment_filter">Zuordnung</string>
+    <string name="account_assignment_all">Alle Zuordnungen</string>
+    <string name="account_assigned">Zugeordnet</string>
+    <string name="account_unassigned">Nicht zugeordnet</string>
     <string name="activity_add_title">Eintrag hinzufügen</string>
     <string name="activity_currency">Währung: %1$s</string>
     <string name="activity_receipt_total_added">Der Belegbetrag wurde eingetragen. Prüfe ihn vor dem Speichern.</string>
@@ -293,7 +302,9 @@
     <string name="recurring_following_month">Folgemonat</string>
     <string name="recurring_counts_following_month_short">Zählt für den Folgemonat</string>
     <string name="recurring_counts_toward_help">Wähle, zu welchem Monat dieses Geld in „Jetzt verfügbar“ gehört.</string>
-    <string name="recurring_expected_income_note">Zukünftige Einnahmen zählen vor dem Buchungsdatum nur, wenn „Erwartete Einnahmen einbeziehen“ aktiviert ist. An diesem Datum werden sie automatisch bestätigt, außer du verlangst eine manuelle Bestätigung.</string>
+    <string name="recurring_expected_income_note">Einnahmen zählen standardmäßig ab ihrem Auftretenstag. Aktiviere unten „Vor dem Auftreten berücksichtigen“, um sie früher in ihrem zugeordneten Budgetmonat zu berücksichtigen.</string>
+    <string name="recurring_include_expected_income">Vor dem Auftreten berücksichtigen</string>
+    <string name="recurring_include_expected_income_help">Diese Einnahme vor dem Auftretensdatum in ihrem zugeordneten Budgetmonat berücksichtigen.</string>
     <string name="recurring_confirmation">Bestätigung</string>
     <string name="recurring_require_manual_confirmation">Manuelle Bestätigung verlangen</string>
     <string name="recurring_manual_confirmation_off_help">Jede Buchung wird an ihrem Datum automatisch bestätigt. Bei einem Zeitraum gilt der letzte Tag, bei „irgendwann“ der letzte Tag des Monats.</string>

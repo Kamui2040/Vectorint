@@ -9,7 +9,7 @@ data class CurrentFunds(
 )
 
 data class CalculationPolicy(
-    val includeExpectedIncome: Boolean = false,
+    val expectedIncomeItemIds: Set<RecurringItemId> = emptySet(),
 )
 
 enum class UnsafeReason {
@@ -86,7 +86,7 @@ object AvailableFundsCalculator {
                     add(UnsafeReason.DUPLICATE_RECURRING_OCCURRENCE)
                 }
 
-                if (activity.any { it.accountId !in accountsById }) {
+                if (activity.any { it.accountId != null && it.accountId !in accountsById }) {
                     add(UnsafeReason.UNKNOWN_ACCOUNT_ASSIGNMENT)
                 }
 
@@ -118,7 +118,8 @@ object AvailableFundsCalculator {
                 }
 
             activity.forEach { entry ->
-                val account = checkNotNull(accountsById[entry.accountId])
+                val accountId = entry.accountId ?: return@forEach
+                val account = checkNotNull(accountsById[accountId])
                 if (!account.includeInAvailableNow) return@forEach
                 when (entry.state) {
                     ActivityState.CONFIRMED -> {
@@ -135,7 +136,8 @@ object AvailableFundsCalculator {
                         if (entry.budgetMonth == month) {
                             when (entry.direction) {
                                 Direction.INCOME -> {
-                                    if (policy.includeExpectedIncome) {
+                                    val recurringItemId = (entry.source as? ActivitySource.Recurring)?.itemId
+                                    if (recurringItemId in policy.expectedIncomeItemIds) {
                                         plannedIncomeMinorUnits =
                                             Math.addExact(plannedIncomeMinorUnits, entry.amount.minorUnits)
                                     }

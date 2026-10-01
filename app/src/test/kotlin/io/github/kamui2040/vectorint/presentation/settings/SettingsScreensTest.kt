@@ -42,10 +42,8 @@ class SettingsScreensTest {
         compose.setContent {
             VectorintTheme {
                 SettingsScreen(
-                    includeExpectedIncome = false,
                     saving = false,
                     saveFailed = false,
-                    onIncludeExpectedIncomeChange = {},
                     onSave = {},
                     onOpenAbout = { aboutOpens++ },
                     onDismiss = { closes++ },
@@ -60,7 +58,7 @@ class SettingsScreensTest {
         compose.onNodeWithText("Appearance").assertIsDisplayed()
         compose.onNodeWithText("Language").assertIsDisplayed()
         compose.onNodeWithText("Home").assertIsDisplayed()
-        compose.onNodeWithText("Calculation").assertIsDisplayed()
+        compose.onNodeWithText("Calculation").assertDoesNotExist()
         compose.onNodeWithText("Data & Backup").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Use device setting · Orbit").assertDoesNotExist()
         compose.onNodeWithText("Follow device").assertDoesNotExist()
@@ -85,13 +83,11 @@ class SettingsScreensTest {
         compose.setContent {
             VectorintTheme {
                 SettingsScreen(
-                    includeExpectedIncome = false,
                     showUpcomingEntries = showUpcomingEntries,
                     page = page,
                     saving = false,
                     saveFailed = false,
                     onPageChange = { page = it },
-                    onIncludeExpectedIncomeChange = {},
                     onShowUpcomingEntriesChange = { showUpcomingEntries = it },
                     onSave = { saves++ },
                 )
@@ -110,43 +106,6 @@ class SettingsScreensTest {
     }
 
     @Test
-    fun `calculation page explains and saves the expected-income choice`() {
-        var page by mutableStateOf(SettingsPage.ROOT)
-        var includeExpectedIncome by mutableStateOf(false)
-        var saves = 0
-        compose.setContent {
-            VectorintTheme {
-                SettingsScreen(
-                    includeExpectedIncome = includeExpectedIncome,
-                    page = page,
-                    saving = false,
-                    saveFailed = false,
-                    onPageChange = { page = it },
-                    onIncludeExpectedIncomeChange = { includeExpectedIncome = it },
-                    onSave = { saves++ },
-                )
-            }
-        }
-
-        compose.onNodeWithText("Calculation").performClick()
-        val help =
-            "When on, planned income for this month increases Available now. " +
-                "When off, only confirmed money in included accounts counts."
-        compose.onNodeWithText(help).assertDoesNotExist()
-        compose.onNodeWithContentDescription("More about Calculation").performClick()
-        compose.onNodeWithText(help).assertIsDisplayed()
-        compose.onNodeWithText("Close").performClick()
-        compose.onNodeWithText("Include expected income").assertIsOff()
-        compose.onNodeWithText("Include expected income").performClick()
-        compose.onNodeWithText("Include expected income").assertIsOn()
-        compose.onNodeWithText("Save settings").performClick()
-        compose.runOnIdle {
-            assertEquals(true, includeExpectedIncome)
-            assertEquals(1, saves)
-        }
-    }
-
-    @Test
     fun `appearance page offers theme and palette choices`() {
         var page by mutableStateOf(SettingsPage.ROOT)
         var themeMode by mutableStateOf(ThemeMode.FOLLOW_SYSTEM)
@@ -154,14 +113,12 @@ class SettingsScreensTest {
         compose.setContent {
             VectorintTheme {
                 SettingsScreen(
-                    includeExpectedIncome = false,
                     themeMode = themeMode,
                     colorPalette = colorPalette,
                     page = page,
                     saving = false,
                     saveFailed = false,
                     onPageChange = { page = it },
-                    onIncludeExpectedIncomeChange = {},
                     onThemeModeChange = { themeMode = it },
                     onColorPaletteChange = { colorPalette = it },
                     onSave = {},
@@ -188,14 +145,12 @@ class SettingsScreensTest {
         compose.setContent {
             VectorintTheme {
                 SettingsScreen(
-                    includeExpectedIncome = false,
                     language = language,
                     page = page,
                     saving = false,
                     saveFailed = false,
                     onPageChange = { page = it },
                     onLanguageChange = { language = it },
-                    onIncludeExpectedIncomeChange = {},
                     onSave = {},
                 )
             }
@@ -227,12 +182,10 @@ class SettingsScreensTest {
         compose.setContent {
             VectorintTheme {
                 SettingsScreen(
-                    includeExpectedIncome = false,
                     page = page,
                     saving = false,
                     saveFailed = false,
                     onPageChange = { page = it },
-                    onIncludeExpectedIncomeChange = {},
                     onSave = {},
                     onExportBackup = { exports++ },
                     onRestoreBackup = { restores++ },
@@ -284,14 +237,12 @@ class SettingsScreensTest {
         compose.setContent {
             VectorintTheme {
                 SettingsScreen(
-                    includeExpectedIncome = false,
                     page = page,
                     saving = false,
                     saveFailed = false,
                     autoBackupConfiguration = configuration,
                     autoBackupLastResult = AutoBackupLastResult.SUCCEEDED,
                     onPageChange = { page = it },
-                    onIncludeExpectedIncomeChange = {},
                     onSave = {},
                     onForgetAutoBackupFolder = { forgotten++ },
                     onAutoBackupAfterChangesChange = { configuration = configuration.copy(afterChanges = it) },
@@ -339,18 +290,16 @@ class SettingsScreensTest {
 
     @Test
     fun `save and restore failures remain visibly distinct`() {
-        var page by mutableStateOf(SettingsPage.CALCULATION)
+        var page by mutableStateOf(SettingsPage.HOME)
         var state by mutableStateOf(BackupUiState.INVALID_BACKUP)
         compose.setContent {
             VectorintTheme {
                 SettingsScreen(
-                    includeExpectedIncome = false,
                     page = page,
                     saving = false,
                     saveFailed = true,
                     backupState = state,
                     onPageChange = { page = it },
-                    onIncludeExpectedIncomeChange = {},
                     onSave = {},
                 )
             }

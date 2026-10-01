@@ -112,11 +112,11 @@ class AvailableFundsCalculatorTest {
     }
 
     @Test
-    fun `planned income is included once`() {
+    fun `opted-in recurring income is included once`() {
         val result =
             available(
-                planned("salary", Direction.INCOME, 150_000),
-                policy = CalculationPolicy(includeExpectedIncome = true),
+                recurring("salary", Direction.INCOME, 150_000),
+                policy = expected("salary"),
             )
 
         assertEquals(Money(150_000, eur), result.plannedIncome)
@@ -151,7 +151,7 @@ class AvailableFundsCalculatorTest {
     @Test
     fun `income confirmation replaces expectation without double counting`() {
         val planned = recurring("salary", Direction.INCOME, 150_000)
-        val policy = CalculationPolicy(includeExpectedIncome = true)
+        val policy = expected("salary")
         val before = available(planned, policy = policy)
         val after =
             available(
@@ -222,15 +222,15 @@ class AvailableFundsCalculatorTest {
     }
 
     @Test
-    fun `one-off planned activity uses the same direction model`() {
+    fun `one-off planned income is not included by recurring income policy`() {
         val result =
             available(
                 planned("reimbursement", Direction.INCOME, 5_000),
                 planned("purchase", Direction.EXPENSE, 2_000),
-                policy = CalculationPolicy(includeExpectedIncome = true),
+                policy = expected("reimbursement"),
             )
 
-        assertEquals(Money(103_000, eur), result.availableNow)
+        assertEquals(Money(98_000, eur), result.availableNow)
     }
 
     @Test
@@ -309,14 +309,14 @@ class AvailableFundsCalculatorTest {
             Locale.setDefault(Locale.GERMANY)
             val german =
                 available(
-                    planned("income", Direction.INCOME, 12_345),
-                    policy = CalculationPolicy(includeExpectedIncome = true),
+                    recurring("income", Direction.INCOME, 12_345),
+                    policy = expected("income"),
                 )
             Locale.setDefault(Locale.US)
             val us =
                 available(
-                    planned("income", Direction.INCOME, 12_345),
-                    policy = CalculationPolicy(includeExpectedIncome = true),
+                    recurring("income", Direction.INCOME, 12_345),
+                    policy = expected("income"),
                 )
 
             assertEquals(german, us)
@@ -324,6 +324,9 @@ class AvailableFundsCalculatorTest {
             Locale.setDefault(original)
         }
     }
+
+    private fun expected(vararg ids: String): CalculationPolicy =
+        CalculationPolicy(expectedIncomeItemIds = ids.map { RecurringItemId("item-$it") }.toSet())
 
     private fun available(
         vararg activity: ActivityEntry,

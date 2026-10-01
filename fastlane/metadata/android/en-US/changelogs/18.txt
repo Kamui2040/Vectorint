@@ -1,0 +1,1 @@
+Receipt photos now work on devices where the Google Play document scanner is unavailable. Vectorint uses the installed camera directly and still imports recognized receipt details into the editable entry.

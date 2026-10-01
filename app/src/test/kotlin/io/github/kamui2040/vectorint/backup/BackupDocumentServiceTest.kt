@@ -74,7 +74,7 @@ class BackupDocumentServiceTest {
                     VectorintBackup(
                         createdAt = Instant.parse("2026-09-06T12:00:00Z"),
                         data = restored,
-                        settings = UserSettings(includeExpectedIncome = true),
+                        settings = UserSettings(),
                     ),
                 )
             val data = FakeDocumentDataRepository(emptyData)
@@ -83,7 +83,7 @@ class BackupDocumentServiceTest {
 
             assertEquals(BackupRestoreResult.Restored, service.restore(uri))
             assertEquals(restored, data.data)
-            assertEquals(UserSettings(includeExpectedIncome = true), settings.value)
+            assertEquals(UserSettings(), settings.value)
         }
 
     private fun service(

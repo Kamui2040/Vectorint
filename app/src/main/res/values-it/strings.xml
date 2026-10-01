@@ -176,7 +176,7 @@
     <string name="account_edit_named">Modifica %1$s</string>
     <string name="account_delete_named">Elimina %1$s</string>
     <string name="account_delete_title">Eliminare il conto?</string>
-    <string name="account_delete_body">Eliminare %1$s? Puoi eliminare solo un conto senza movimenti o elementi ricorrenti.</string>
+    <string name="account_delete_body">Eliminare %1$s?</string>
     <string name="account_delete_confirm">Elimina conto</string>
     <string name="account_invalid_name">Inserisci un nome del conto lungo al massimo 80 caratteri.</string>
     <string name="account_duplicate_name">Utilizza un nome account diverso.</string>
@@ -188,6 +188,15 @@
     <string name="account_entry_section">Conto</string>
     <string name="account_entry_help">Scegli il conto a cui appartiene questo movimento. La scelta determina se rientra in «Disponibile ora».</string>
     <string name="account_assignment_label">Conto: %1$s</string>
+    <string name="account_delete_associated_body">%1$s ha %2$d voci e %3$d elementi ricorrenti. Scegli cosa deve accadere a questi elementi.</string>
+    <string name="account_delete_keep_unassigned">Elimina il conto e mantieni le voci non assegnate</string>
+    <string name="account_delete_reassign_heading">Riassegna tutte le voci a</string>
+    <string name="account_delete_reassign_to">Riassegna a %1$s</string>
+    <string name="account_delete_with_activity">Elimina il conto e tutte le voci</string>
+    <string name="account_assignment_filter">Assegnazione</string>
+    <string name="account_assignment_all">Tutte le assegnazioni</string>
+    <string name="account_assigned">Assegnato</string>
+    <string name="account_unassigned">Non assegnato</string>
     <string name="activity_add_title">Aggiungi movimento</string>
     <string name="activity_currency">Valuta: %1$s</string>
     <string name="activity_receipt_total_added">Il totale dello scontrino è stato aggiunto. Controllalo prima di salvare.</string>
@@ -309,7 +318,9 @@
     <string name="recurring_following_month">Mese successivo</string>
     <string name="recurring_counts_following_month_short">Conta per il mese successivo</string>
     <string name="recurring_counts_toward_help">Scegli a quale mese assegnare questo importo in «Disponibile ora».</string>
-    <string name="recurring_expected_income_note">Il reddito futuro viene incluso prima della data di prenotazione solo quando è attiva l\'opzione "Includi reddito previsto". In quella data si confermerà automaticamente a meno che tu non richieda la conferma manuale.</string>
+    <string name="recurring_expected_income_note">Per impostazione predefinita, le entrate contano dal giorno in cui si verificano. Attiva «Includi prima dell’occorrenza» per contarle prima nel mese di budget assegnato.</string>
+    <string name="recurring_include_expected_income">Includi prima dell’occorrenza</string>
+    <string name="recurring_include_expected_income_help">Conta questa entrata nel mese di budget assegnato prima della data di occorrenza.</string>
     <string name="recurring_confirmation">Conferma</string>
     <string name="recurring_require_manual_confirmation">Richiedi conferma manuale</string>
     <string name="recurring_manual_confirmation_off_help">Ogni ricorrenza viene confermata alla sua data. Gli intervalli e l’opzione «momento qualsiasi» vengono confermati l’ultimo giorno.</string>
