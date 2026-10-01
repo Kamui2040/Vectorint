@@ -1,5 +1,6 @@
 package io.github.kamui2040.vectorint.presentation.home
 
+import io.github.kamui2040.vectorint.core.AccountId
 import io.github.kamui2040.vectorint.core.ActivityEntry
 import io.github.kamui2040.vectorint.core.ActivityId
 import io.github.kamui2040.vectorint.core.ActivitySource
@@ -76,12 +77,25 @@ class HomeStateLoaderTest {
         }
 
     @Test
-    fun `ready state includes expected income only after opt in`() =
+    fun `ready state includes opted-in recurring income before occurrence`() =
         runBlocking {
+            val salary =
+                RecurringItem
+                    .monthly(
+                        id = RecurringItemId("salary"),
+                        name = "Salary",
+                        direction = Direction.INCOME,
+                        amount = Money(10_000, eur),
+                        firstOccurrence = LocalDate.of(2026, 9, 20),
+                    ).copy(includeExpectedIncome = true)
+            val salaryOccurrence =
+                plannedIncome(10_000).copy(
+                    source = ActivitySource.Recurring(salary.id, "2026-09"),
+                )
             val loader =
                 loader(
-                    snapshot = snapshot(plannedExpense(25_000), plannedIncome(10_000), confirmedExpense(10_000)),
-                    settings = UserSettings(includeExpectedIncome = true),
+                    snapshot = snapshot(plannedExpense(25_000), salaryOccurrence, confirmedExpense(10_000)),
+                    recurringItems = listOf(salary),
                 )
 
             assertEquals(
@@ -486,6 +500,7 @@ private class FakeBudgetRepository(
         amount: Money,
         tags: Set<Tag>,
         categoryId: CategoryId?,
+        accountId: AccountId?,
     ): ActivityEntry? = error("Not used by Home")
 
     override suspend fun confirmActivity(
@@ -501,6 +516,7 @@ private class FakeBudgetRepository(
         tags: Set<Tag>,
         bookedAt: Instant,
         categoryId: CategoryId?,
+        accountId: AccountId?,
     ): ActivityEntry? = error("Not used by Home")
 
     override suspend fun deleteActivity(activityId: ActivityId) = error("Not used by Home")

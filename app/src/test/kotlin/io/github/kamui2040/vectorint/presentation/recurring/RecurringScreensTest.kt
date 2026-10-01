@@ -2,6 +2,7 @@ package io.github.kamui2040.vectorint.presentation.recurring
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -78,7 +79,8 @@ class RecurringScreensTest {
             }
         }
 
-        compose.onNodeWithText("Every 3 months · first Sep 30, 2026").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("recurring_list").performScrollToIndex(5)
+        compose.onNodeWithText("Every 3 months · first Sep 30, 2026").assertIsDisplayed()
         compose.onNodeWithText("Counts toward the following month").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Annual bills").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Insurance").performClick()
@@ -117,7 +119,8 @@ class RecurringScreensTest {
             }
         }
 
-        compose.onNodeWithText("Every month · first Sep 30, 2026").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("recurring_list").performScrollToIndex(5)
+        compose.onNodeWithText("Every month · first Sep 30, 2026").assertIsDisplayed()
     }
 
     @Test
@@ -175,6 +178,59 @@ class RecurringScreensTest {
         compose.onNodeWithTag("recurring_list").performScrollToIndex(5)
         compose.onNodeWithText("Salary").assertIsDisplayed()
         compose.onNodeWithText("Rent").assertDoesNotExist()
+    }
+
+    @Test
+    fun `recurring list filters assigned and unassigned items`() {
+        compose.setContent {
+            VectorintTheme {
+                RecurringListScreen(
+                    state =
+                        RecurringListUiState.Ready(
+                            listOf(
+                                RecurringListItemUi(
+                                    id = RecurringItemId("assigned"),
+                                    name = "Assigned rent",
+                                    direction = Direction.EXPENSE,
+                                    amount = "€500.00",
+                                    schedule = RecurringSchedule(LocalDate.of(2026, 9, 20)),
+                                    firstOccurrenceLabel = "Sep 20, 2026",
+                                    accountName = "Main",
+                                ),
+                                RecurringListItemUi(
+                                    id = RecurringItemId("unassigned"),
+                                    name = "Kept rent",
+                                    direction = Direction.EXPENSE,
+                                    amount = "€600.00",
+                                    schedule = RecurringSchedule(LocalDate.of(2026, 9, 21)),
+                                    firstOccurrenceLabel = "Sep 21, 2026",
+                                    accountName = null,
+                                ),
+                            ),
+                        ),
+                    onRetry = {},
+                    onItemSelected = {},
+                    onAdd = {},
+                    onBack = {},
+                )
+            }
+        }
+
+        compose.onNodeWithTag("recurring_list").performScrollToIndex(4)
+        compose.onNodeWithTag("recurring_assignment:UNASSIGNED").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("recurring_assignment:UNASSIGNED").assertIsSelected()
+        compose.onNodeWithTag("recurring_list").performScrollToIndex(5)
+        compose.onNodeWithText("Kept rent").assertIsDisplayed()
+        compose.onNodeWithText("Assigned rent").assertDoesNotExist()
+        compose.onNodeWithText("Account: Unassigned").assertIsDisplayed()
+
+        compose.onNodeWithTag("recurring_list").performScrollToIndex(4)
+        compose.onNodeWithTag("recurring_assignment:ASSIGNED").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("recurring_list").performScrollToIndex(5)
+        compose.onNodeWithText("Assigned rent").assertIsDisplayed()
+        compose.onNodeWithText("Kept rent").assertDoesNotExist()
     }
 
     @Test
@@ -280,8 +336,8 @@ class RecurringScreensTest {
 
         compose.onNodeWithText("Income").performClick()
         val expectedIncomeHelp =
-            "Future income is included before its booking date only when “Include expected income” is on. " +
-                "On that date it confirms automatically unless you require manual confirmation."
+            "Income counts from its occurrence day by default. Enable “Include before occurrence” below " +
+                "to count it earlier in its assigned budget month."
         compose.onNodeWithText(expectedIncomeHelp).assertDoesNotExist()
         compose.onNodeWithContentDescription("More about Direction").performScrollTo().performClick()
         compose.onNodeWithText(expectedIncomeHelp).assertIsDisplayed()

@@ -7,6 +7,7 @@ import io.github.kamui2040.vectorint.core.ActivityState
 import io.github.kamui2040.vectorint.core.AvailableFundsCalculator
 import io.github.kamui2040.vectorint.core.AvailableFundsResult
 import io.github.kamui2040.vectorint.core.BudgetMonth
+import io.github.kamui2040.vectorint.core.CalculationPolicy
 import io.github.kamui2040.vectorint.core.CurrencyCode
 import io.github.kamui2040.vectorint.core.Direction
 import io.github.kamui2040.vectorint.core.Money
@@ -131,7 +132,7 @@ internal class HomeStateLoader(
         val initialSnapshot =
             budgetRepository.loadBudgetSnapshot()
                 ?: return HomeUiState.NeedsCurrentFunds(monthLabel)
-        if (initialSnapshot.accounts.isEmpty()) return HomeUiState.LoadFailed(monthLabel)
+        if (initialSnapshot.accounts.isEmpty()) return HomeUiState.NeedsCurrentFunds(monthLabel)
         val accountCurrencies = initialSnapshot.accounts.map { it.currentFunds.amount.currency }.distinct()
         if (accountCurrencies.size != 1) {
             return HomeUiState.Unsafe(monthLabel, setOf(UnsafeReason.CURRENCY_MISMATCH))
@@ -145,6 +146,13 @@ internal class HomeStateLoader(
                 currency = currency,
             )
         }
+        var currentSettings = checkNotNull(settings)
+        var recurringItems = budgetRepository.loadRecurringItems()
+        if (currentSettings.includeExpectedIncome) {
+            recurringItems = migrateLegacyExpectedIncome(recurringItems)
+            settingsRepository.setIncludeExpectedIncome(false)
+            currentSettings = currentSettings.copy(includeExpectedIncome = false)
+        }
         val recurringOccurrences = occurrenceUpdater.refresh(month, currency)
         val snapshot =
             initialSnapshot.copy(
@@ -152,12 +160,17 @@ internal class HomeStateLoader(
                     (recurringOccurrences + initialSnapshot.activities)
                         .distinctBy { it.id },
             )
-        val currentSettings = checkNotNull(settings)
+        val expectedIncomeItemIds =
+            recurringItems
+                .asSequence()
+                .filter { it.direction == Direction.INCOME && it.includeExpectedIncome }
+                .map(RecurringItem::id)
+                .toSet()
         val upcomingEntries =
             if (currentSettings.showUpcomingEntries) {
                 loadUpcomingEntries(
                     activities = snapshot.activities,
-                    recurringItems = budgetRepository.loadRecurringItems(),
+                    recurringItems = recurringItems,
                     today = LocalDate.now(clock),
                 )
             } else {
@@ -170,7 +183,7 @@ internal class HomeStateLoader(
                     accounts = snapshot.accounts,
                     month = month,
                     activity = snapshot.activities,
-                    policy = currentSettings.calculationPolicy,
+                    policy = CalculationPolicy(expectedIncomeItemIds = expectedIncomeItemIds),
                 )
         ) {
             is AvailableFundsResult.Available ->
@@ -180,7 +193,7 @@ internal class HomeStateLoader(
                     currentFunds = formatter.formatMoney(result.confirmedFunds),
                     reservedExpenses = formatter.formatMoney(result.reservedExpenses),
                     expectedIncome =
-                        if (currentSettings.includeExpectedIncome) {
+                        if (expectedIncomeItemIds.isNotEmpty()) {
                             ExpectedIncomeUi.Included(formatter.formatMoney(result.plannedIncome))
                         } else {
                             ExpectedIncomeUi.Excluded
@@ -196,6 +209,19 @@ internal class HomeStateLoader(
                 )
         }
     }
+
+    private suspend fun migrateLegacyExpectedIncome(items: List<RecurringItem>): List<RecurringItem> =
+        items.map { item ->
+            if (item.direction == Direction.INCOME && !item.includeExpectedIncome) {
+                item.copy(includeExpectedIncome = true).also { migrated ->
+                    check(budgetRepository.updateRecurringItem(migrated)) {
+                        "Recurring item disappeared during expected-income migration"
+                    }
+                }
+            } else {
+                item
+            }
+        }
 
     private fun loadUpcomingEntries(
         activities: List<ActivityEntry>,

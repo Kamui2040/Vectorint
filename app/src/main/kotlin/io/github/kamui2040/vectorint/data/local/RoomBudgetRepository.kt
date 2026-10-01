@@ -12,6 +12,8 @@ import io.github.kamui2040.vectorint.core.PredefinedCategory
 import io.github.kamui2040.vectorint.core.RecurringItem
 import io.github.kamui2040.vectorint.core.RecurringItemId
 import io.github.kamui2040.vectorint.core.Tag
+import io.github.kamui2040.vectorint.data.AccountDeletionAction
+import io.github.kamui2040.vectorint.data.AccountUsage
 import io.github.kamui2040.vectorint.data.BackupData
 import io.github.kamui2040.vectorint.data.BackupDataRepository
 import io.github.kamui2040.vectorint.data.BudgetRepository
@@ -45,7 +47,44 @@ internal class RoomBudgetRepository(
             database.accountDao().update(account)
         }
 
-    override suspend fun deleteAccount(accountId: AccountId): Boolean = mutateIfChanged({ it }) { database.accountDao().delete(accountId) }
+    override suspend fun loadAccountUsage(accountId: AccountId): AccountUsage =
+        onDatabaseThread {
+            AccountUsage(
+                activityCount = database.accountDao().activityReferenceCount(accountId.value),
+                recurringItemCount = database.accountDao().recurringReferenceCount(accountId.value),
+            )
+        }
+
+    override suspend fun deleteAccount(
+        accountId: AccountId,
+        action: AccountDeletionAction,
+    ): Boolean =
+        mutateIfChanged({ it }) {
+            database.runInTransaction<Boolean> {
+                if (!database.accountDao().entityExists(accountId.value)) return@runInTransaction false
+                when (action) {
+                    AccountDeletionAction.KeepUnassigned -> {
+                        database.activityDao().reassignAccount(accountId.value, UNASSIGNED_ACCOUNT_STORAGE_ID)
+                        database.recurringItemDao().reassignAccount(accountId.value, UNASSIGNED_ACCOUNT_STORAGE_ID)
+                    }
+
+                    AccountDeletionAction.DeleteAssociated -> {
+                        database.activityDao().deleteForAccount(accountId.value)
+                        database.recurringItemDao().deleteForAccount(accountId.value)
+                    }
+
+                    is AccountDeletionAction.Reassign -> {
+                        require(action.targetAccountId != accountId) { "Replacement account must be different" }
+                        requireNotNull(database.accountDao().load(action.targetAccountId)) {
+                            "Replacement account is unknown"
+                        }
+                        database.activityDao().reassignAccount(accountId.value, action.targetAccountId.value)
+                        database.recurringItemDao().reassignAccount(accountId.value, action.targetAccountId.value)
+                    }
+                }
+                database.accountDao().deleteEntity(accountId.value) == 1
+            }
+        }
 
     override suspend fun loadActivities(): List<ActivityEntry> = onDatabaseThread { database.activityDao().loadAll() }
 
@@ -79,11 +118,12 @@ internal class RoomBudgetRepository(
         amount: Money,
         tags: Set<Tag>,
         categoryId: CategoryId?,
+        accountId: AccountId?,
     ): ActivityEntry? =
         mutateIfChanged({ it != null }) {
             requireKnownCategory(categoryId)
-            requireKnownAccountForActivity(activityId, amount)
-            database.activityDao().updateDetails(activityId, name, direction, amount, categoryId, tags)
+            requireKnownAccount(accountId, amount)
+            database.activityDao().updateDetails(activityId, name, direction, amount, categoryId, tags, accountId)
         }
 
     override suspend fun confirmActivity(
@@ -99,11 +139,12 @@ internal class RoomBudgetRepository(
         tags: Set<Tag>,
         bookedAt: Instant,
         categoryId: CategoryId?,
+        accountId: AccountId?,
     ): ActivityEntry? =
         mutateIfChanged({ it != null }) {
             requireKnownCategory(categoryId)
-            requireKnownAccountForActivity(activityId, amount)
-            database.activityDao().updateAndConfirm(activityId, name, direction, amount, categoryId, tags, bookedAt)
+            requireKnownAccount(accountId, amount)
+            database.activityDao().updateAndConfirm(activityId, name, direction, amount, categoryId, tags, bookedAt, accountId)
         }
 
     override suspend fun deleteActivity(activityId: ActivityId) = mutate { database.activityDao().delete(activityId) }
@@ -195,52 +236,58 @@ internal class RoomBudgetRepository(
     }
 
     private fun requireCompatibleAccountCurrency(account: Account) {
-        val stored = database.accountDao().loadAll()
         val otherCurrencies =
-            stored
-                .asSequence()
-                .filter { it.id != account.id }
-                .map { it.currentFunds.amount.currency }
-                .toSet()
+            buildSet {
+                database
+                    .accountDao()
+                    .loadAll()
+                    .asSequence()
+                    .filter { it.id != account.id }
+                    .mapTo(this) { it.currentFunds.amount.currency }
+                database.activityDao().loadAll().mapTo(this) { it.amount.currency }
+                database.recurringItemDao().loadAll().mapTo(this) { it.amount.currency }
+            }
         require(otherCurrencies.isEmpty() || otherCurrencies == setOf(account.currentFunds.amount.currency)) {
-            "Account currency must match existing accounts"
+            "Account currency must match existing data"
         }
     }
 
     private fun requireKnownAccount(
-        accountId: AccountId,
+        accountId: AccountId?,
         amount: Money,
     ) {
+        if (accountId == null) {
+            val accountCurrencies =
+                database
+                    .accountDao()
+                    .loadAll()
+                    .map { it.currentFunds.amount.currency }
+                    .toSet()
+            require(accountCurrencies.isEmpty() || accountCurrencies == setOf(amount.currency)) {
+                "Unassigned entry currency must match existing accounts"
+            }
+            return
+        }
         val account = requireNotNull(database.accountDao().load(accountId)) { "Account assignment is unknown" }
         require(account.currentFunds.amount.currency == amount.currency) {
             "Entry currency must match its account"
         }
     }
 
-    private fun requireKnownAccountForActivity(
-        activityId: ActivityId,
-        amount: Money,
-    ) {
-        val activity = database.activityDao().load(activityId) ?: return
-        requireKnownAccount(activity.accountId, amount)
-    }
-
     private fun requireKnownAccountAssignments(data: BackupData) {
         val accountIds = data.accounts.map(Account::id)
         require(accountIds.distinct().size == accountIds.size) { "Account IDs must be unique" }
-        val accountCurrency =
-            data.accounts
-                .firstOrNull()
-                ?.currentFunds
-                ?.amount
-                ?.currency
-        require(data.accounts.all { it.currentFunds.amount.currency == accountCurrency }) {
-            "Account currencies must match"
-        }
-        (data.activities.map { it.accountId to it.amount } + data.recurringItems.map { it.accountId to it.amount })
-            .forEach { (accountId, amount) ->
+        val currencies =
+            buildSet {
+                data.accounts.mapTo(this) { it.currentFunds.amount.currency }
+                data.activities.mapTo(this) { it.amount.currency }
+                data.recurringItems.mapTo(this) { it.amount.currency }
+            }
+        require(currencies.size <= 1) { "Account and entry currencies must match" }
+        (data.activities.map(ActivityEntry::accountId) + data.recurringItems.map(RecurringItem::accountId))
+            .filterNotNull()
+            .forEach { accountId ->
                 require(accountId in accountIds) { "Account assignment is unknown" }
-                require(amount.currency == accountCurrency) { "Entry currency must match its account" }
             }
     }
 

@@ -252,10 +252,11 @@ data class ReminderSettings(
 data class RecurringItem(
     val id: RecurringItemId,
     val name: String,
-    val accountId: AccountId = LEGACY_DEFAULT_ACCOUNT_ID,
+    val accountId: AccountId? = LEGACY_DEFAULT_ACCOUNT_ID,
     val direction: Direction,
     val amount: Money,
     val schedule: RecurringSchedule,
+    val includeExpectedIncome: Boolean = false,
     val reminders: ReminderSettings = ReminderSettings(),
     val categoryId: CategoryId? = null,
     val tags: Set<Tag> = emptySet(),
@@ -263,6 +264,9 @@ data class RecurringItem(
     init {
         require(name.isNotBlank()) { "Recurring item name must not be blank" }
         require(amount.minorUnits >= 0) { "Recurring amount must be non-negative" }
+        require(!includeExpectedIncome || direction == Direction.INCOME) {
+            "Expected income can only be enabled for income"
+        }
     }
 
     companion object {

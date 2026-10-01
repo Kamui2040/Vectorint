@@ -45,33 +45,34 @@ import java.time.temporal.ChronoUnit
 
 internal class VectorintBackupCodec {
     fun encode(backup: VectorintBackup): ByteArray {
-        VectorintBackupValidator.validate(backup)
+        val portableBackup = backup.migrateLegacyExpectedIncome()
+        VectorintBackupValidator.validate(portableBackup)
         val output = StringWriter()
         JsonWriter(output).use { writer ->
             writer.beginObject()
             writer.name("format").value(VectorintBackupContract.FORMAT)
             writer.name("version").value(VectorintBackupContract.VERSION.toLong())
             writer.name("createdAt")
-            writer.writeInstant(backup.createdAt)
+            writer.writeInstant(portableBackup.createdAt)
             writer.name("settings")
-            writer.writeSettings(backup.settings)
+            writer.writeSettings(portableBackup.settings)
             writer.name("accounts").beginArray()
-            backup.data.accounts
+            portableBackup.data.accounts
                 .sortedBy { it.id.value }
                 .forEach(writer::writeAccount)
             writer.endArray()
             writer.name("customCategories").beginArray()
-            backup.data.customCategories
+            portableBackup.data.customCategories
                 .sortedBy { it.id.value }
                 .forEach(writer::writeCustomCategory)
             writer.endArray()
             writer.name("activities").beginArray()
-            backup.data.activities
+            portableBackup.data.activities
                 .sortedBy { it.id.value }
                 .forEach(writer::writeActivity)
             writer.endArray()
             writer.name("recurringItems").beginArray()
-            backup.data.recurringItems
+            portableBackup.data.recurringItems
                 .sortedBy { it.id.value }
                 .forEach(writer::writeRecurringItem)
             writer.endArray()
@@ -120,9 +121,24 @@ internal class VectorintBackupCodec {
             } catch (_: Exception) {
                 throw InvalidVectorintBackup("Backup JSON is malformed")
             }
-        VectorintBackupValidator.validate(backup)
-        return backup
+        val migratedBackup = backup.migrateLegacyExpectedIncome()
+        VectorintBackupValidator.validate(migratedBackup)
+        return migratedBackup
     }
+}
+
+private fun VectorintBackup.migrateLegacyExpectedIncome(): VectorintBackup {
+    if (!settings.includeExpectedIncome) return this
+    return copy(
+        data =
+            data.copy(
+                recurringItems =
+                    data.recurringItems.map { item ->
+                        if (item.direction == Direction.INCOME) item.copy(includeExpectedIncome = true) else item
+                    },
+            ),
+        settings = settings.copy(includeExpectedIncome = false),
+    )
 }
 
 private fun JsonWriter.writeSettings(settings: UserSettings) {
@@ -171,7 +187,8 @@ private fun JsonWriter.writeActivity(activity: ActivityEntry) {
     beginObject()
     name("id").value(activity.id.value)
     name("name").value(activity.name)
-    name("accountId").value(activity.accountId.value)
+    name("accountId")
+    activity.accountId?.let { value(it.value) } ?: nullValue()
     name("direction").value(activity.direction.storedValue())
     name("amount")
     writeMoney(activity.amount)
@@ -207,12 +224,14 @@ private fun JsonWriter.writeRecurringItem(item: RecurringItem) {
     beginObject()
     name("id").value(item.id.value)
     name("name").value(item.name)
-    name("accountId").value(item.accountId.value)
+    name("accountId")
+    item.accountId?.let { value(it.value) } ?: nullValue()
     name("direction").value(item.direction.storedValue())
     name("amount")
     writeMoney(item.amount)
     name("schedule")
     writeSchedule(item.schedule)
+    name("includeExpectedIncome").value(item.includeExpectedIncome)
     name("reminders")
     writeReminders(item.reminders)
     name("categoryId")
@@ -520,7 +539,7 @@ private fun JsonReader.readActivity(version: Int): ActivityEntry {
             when (field) {
                 "id" -> id = ActivityId(readStringValue())
                 "name" -> name = readStringValue()
-                "accountId" -> accountId = AccountId(readStringValue())
+                "accountId" -> accountId = readNullable { AccountId(readStringValue()) }
                 "direction" -> direction = readDirection()
                 "amount" -> amount = readMoney()
                 "state" -> state = readActivityState()
@@ -544,7 +563,12 @@ private fun JsonReader.readActivity(version: Int): ActivityEntry {
     return ActivityEntry(
         id = requireNotNull(id),
         name = name,
-        accountId = accountId ?: io.github.kamui2040.vectorint.core.LEGACY_DEFAULT_ACCOUNT_ID,
+        accountId =
+            if (version >= 9) {
+                accountId
+            } else {
+                accountId ?: io.github.kamui2040.vectorint.core.LEGACY_DEFAULT_ACCOUNT_ID
+            },
         direction = requireNotNull(direction),
         amount = requireNotNull(amount),
         state = requireNotNull(state),
@@ -596,6 +620,8 @@ private fun JsonReader.readRecurringItem(version: Int): RecurringItem =
         4,
         5,
         6,
+        7,
+        8,
         VectorintBackupContract.VERSION,
         -> readCurrentRecurringItem(version)
 
@@ -609,6 +635,7 @@ private fun JsonReader.readCurrentRecurringItem(version: Int): RecurringItem {
     var direction: Direction? = null
     var amount: Money? = null
     var schedule: RecurringSchedule? = null
+    var includeExpectedIncome: Boolean? = null
     var reminders: ReminderSettings? = null
     var categoryId: CategoryId? = null
     var tags: Set<Tag>? = null
@@ -617,10 +644,11 @@ private fun JsonReader.readCurrentRecurringItem(version: Int): RecurringItem {
             when (field) {
                 "id" -> id = RecurringItemId(readStringValue())
                 "name" -> name = readStringValue()
-                "accountId" -> accountId = AccountId(readStringValue())
+                "accountId" -> accountId = readNullable { AccountId(readStringValue()) }
                 "direction" -> direction = readDirection()
                 "amount" -> amount = readMoney()
                 "schedule" -> schedule = readSchedule(version)
+                "includeExpectedIncome" -> includeExpectedIncome = readBooleanValue()
                 "reminders" -> reminders = readCurrentReminders()
                 "categoryId" -> categoryId = readNullable { CategoryId(readStringValue()) }
                 "tags" -> tags = readTags()
@@ -632,15 +660,22 @@ private fun JsonReader.readCurrentRecurringItem(version: Int): RecurringItem {
             addAll(setOf("id", "name", "direction", "amount", "schedule", "reminders", "tags"))
             if (version >= 5) add("categoryId")
             if (version >= 7) add("accountId")
+            if (version >= 9) add("includeExpectedIncome")
         },
     )
     return RecurringItem(
         id = requireNotNull(id),
         name = requireNotNull(name),
-        accountId = accountId ?: io.github.kamui2040.vectorint.core.LEGACY_DEFAULT_ACCOUNT_ID,
+        accountId =
+            if (version >= 9) {
+                accountId
+            } else {
+                accountId ?: io.github.kamui2040.vectorint.core.LEGACY_DEFAULT_ACCOUNT_ID
+            },
         direction = requireNotNull(direction),
         amount = requireNotNull(amount),
         schedule = requireNotNull(schedule),
+        includeExpectedIncome = includeExpectedIncome ?: false,
         reminders = requireNotNull(reminders),
         categoryId = categoryId,
         tags = requireNotNull(tags),

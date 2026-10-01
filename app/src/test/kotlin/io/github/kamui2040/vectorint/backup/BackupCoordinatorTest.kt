@@ -65,7 +65,6 @@ class BackupCoordinatorTest {
             val data = FakeDataRepository(newData)
             val userSettings =
                 UserSettings(
-                    includeExpectedIncome = true,
                     themeMode = ThemeMode.DARK,
                     colorPalette = ColorPalette.NEBULA,
                 )
@@ -104,7 +103,7 @@ class BackupCoordinatorTest {
 
             assertEquals(BackupRestoreResult.Restored, coordinator(data, settings).restore(newBackupBytes()))
             assertEquals(newData, data.data)
-            assertEquals(UserSettings(includeExpectedIncome = true), settings.value)
+            assertEquals(UserSettings(), settings.value)
         }
 
     @Test
@@ -114,7 +113,6 @@ class BackupCoordinatorTest {
             val settings = FakeSettingsRepository(UserSettings())
             val restoredSettings =
                 UserSettings(
-                    includeExpectedIncome = true,
                     showUpcomingEntries = true,
                     themeMode = ThemeMode.DARK,
                     colorPalette = ColorPalette.NOVA,
@@ -142,13 +140,13 @@ class BackupCoordinatorTest {
 
             assertEquals(BackupRestoreResult.Restored, coordinator(data, settings).restore(versionSevenBytes))
             assertEquals(
-                UserSettings(includeExpectedIncome = true, showUpcomingEntries = true),
+                UserSettings(showUpcomingEntries = true),
                 settings.value,
             )
         }
 
     @Test
-    fun `older backup changes calculation setting without replacing current appearance`() =
+    fun `older backup retires the legacy income setting without replacing current appearance`() =
         runBlocking {
             val data = FakeDataRepository(oldData)
             val currentSettings =
@@ -169,7 +167,7 @@ class BackupCoordinatorTest {
                     .toByteArray(Charsets.UTF_8)
 
             assertEquals(BackupRestoreResult.Restored, coordinator(data, settings).restore(versionThreeBytes))
-            assertEquals(currentSettings.copy(includeExpectedIncome = true), settings.value)
+            assertEquals(currentSettings, settings.value)
         }
 
     private fun String.asLegacyVersion(version: Int): String {
@@ -185,6 +183,15 @@ class BackupCoordinatorTest {
             .replace("\"version\":${VectorintBackupContract.VERSION}", "\"version\":$version")
             .let { legacy ->
                 if (version < 8) legacy.replace(",\"showUpcomingEntries\":false", "") else legacy
+            }.let { legacy ->
+                if (version < 9) {
+                    legacy.replace(
+                        "\"settings\":{\"includeExpectedIncome\":false",
+                        "\"settings\":{\"includeExpectedIncome\":true",
+                    )
+                } else {
+                    legacy
+                }
             }.replace(",\"accountId\":\"legacy-main\"", "")
     }
 
@@ -287,7 +294,7 @@ class BackupCoordinatorTest {
         clock = Clock.fixed(Instant.parse("2026-09-06T12:00:00Z"), ZoneOffset.UTC),
     )
 
-    private fun newBackupBytes(settings: UserSettings = UserSettings(includeExpectedIncome = true)): ByteArray =
+    private fun newBackupBytes(settings: UserSettings = UserSettings()): ByteArray =
         codec.encode(
             VectorintBackup(
                 createdAt = Instant.parse("2026-09-06T12:00:00Z"),

@@ -176,7 +176,7 @@
     <string name="account_edit_named">Editar %1$s</string>
     <string name="account_delete_named">Excluir %1$s</string>
     <string name="account_delete_title">Excluir conta?</string>
-    <string name="account_delete_body">Excluir %1$s? Só é possível excluir uma conta sem movimentações nem itens recorrentes.</string>
+    <string name="account_delete_body">Excluir %1$s?</string>
     <string name="account_delete_confirm">Excluir conta</string>
     <string name="account_invalid_name">Insira um nome de conta com até 80 caracteres.</string>
     <string name="account_duplicate_name">Use um nome de conta diferente.</string>
@@ -188,6 +188,15 @@
     <string name="account_entry_section">Conta</string>
     <string name="account_entry_help">Escolha a conta desta movimentação. Isso determina se ela entra em “Disponível agora”.</string>
     <string name="account_assignment_label">Conta: %1$s</string>
+    <string name="account_delete_associated_body">%1$s tem %2$d lançamentos e %3$d itens recorrentes. Escolha o que deve acontecer com eles.</string>
+    <string name="account_delete_keep_unassigned">Excluir a conta e manter os lançamentos não atribuídos</string>
+    <string name="account_delete_reassign_heading">Reatribuir todos os lançamentos a</string>
+    <string name="account_delete_reassign_to">Reatribuir a %1$s</string>
+    <string name="account_delete_with_activity">Excluir a conta e todos os lançamentos</string>
+    <string name="account_assignment_filter">Atribuição</string>
+    <string name="account_assignment_all">Todas as atribuições</string>
+    <string name="account_assigned">Atribuído</string>
+    <string name="account_unassigned">Não atribuído</string>
     <string name="activity_add_title">Adicionar movimentação</string>
     <string name="activity_currency">Moeda: %1$s</string>
     <string name="activity_receipt_total_added">O total do recibo foi adicionado. Verifica-o antes de guardar.</string>
@@ -310,7 +319,9 @@
     <string name="recurring_following_month">Mês seguinte</string>
     <string name="recurring_counts_following_month_short">Conta para o mês seguinte</string>
     <string name="recurring_counts_toward_help">Escolha em qual mês este valor entra em “Disponível agora”.</string>
-    <string name="recurring_expected_income_note">A receita futura só entra antes da data de lançamento quando “Incluir receita prevista” está ativado. Nessa data, ela é confirmada automaticamente, a menos que você exija confirmação manual.</string>
+    <string name="recurring_expected_income_note">Por padrão, a receita conta a partir do dia da ocorrência. Ative «Incluir antes da ocorrência» abaixo para contabilizá-la mais cedo no mês de orçamento atribuído.</string>
+    <string name="recurring_include_expected_income">Incluir antes da ocorrência</string>
+    <string name="recurring_include_expected_income_help">Contabiliza esta receita no mês de orçamento atribuído antes da data da ocorrência.</string>
     <string name="recurring_confirmation">Confirmação</string>
     <string name="recurring_require_manual_confirmation">Exigir confirmação manual</string>
     <string name="recurring_manual_confirmation_off_help">Cada ocorrência é confirmada na própria data. Intervalos e a opção “qualquer momento” usam o último dia.</string>

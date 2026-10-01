@@ -69,7 +69,6 @@ internal enum class SettingsPage {
     APPEARANCE,
     LANGUAGE,
     HOME,
-    CALCULATION,
     DATA,
 }
 
@@ -133,7 +132,6 @@ private fun SettingsReadyRoute(
     onBack: () -> Unit,
 ) {
     var page by rememberSaveable { mutableStateOf(SettingsPage.ROOT) }
-    var includeExpectedIncome by rememberSaveable { mutableStateOf(settings.includeExpectedIncome) }
     var showUpcomingEntries by rememberSaveable { mutableStateOf(settings.showUpcomingEntries) }
     var themeMode by rememberSaveable { mutableStateOf(settings.themeMode) }
     var colorPalette by rememberSaveable { mutableStateOf(settings.colorPalette) }
@@ -263,7 +261,6 @@ private fun SettingsReadyRoute(
     }
 
     SettingsScreen(
-        includeExpectedIncome = includeExpectedIncome,
         showUpcomingEntries = showUpcomingEntries,
         themeMode = themeMode,
         colorPalette = colorPalette,
@@ -279,10 +276,6 @@ private fun SettingsReadyRoute(
         autoBackupUiState = autoBackupUiState,
         onPageChange = {
             page = it
-            saveFailed = false
-        },
-        onIncludeExpectedIncomeChange = {
-            includeExpectedIncome = it
             saveFailed = false
         },
         onShowUpcomingEntriesChange = {
@@ -305,7 +298,7 @@ private fun SettingsReadyRoute(
                 when (
                     editor.save(
                         UserSettings(
-                            includeExpectedIncome = includeExpectedIncome,
+                            includeExpectedIncome = settings.includeExpectedIncome,
                             showUpcomingEntries = showUpcomingEntries,
                             themeMode = themeMode,
                             colorPalette = colorPalette,
@@ -412,7 +405,6 @@ private fun SettingsReadyRoute(
 
 @Composable
 internal fun SettingsScreen(
-    includeExpectedIncome: Boolean,
     showUpcomingEntries: Boolean = false,
     themeMode: ThemeMode = ThemeMode.FOLLOW_SYSTEM,
     colorPalette: ColorPalette = ColorPalette.ORBIT,
@@ -427,7 +419,6 @@ internal fun SettingsScreen(
     autoBackupLoadFailed: Boolean = false,
     autoBackupUiState: AutoBackupUiState = AutoBackupUiState.IDLE,
     onPageChange: (SettingsPage) -> Unit = {},
-    onIncludeExpectedIncomeChange: (Boolean) -> Unit,
     onShowUpcomingEntriesChange: (Boolean) -> Unit = {},
     onThemeModeChange: (ThemeMode) -> Unit = {},
     onColorPaletteChange: (ColorPalette) -> Unit = {},
@@ -454,14 +445,12 @@ internal fun SettingsScreen(
             SettingsPage.APPEARANCE -> stringResource(R.string.settings_appearance)
             SettingsPage.LANGUAGE -> stringResource(R.string.settings_language)
             SettingsPage.HOME -> stringResource(R.string.settings_home)
-            SettingsPage.CALCULATION -> stringResource(R.string.settings_calculation)
             SettingsPage.DATA -> stringResource(R.string.settings_data_backup)
         }
     val pageHelp =
         when (page) {
             SettingsPage.LANGUAGE -> stringResource(R.string.settings_language_body)
             SettingsPage.HOME -> stringResource(R.string.settings_home_upcoming_body)
-            SettingsPage.CALCULATION -> stringResource(R.string.settings_include_expected_income_body)
             SettingsPage.DATA -> stringResource(R.string.settings_backup_body)
             SettingsPage.ROOT,
             SettingsPage.APPEARANCE,
@@ -564,15 +553,6 @@ internal fun SettingsScreen(
                     onSave = onSave,
                 )
 
-            SettingsPage.CALCULATION ->
-                SettingsCalculationPage(
-                    includeExpectedIncome = includeExpectedIncome,
-                    enabled = !busy,
-                    saving = saving,
-                    onIncludeExpectedIncomeChange = onIncludeExpectedIncomeChange,
-                    onSave = onSave,
-                )
-
             SettingsPage.DATA ->
                 SettingsDataPage(
                     enabled = !busy,
@@ -632,12 +612,6 @@ private fun SettingsRootPage(
                 title = stringResource(R.string.settings_home),
                 enabled = enabled,
                 onClick = { onPageChange(SettingsPage.HOME) },
-            )
-            HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
-            SettingsMenuRow(
-                title = stringResource(R.string.settings_calculation),
-                enabled = enabled,
-                onClick = { onPageChange(SettingsPage.CALCULATION) },
             )
             HorizontalDivider(modifier = Modifier.padding(horizontal = 16.dp))
             SettingsMenuRow(
@@ -725,44 +699,6 @@ private fun SettingsLanguagePage(
             )
         }
     }
-}
-
-@Composable
-private fun SettingsCalculationPage(
-    includeExpectedIncome: Boolean,
-    enabled: Boolean,
-    saving: Boolean,
-    onIncludeExpectedIncomeChange: (Boolean) -> Unit,
-    onSave: () -> Unit,
-) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        shape = MaterialTheme.shapes.extraLarge,
-        color = MaterialTheme.colorScheme.surfaceContainer,
-    ) {
-        Row(
-            modifier =
-                Modifier
-                    .toggleable(
-                        value = includeExpectedIncome,
-                        enabled = enabled,
-                        role = Role.Switch,
-                        onValueChange = onIncludeExpectedIncomeChange,
-                    ).padding(horizontal = 16.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.spacedBy(16.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                SettingsSectionTitle(stringResource(R.string.settings_include_expected_income))
-            }
-            Switch(
-                checked = includeExpectedIncome,
-                onCheckedChange = null,
-                enabled = enabled,
-            )
-        }
-    }
-    SettingsSaveButton(saving = saving, enabled = enabled, onSave = onSave)
 }
 
 @Composable

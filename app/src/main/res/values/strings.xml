@@ -177,7 +177,7 @@
     <string name="account_edit_named">Edit %1$s</string>
     <string name="account_delete_named">Delete %1$s</string>
     <string name="account_delete_title">Delete account?</string>
-    <string name="account_delete_body">Delete %1$s? Only an account without entries or recurring items can be deleted.</string>
+    <string name="account_delete_body">Delete %1$s?</string>
     <string name="account_delete_confirm">Delete account</string>
     <string name="account_invalid_name">Enter an account name of up to 80 characters.</string>
     <string name="account_duplicate_name">Use a different account name.</string>
@@ -189,6 +189,15 @@
     <string name="account_entry_section">Account</string>
     <string name="account_entry_help">Choose which account this entry belongs to. This affects whether it counts toward Available now.</string>
     <string name="account_assignment_label">Account: %1$s</string>
+    <string name="account_delete_associated_body">%1$s has %2$d entries and %3$d recurring items. Choose what should happen to them.</string>
+    <string name="account_delete_keep_unassigned">Delete account, keep entries unassigned</string>
+    <string name="account_delete_reassign_heading">Reassign all entries to</string>
+    <string name="account_delete_reassign_to">Reassign to %1$s</string>
+    <string name="account_delete_with_activity">Delete account and all entries</string>
+    <string name="account_assignment_filter">Assignment</string>
+    <string name="account_assignment_all">All assignments</string>
+    <string name="account_assigned">Assigned</string>
+    <string name="account_unassigned">Unassigned</string>
     <string name="activity_add_title">Add activity</string>
     <string name="activity_currency">Currency: %1$s</string>
     <string name="activity_receipt_total_added">Receipt total added. Check it before saving.</string>
@@ -294,7 +303,9 @@
     <string name="recurring_following_month">Following month</string>
     <string name="recurring_counts_following_month_short">Counts toward the following month</string>
     <string name="recurring_counts_toward_help">Choose which month this money belongs to in Available now.</string>
-    <string name="recurring_expected_income_note">Future income is included before its booking date only when “Include expected income” is on. On that date it confirms automatically unless you require manual confirmation.</string>
+    <string name="recurring_expected_income_note">Income counts from its occurrence day by default. Enable “Include before occurrence” below to count it earlier in its assigned budget month.</string>
+    <string name="recurring_include_expected_income">Include before occurrence</string>
+    <string name="recurring_include_expected_income_help">Count this income in its assigned budget month before the occurrence date.</string>
     <string name="recurring_confirmation">Confirmation</string>
     <string name="recurring_require_manual_confirmation">Require manual confirmation</string>
     <string name="recurring_manual_confirmation_off_help">Each occurrence confirms on its date. A range and “anytime” confirm on their final day.</string>

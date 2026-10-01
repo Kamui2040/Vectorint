@@ -118,7 +118,7 @@ class RecurringOccurrenceGeneratorTest {
                 funds,
                 february,
                 listOf(occurrence),
-                CalculationPolicy(includeExpectedIncome = true),
+                CalculationPolicy(expectedIncomeItemIds = setOf(salary.id)),
             ) as AvailableFundsResult.Available
 
         assertEquals(Money(100_000, eur), conservative.availableNow)

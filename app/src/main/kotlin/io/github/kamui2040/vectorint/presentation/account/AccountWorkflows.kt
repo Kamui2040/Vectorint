@@ -4,6 +4,7 @@ import io.github.kamui2040.vectorint.core.Account
 import io.github.kamui2040.vectorint.core.AccountId
 import io.github.kamui2040.vectorint.core.CurrencyCode
 import io.github.kamui2040.vectorint.core.CurrentFunds
+import io.github.kamui2040.vectorint.data.AccountDeletionAction
 import io.github.kamui2040.vectorint.data.BudgetRepository
 import io.github.kamui2040.vectorint.presentation.entry.EntryMoneyAdapter
 import io.github.kamui2040.vectorint.presentation.format.AmountSignPolicy
@@ -16,7 +17,12 @@ import java.util.UUID
 internal data class AccountListItemUi(
     val account: Account,
     val amountInput: String,
-)
+    val activityCount: Int = 0,
+    val recurringItemCount: Int = 0,
+) {
+    val associatedItemCount: Int
+        get() = activityCount + recurringItemCount
+}
 
 internal data class AccountManagementSeed(
     val accounts: List<AccountListItemUi>,
@@ -46,8 +52,6 @@ internal sealed interface AccountMutationResult {
 
     data object Missing : AccountMutationResult
 
-    data object InUse : AccountMutationResult
-
     data object StorageFailed : AccountMutationResult
 }
 
@@ -70,9 +74,12 @@ internal class AccountManager(
                 AccountManagementSeed(
                     accounts =
                         accounts.map { account ->
+                            val usage = budgetRepository.loadAccountUsage(account.id)
                             AccountListItemUi(
                                 account = account,
                                 amountInput = moneyAdapter.formatInput(account.currentFunds.amount),
+                                activityCount = usage.activityCount,
+                                recurringItemCount = usage.recurringItemCount,
                             )
                         },
                     currencyCode = currencies.singleOrNull() ?: moneyAdapter.defaultCurrencyCode(),
@@ -161,14 +168,17 @@ internal class AccountManager(
             }
         }
 
-    suspend fun delete(accountId: AccountId): AccountMutationResult =
+    suspend fun delete(
+        accountId: AccountId,
+        action: AccountDeletionAction,
+    ): AccountMutationResult =
         mutate {
             if (budgetRepository.loadAccounts().none { it.id == accountId }) {
                 AccountMutationResult.Missing
-            } else if (budgetRepository.deleteAccount(accountId)) {
+            } else if (budgetRepository.deleteAccount(accountId, action)) {
                 AccountMutationResult.Deleted
             } else {
-                AccountMutationResult.InUse
+                AccountMutationResult.Missing
             }
         }
 

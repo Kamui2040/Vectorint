@@ -176,7 +176,7 @@
     <string name="account_edit_named">Modifier %1$s</string>
     <string name="account_delete_named">Supprimer %1$s</string>
     <string name="account_delete_title">Supprimer le compte ?</string>
-    <string name="account_delete_body">Supprimer %1$s ? Seul un compte sans opération ni élément récurrent peut être supprimé.</string>
+    <string name="account_delete_body">Supprimer %1$s ?</string>
     <string name="account_delete_confirm">Supprimer le compte</string>
     <string name="account_invalid_name">Saisissez un nom de compte comportant jusqu\'à 80 caractères.</string>
     <string name="account_duplicate_name">Utilisez un autre nom de compte.</string>
@@ -188,6 +188,15 @@
     <string name="account_entry_section">Compte</string>
     <string name="account_entry_help">Choisissez le compte auquel appartient cette opération. Ce choix détermine si elle est incluse dans « Disponible maintenant ».</string>
     <string name="account_assignment_label">Compte : %1$s</string>
+    <string name="account_delete_associated_body">%1$s contient %2$d entrées et %3$d éléments récurrents. Choisissez ce qu’ils doivent devenir.</string>
+    <string name="account_delete_keep_unassigned">Supprimer le compte et conserver les entrées non affectées</string>
+    <string name="account_delete_reassign_heading">Réaffecter toutes les entrées à</string>
+    <string name="account_delete_reassign_to">Réaffecter à %1$s</string>
+    <string name="account_delete_with_activity">Supprimer le compte et toutes les entrées</string>
+    <string name="account_assignment_filter">Affectation</string>
+    <string name="account_assignment_all">Toutes les affectations</string>
+    <string name="account_assigned">Affecté</string>
+    <string name="account_unassigned">Non affecté</string>
     <string name="activity_add_title">Ajouter une opération</string>
     <string name="activity_currency">Devise : %1$s</string>
     <string name="activity_receipt_total_added">Le total du reçu a été ajouté. Vérifiez-le avant d’enregistrer.</string>
@@ -310,7 +319,9 @@
     <string name="recurring_following_month">Mois suivant</string>
     <string name="recurring_counts_following_month_short">Compte pour le mois suivant</string>
     <string name="recurring_counts_toward_help">Choisissez à quel mois attribuer ce montant dans « Disponible maintenant ».</string>
-    <string name="recurring_expected_income_note">Les revenus futurs ne sont inclus avant leur date d’enregistrement que si « Inclure les revenus prévus » est activé. À cette date, ils sont confirmés automatiquement, sauf si vous exigez une confirmation manuelle.</string>
+    <string name="recurring_expected_income_note">Par défaut, les revenus sont comptabilisés à partir de leur jour d’occurrence. Activez « Inclure avant l’occurrence » ci-dessous pour les comptabiliser plus tôt dans leur mois budgétaire affecté.</string>
+    <string name="recurring_include_expected_income">Inclure avant l’occurrence</string>
+    <string name="recurring_include_expected_income_help">Comptabiliser ce revenu dans son mois budgétaire affecté avant sa date d’occurrence.</string>
     <string name="recurring_confirmation">Confirmation</string>
     <string name="recurring_require_manual_confirmation">Exiger une confirmation manuelle</string>
     <string name="recurring_manual_confirmation_off_help">Chaque récurrence est confirmée à sa date. Les périodes et l’option « à tout moment » sont confirmées le dernier jour.</string>

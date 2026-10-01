@@ -3,6 +3,8 @@ package io.github.kamui2040.vectorint.data.local
 import android.database.sqlite.SQLiteConstraintException
 import androidx.room.Room
 import io.github.kamui2040.vectorint.VectorintApplication
+import io.github.kamui2040.vectorint.core.Account
+import io.github.kamui2040.vectorint.core.AccountId
 import io.github.kamui2040.vectorint.core.ActivityEntry
 import io.github.kamui2040.vectorint.core.ActivityId
 import io.github.kamui2040.vectorint.core.ActivitySource
@@ -22,6 +24,7 @@ import io.github.kamui2040.vectorint.core.RecurringItem
 import io.github.kamui2040.vectorint.core.RecurringItemId
 import io.github.kamui2040.vectorint.core.Tag
 import io.github.kamui2040.vectorint.core.asLegacyDefaultAccount
+import io.github.kamui2040.vectorint.data.AccountDeletionAction
 import io.github.kamui2040.vectorint.data.BackupData
 import io.github.kamui2040.vectorint.data.BudgetSnapshot
 import io.github.kamui2040.vectorint.data.RecurringOccurrenceActivityIdFactory
@@ -117,6 +120,62 @@ class RoomBudgetRepositoryTest {
             repository.clearCurrentFunds()
 
             assertNull(repository.loadBudgetSnapshot())
+            assertEquals(emptyList<ActivityEntry>(), repository.loadActivities())
+            assertEquals(emptyList<RecurringItem>(), repository.loadRecurringItems())
+        }
+
+    @Test
+    fun `account deletion can keep activity and recurring items unassigned`() =
+        runBlocking {
+            val account = repository.loadAccounts().single()
+            val activity = plannedExpense("kept-activity", 8_000).copy(accountId = account.id)
+            val recurring = recurringExpense("kept-recurring", 4_000).copy(accountId = account.id)
+            repository.createActivity(activity)
+            repository.createRecurringItem(recurring)
+
+            val usage = repository.loadAccountUsage(account.id)
+            assertEquals(1, usage.activityCount)
+            assertEquals(1, usage.recurringItemCount)
+            assertTrue(repository.deleteAccount(account.id, AccountDeletionAction.KeepUnassigned))
+
+            assertEquals(emptyList<Account>(), repository.loadAccounts())
+            assertEquals(activity.copy(accountId = null), repository.loadActivity(activity.id))
+            assertEquals(recurring.copy(accountId = null), repository.loadRecurringItems().single())
+        }
+
+    @Test
+    fun `account deletion can reassign all associated data atomically`() =
+        runBlocking {
+            val source = repository.loadAccounts().single()
+            val target =
+                Account(
+                    id = AccountId("cash"),
+                    name = "Cash",
+                    currentFunds = CurrentFunds(Money(25_000, eur), Instant.parse("2026-09-01T11:00:00Z")),
+                )
+            repository.createAccount(target)
+            val activity = plannedExpense("moved-activity", 8_000).copy(accountId = source.id)
+            val recurring = recurringExpense("moved-recurring", 4_000).copy(accountId = source.id)
+            repository.createActivity(activity)
+            repository.createRecurringItem(recurring)
+
+            assertTrue(repository.deleteAccount(source.id, AccountDeletionAction.Reassign(target.id)))
+
+            assertEquals(listOf(target), repository.loadAccounts())
+            assertEquals(target.id, repository.loadActivity(activity.id)?.accountId)
+            assertEquals(target.id, repository.loadRecurringItems().single().accountId)
+        }
+
+    @Test
+    fun `account deletion can delete all associated data`() =
+        runBlocking {
+            val account = repository.loadAccounts().single()
+            repository.createActivity(plannedExpense("deleted-activity", 8_000).copy(accountId = account.id))
+            repository.createRecurringItem(recurringExpense("deleted-recurring", 4_000).copy(accountId = account.id))
+
+            assertTrue(repository.deleteAccount(account.id, AccountDeletionAction.DeleteAssociated))
+
+            assertEquals(emptyList<Account>(), repository.loadAccounts())
             assertEquals(emptyList<ActivityEntry>(), repository.loadActivities())
             assertEquals(emptyList<RecurringItem>(), repository.loadRecurringItems())
         }
@@ -223,6 +282,7 @@ class RoomBudgetRepositoryTest {
                         amount = Money(45_000, eur),
                         tags = setOf(Tag("settled")),
                         bookedAt = Instant.parse("2026-09-02T08:00:00.000000001Z"),
+                        accountId = expense.accountId,
                     ),
                 )
 
@@ -250,6 +310,7 @@ class RoomBudgetRepositoryTest {
                         direction = Direction.INCOME,
                         amount = Money(5_000, eur),
                         tags = setOf(Tag("adjusted")),
+                        accountId = planned.accountId,
                     ),
                 )
 
@@ -589,7 +650,7 @@ private suspend fun RoomBudgetRepository.saveCurrentFunds(currentFunds: CurrentF
 
 private suspend fun RoomBudgetRepository.clearCurrentFunds() {
     val account = currentFundsAccountOrNull() ?: return
-    check(deleteAccount(account.id))
+    check(deleteAccount(account.id, io.github.kamui2040.vectorint.data.AccountDeletionAction.DeleteAssociated))
 }
 
 private suspend fun RoomBudgetRepository.currentFundsAccountOrNull() =

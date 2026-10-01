@@ -173,14 +173,15 @@ class BudgetEntryEditorsTest {
         }
 
     @Test
-    fun `planned one-off income remains excluded without an explicit opt in`() =
+    fun `planned one-off income remains excluded from recurring income policy`() =
         runBlocking {
             val repository = FakeBudgetRepository(currentFunds = funds(100_000))
             activityEditor(repository).save("25.00", usd, Direction.INCOME, ActivityState.PLANNED)
 
             assertEquals(100_000, calculation(repository).availableNow.minorUnits)
-            val included = calculation(repository, CalculationPolicy(includeExpectedIncome = true))
-            assertEquals(102_500, included.availableNow.minorUnits)
+            val recurringOnlyPolicy =
+                CalculationPolicy(expectedIncomeItemIds = setOf(RecurringItemId("synthetic-recurring-income")))
+            assertEquals(100_000, calculation(repository, recurringOnlyPolicy).availableNow.minorUnits)
         }
 
     @Test
@@ -403,6 +404,7 @@ private class FakeBudgetRepository(
         amount: Money,
         tags: Set<Tag>,
         categoryId: CategoryId?,
+        accountId: AccountId?,
     ): ActivityEntry? = error("Not used by entry editors")
 
     override suspend fun confirmActivity(
@@ -418,6 +420,7 @@ private class FakeBudgetRepository(
         tags: Set<Tag>,
         bookedAt: Instant,
         categoryId: CategoryId?,
+        accountId: AccountId?,
     ): ActivityEntry? = error("Not used by entry editors")
 
     override suspend fun deleteActivity(activityId: ActivityId) {
