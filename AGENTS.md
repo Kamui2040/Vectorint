@@ -307,6 +307,10 @@ Treat every tracked file as suitable for public release.
 - Run host-side Android tests on an API level explicitly supported by the pinned
   Robolectric version; do not assume support merely because the app compiles
   against a newer SDK.
+- Use `testDebugUnitTest` as the supported host-side Android unit-test gate. Do not
+  substitute the aggregate `test` task while Compose's test manifest is debug-only:
+  that aggregate also invokes optimized release unit-test variants, which cannot
+  resolve the Compose test `ComponentActivity` and fail before test bodies run.
 - If Android's incremental resource merge reports `no data file for changedFile`
   after a resource is replaced or removed, preserve the diagnostic and rerun the
   unchanged source through a full clean build before changing the resource.
