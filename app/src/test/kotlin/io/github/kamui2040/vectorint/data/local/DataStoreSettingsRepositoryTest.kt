@@ -5,7 +5,6 @@ import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
-import io.github.kamui2040.vectorint.core.CalculationPolicy
 import io.github.kamui2040.vectorint.data.ColorPalette
 import io.github.kamui2040.vectorint.data.ThemeMode
 import io.github.kamui2040.vectorint.data.UserSettings
@@ -64,17 +63,15 @@ class DataStoreSettingsRepositoryTest {
             assertEquals(UserSettings(), settings)
             assertFalse(settings.includeExpectedIncome)
             assertFalse(settings.showUpcomingEntries)
-            assertEquals(CalculationPolicy(includeExpectedIncome = false), settings.calculationPolicy)
         }
 
     @Test
-    fun `expected income opt-in is persisted and exposed as calculation policy`() =
+    fun `legacy expected income opt-in remains persisted for migration`() =
         runBlocking {
             repository.setIncludeExpectedIncome(true)
             val settings = repository.settings.first()
 
             assertTrue(settings.includeExpectedIncome)
-            assertEquals(CalculationPolicy(includeExpectedIncome = true), settings.calculationPolicy)
             assertTrue(dataStoreFile.isFile)
             assertTrue(dataStoreFile.length() > 0)
         }

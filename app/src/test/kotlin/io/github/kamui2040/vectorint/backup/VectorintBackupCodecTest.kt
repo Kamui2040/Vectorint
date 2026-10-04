@@ -205,7 +205,7 @@ class VectorintBackupCodecTest {
         assertInvalid(text.replaceFirst("{", "{\"format\":\"${VectorintBackupContract.FORMAT}\","))
         assertInvalid(
             text.replace(
-                "\"settings\":{\"includeExpectedIncome\":true,\"showUpcomingEntries\":true,\"themeMode\":\"dark\",\"colorPalette\":\"nebula\"},",
+                "\"settings\":{\"includeExpectedIncome\":false,\"showUpcomingEntries\":true,\"themeMode\":\"dark\",\"colorPalette\":\"nebula\"},",
                 "",
             ),
         )
@@ -395,6 +395,15 @@ class VectorintBackupCodecTest {
             .replace("\"version\":${VectorintBackupContract.VERSION}", "\"version\":$version")
             .let { legacy ->
                 if (version < 8) legacy.replace(",\"showUpcomingEntries\":true", "") else legacy
+            }.let { legacy ->
+                if (version < 9) {
+                    legacy
+                        .replace("\"settings\":{\"includeExpectedIncome\":false", "\"settings\":{\"includeExpectedIncome\":true")
+                        .replace(",\"includeExpectedIncome\":true", "")
+                        .replace(",\"includeExpectedIncome\":false", "")
+                } else {
+                    legacy
+                }
             }.replace(",\"accountId\":\"legacy-main\"", "")
     }
 
@@ -491,6 +500,7 @@ class VectorintBackupCodecTest {
                                 name = "Salary",
                                 direction = Direction.INCOME,
                                 amount = Money(250_000, eur),
+                                includeExpectedIncome = true,
                                 schedule =
                                     RecurringSchedule(
                                         firstOccurrence = LocalDate.of(2026, 1, 31),
@@ -503,7 +513,7 @@ class VectorintBackupCodecTest {
                 ),
             settings =
                 UserSettings(
-                    includeExpectedIncome = true,
+                    includeExpectedIncome = false,
                     showUpcomingEntries = true,
                     themeMode = ThemeMode.DARK,
                     colorPalette = ColorPalette.NEBULA,

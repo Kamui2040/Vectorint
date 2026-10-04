@@ -9,6 +9,9 @@ All notable user-facing changes will be recorded here.
   chronological order beneath Available now.
 - Add a user-triggered update check in About, using Google Play's update flow in
   Play builds and the public Vectorint download page in Google-free builds.
+- Use the installed camera for Play-edition receipt photos on devices where
+  Google's document scanner reports that it is unavailable, while preserving
+  private temporary-file cleanup and safe activity recreation.
 
 ## 0.0.12 - Tester candidate
 

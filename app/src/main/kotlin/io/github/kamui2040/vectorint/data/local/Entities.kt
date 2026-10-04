@@ -74,6 +74,8 @@ internal data class RecurringItemEntity(
     @ColumnInfo(name = "period_end_offset_days") val periodEndOffsetDays: Int? = null,
     @ColumnInfo(name = "require_manual_confirmation", defaultValue = "0")
     val requireManualConfirmation: Boolean = false,
+    @ColumnInfo(name = "include_expected_income", defaultValue = "0")
+    val includeExpectedIncome: Boolean = false,
     @ColumnInfo(name = "ends_at_epoch_day") val endsOnEpochDay: Long?,
     @ColumnInfo(name = "review_on_epoch_day") val remindOnEpochDay: Long?,
     @ColumnInfo(name = "occurrence_reminder_days") val occurrenceReminderDays: Int?,

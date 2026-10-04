@@ -1,6 +1,5 @@
 package io.github.kamui2040.vectorint.data
 
-import io.github.kamui2040.vectorint.core.CalculationPolicy
 import kotlinx.coroutines.flow.Flow
 
 internal enum class ThemeMode {
@@ -20,10 +19,7 @@ internal data class UserSettings(
     val showUpcomingEntries: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.FOLLOW_SYSTEM,
     val colorPalette: ColorPalette = ColorPalette.ORBIT,
-) {
-    val calculationPolicy: CalculationPolicy
-        get() = CalculationPolicy(includeExpectedIncome = includeExpectedIncome)
-}
+)
 
 internal interface SettingsRepository {
     val settings: Flow<UserSettings>

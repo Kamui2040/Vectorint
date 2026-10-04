@@ -20,11 +20,11 @@ import io.github.kamui2040.vectorint.presentation.component.InfoHeading
 @Composable
 internal fun AccountSelector(
     accounts: List<Account>,
-    selectedAccountId: AccountId,
+    selectedAccountId: AccountId?,
     enabled: Boolean,
     onAccountChange: (AccountId) -> Unit,
 ) {
-    if (accounts.size <= 1) return
+    if (accounts.size <= 1 && selectedAccountId != null) return
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         InfoHeading(
             title = stringResource(R.string.account_entry_section),

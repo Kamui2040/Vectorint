@@ -1,5 +1,6 @@
 package io.github.kamui2040.vectorint.presentation.recurring
 
+import io.github.kamui2040.vectorint.core.AccountId
 import io.github.kamui2040.vectorint.core.ActivityEntry
 import io.github.kamui2040.vectorint.core.ActivityId
 import io.github.kamui2040.vectorint.core.BudgetMonthAssignment
@@ -175,6 +176,69 @@ class RecurringWorkflowsTest {
         }
 
     @Test
+    fun `expected-income choice is stored per income and cleared for expense`() =
+        runBlocking {
+            val repository = FakeRecurringBudgetRepository()
+            val editor =
+                RecurringItemEditor(
+                    budgetRepository = repository,
+                    moneyAdapter = moneyAdapter,
+                    clock = clock,
+                    idFactory = RecurringItemIdFactory { RecurringItemId("salary") },
+                )
+            val seed = (editor.load(null) as RecurringItemLoadResult.Ready).seed
+
+            assertEquals(
+                RecurringItemMutationResult.Saved,
+                editor.save(
+                    seed = seed,
+                    nameInput = "Salary",
+                    amountInput = "25.00",
+                    direction = Direction.INCOME,
+                    includeExpectedIncome = true,
+                ),
+            )
+            val income = repository.recurringItems.single()
+            assertEquals(true, income.includeExpectedIncome)
+
+            val editSeed = (editor.load(income.id) as RecurringItemLoadResult.Ready).seed
+            assertEquals(
+                RecurringItemMutationResult.Saved,
+                editor.save(
+                    seed = editSeed,
+                    nameInput = "Rent",
+                    amountInput = "25.00",
+                    direction = Direction.EXPENSE,
+                    includeExpectedIncome = true,
+                ),
+            )
+            assertEquals(false, repository.recurringItems.single().includeExpectedIncome)
+        }
+
+    @Test
+    fun `unassigned recurring item can be reassigned from its editor`() =
+        runBlocking {
+            val existing = item("rent", "Rent", 25_000).copy(accountId = null)
+            val repository = FakeRecurringBudgetRepository(recurringItems = mutableListOf(existing))
+            val editor = RecurringItemEditor(repository, moneyAdapter, clock)
+            val seed = (editor.load(existing.id) as RecurringItemLoadResult.Ready).seed
+            val targetAccount = seed.accounts.single()
+
+            assertNull(seed.accountId)
+            assertEquals(
+                RecurringItemMutationResult.Saved,
+                editor.save(
+                    seed = seed,
+                    nameInput = "Rent",
+                    amountInput = "25.00",
+                    direction = Direction.EXPENSE,
+                    accountId = targetAccount.id,
+                ),
+            )
+            assertEquals(targetAccount.id, repository.recurringItems.single().accountId)
+        }
+
+    @Test
     fun `invalid interval or dates fail before storage`() =
         runBlocking {
             val repository = FakeRecurringBudgetRepository()
@@ -335,6 +399,7 @@ private class FakeRecurringBudgetRepository(
         amount: Money,
         tags: Set<Tag>,
         categoryId: CategoryId?,
+        accountId: AccountId?,
     ): ActivityEntry? = error("Not used")
 
     override suspend fun confirmActivity(
@@ -350,6 +415,7 @@ private class FakeRecurringBudgetRepository(
         tags: Set<Tag>,
         bookedAt: Instant,
         categoryId: CategoryId?,
+        accountId: AccountId?,
     ): ActivityEntry? = error("Not used")
 
     override suspend fun deleteActivity(activityId: ActivityId) = error("Not used")

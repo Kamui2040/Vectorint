@@ -1,6 +1,8 @@
 package io.github.kamui2040.vectorint.receipt
 
 internal interface ReceiptScanner {
+    val isInProgress: Boolean
+
     fun launch()
 }
 

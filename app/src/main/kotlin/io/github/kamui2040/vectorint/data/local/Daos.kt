@@ -113,6 +113,15 @@ internal abstract class ActivityDao {
     @Query("DELETE FROM activities WHERE id = :activityId")
     abstract fun deleteEntity(activityId: String)
 
+    @Query("UPDATE activities SET account_id = :targetAccountId WHERE account_id = :sourceAccountId")
+    abstract fun reassignAccount(
+        sourceAccountId: String,
+        targetAccountId: String,
+    ): Int
+
+    @Query("DELETE FROM activities WHERE account_id = :accountId")
+    abstract fun deleteForAccount(accountId: String): Int
+
     @Query("DELETE FROM activities")
     abstract fun clear()
 
@@ -173,6 +182,7 @@ internal abstract class ActivityDao {
         amount: Money,
         categoryId: CategoryId?,
         tags: Set<Tag>,
+        accountId: AccountId?,
     ): ActivityEntry? {
         val activity = loadRecord(activityId.value)?.toDomain() ?: return null
         val updated =
@@ -180,6 +190,7 @@ internal abstract class ActivityDao {
                 name = name,
                 direction = direction,
                 amount = amount,
+                accountId = accountId,
                 categoryId = categoryId,
                 tags = tags,
             )
@@ -224,6 +235,7 @@ internal abstract class ActivityDao {
         categoryId: CategoryId?,
         tags: Set<Tag>,
         bookedAt: Instant,
+        accountId: AccountId?,
     ): ActivityEntry? {
         val activity = loadRecord(activityId.value)?.toDomain() ?: return null
         val confirmed =
@@ -232,6 +244,7 @@ internal abstract class ActivityDao {
                     name = name,
                     direction = direction,
                     amount = amount,
+                    accountId = accountId,
                     categoryId = categoryId,
                     tags = tags,
                 ).confirm(bookedAt)
@@ -272,6 +285,15 @@ internal abstract class RecurringItemDao {
 
     @Query("DELETE FROM recurring_items WHERE id = :recurringItemId")
     abstract fun deleteEntity(recurringItemId: String)
+
+    @Query("UPDATE recurring_items SET account_id = :targetAccountId WHERE account_id = :sourceAccountId")
+    abstract fun reassignAccount(
+        sourceAccountId: String,
+        targetAccountId: String,
+    ): Int
+
+    @Query("DELETE FROM recurring_items WHERE account_id = :accountId")
+    abstract fun deleteForAccount(accountId: String): Int
 
     @Query("DELETE FROM recurring_items")
     abstract fun clear()

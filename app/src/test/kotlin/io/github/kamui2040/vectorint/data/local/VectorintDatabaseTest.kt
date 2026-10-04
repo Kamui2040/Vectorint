@@ -523,6 +523,41 @@ class VectorintDatabaseTest {
         }
     }
 
+    @Test
+    fun `version six recurring income flag migrates disabled by default`() {
+        val helper =
+            FrameworkSQLiteOpenHelperFactory().create(
+                SupportSQLiteOpenHelper.Configuration
+                    .builder(RuntimeEnvironment.getApplication())
+                    .name(null)
+                    .callback(
+                        object : SupportSQLiteOpenHelper.Callback(6) {
+                            override fun onCreate(db: SupportSQLiteDatabase) {
+                                db.execSQL("CREATE TABLE recurring_items (id TEXT NOT NULL PRIMARY KEY)")
+                            }
+
+                            override fun onUpgrade(
+                                db: SupportSQLiteDatabase,
+                                oldVersion: Int,
+                                newVersion: Int,
+                            ) = Unit
+                        },
+                    ).build(),
+            )
+        helper.use {
+            val db = helper.writableDatabase
+            db.execSQL("INSERT INTO recurring_items (id) VALUES ('salary')")
+
+            VectorintDatabase.MIGRATION_6_7.migrate(db)
+
+            db.query("SELECT id, include_expected_income FROM recurring_items").use { cursor ->
+                cursor.moveToFirst()
+                assertEquals("salary", cursor.getString(0))
+                assertEquals(0, cursor.getInt(1))
+            }
+        }
+    }
+
     private fun recurringActivity(
         id: String,
         recurringItemId: String,

@@ -1,0 +1,1 @@
+Belegfotos funktionieren jetzt auch auf Geräten, auf denen der Google-Play-Dokumentenscanner nicht verfügbar ist. Vectorint verwendet dafür direkt die installierte Kamera und übernimmt erkannte Belegdaten weiterhin in den bearbeitbaren Eintrag.

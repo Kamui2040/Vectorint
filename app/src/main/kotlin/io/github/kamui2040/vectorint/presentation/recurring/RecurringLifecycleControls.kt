@@ -42,14 +42,11 @@ internal fun RecurringScheduleDateControls(
     firstOccurrenceLabel: String,
     timingChoice: RecurringTimingChoice,
     firstPeriodEndsOnLabel: String?,
-    endsOnLabel: String?,
     enabled: Boolean,
     issue: RecurringItemMutationResult?,
     intervalContent: @Composable () -> Unit,
     onSelectFirstOccurrence: () -> Unit,
     onSelectFirstPeriodEndsOn: () -> Unit,
-    onSelectEndsOn: () -> Unit,
-    onClearEndsOn: () -> Unit,
 ) {
     OutlinedButton(
         onClick = onSelectFirstOccurrence,
@@ -80,6 +77,22 @@ internal fun RecurringScheduleDateControls(
         }
     }
     intervalContent()
+    if (issue == RecurringItemMutationResult.InvalidSchedule) {
+        Text(
+            text = stringResource(R.string.recurring_invalid_schedule),
+            color = MaterialTheme.colorScheme.error,
+            style = MaterialTheme.typography.bodyMedium,
+        )
+    }
+}
+
+@Composable
+internal fun RecurringEndDateControl(
+    endsOnLabel: String?,
+    enabled: Boolean,
+    onSelectEndsOn: () -> Unit,
+    onClearEndsOn: () -> Unit,
+) {
     OptionalDateControl(
         label =
             endsOnLabel?.let { stringResource(R.string.recurring_ends_on_value, it) }
@@ -91,13 +104,6 @@ internal fun RecurringScheduleDateControls(
         onSelect = onSelectEndsOn,
         onClear = onClearEndsOn,
     )
-    if (issue == RecurringItemMutationResult.InvalidSchedule) {
-        Text(
-            text = stringResource(R.string.recurring_invalid_schedule),
-            color = MaterialTheme.colorScheme.error,
-            style = MaterialTheme.typography.bodyMedium,
-        )
-    }
 }
 
 @Composable
@@ -111,6 +117,7 @@ internal fun RecurringReminderControls(
     endDateIsSet: Boolean,
     enabled: Boolean,
     issue: RecurringItemMutationResult?,
+    showHeading: Boolean = true,
     onSelectRemindOn: () -> Unit,
     onClearRemindOn: () -> Unit,
     onOccurrenceEnabledChange: (Boolean) -> Unit,
@@ -122,10 +129,12 @@ internal fun RecurringReminderControls(
     onOpenNotificationSettings: () -> Unit,
 ) {
     val anyReminderEnabled = occurrence.enabled || remind.enabled || end.enabled
-    InfoHeading(
-        title = stringResource(R.string.recurring_reminders),
-        help = stringResource(R.string.recurring_reminders_delivery),
-    )
+    if (showHeading) {
+        InfoHeading(
+            title = stringResource(R.string.recurring_reminders),
+            help = stringResource(R.string.recurring_reminders_delivery),
+        )
+    }
     OptionalDateControl(
         label =
             remindOnLabel?.let { stringResource(R.string.recurring_remind_on_value, it) }

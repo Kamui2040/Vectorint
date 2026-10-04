@@ -15,7 +15,7 @@ android {
         applicationId = "io.github.kamui2040.vectorint"
         minSdk = 23
         targetSdk = 37
-        versionCode = 17
+        versionCode = 19
         versionName = "0.1.0"
     }
 
@@ -85,10 +85,10 @@ dependencies {
     implementation("androidx.room:room-runtime:2.8.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0")
 
-    add("playDebugImplementation", "com.google.android.gms:play-services-mlkit-document-scanner:16.0.0")
+    add("playDebugImplementation", "androidx.exifinterface:exifinterface:1.4.2")
     add("playDebugImplementation", "com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
     add("playDebugImplementation", "com.google.android.play:app-update:2.1.0")
-    add("playReleaseImplementation", "com.google.android.gms:play-services-mlkit-document-scanner:16.0.0")
+    add("playReleaseImplementation", "androidx.exifinterface:exifinterface:1.4.2")
     add("playReleaseImplementation", "com.google.android.gms:play-services-mlkit-text-recognition:19.0.1")
     add("playReleaseImplementation", "com.google.android.play:app-update:2.1.0")
 

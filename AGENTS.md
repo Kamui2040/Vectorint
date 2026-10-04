@@ -131,6 +131,15 @@ Treat every tracked file as suitable for public release.
   or recognized receipt text after the draft flow ends. When the scanner is
   available, keep its camera action available inside the one-off editor so entry
   flows opened from the quick-add widget can use the same receipt draft path.
+- Launch Play-edition receipt capture through Android's standard `TakePicture`
+  contract with a narrowly scoped private `FileProvider` URI. Do not reject a
+  device through a camera-handler preflight. Persist only the private temporary
+  filename and capture stage across activity recreation, validate both on restore,
+  and remove or empty the temporary image on every terminal result.
+- Initialize Play services receipt text recognition only after a valid image has
+  been captured. Provider initialization, image decoding, recognition, null
+  results, cancellation, and cleanup failure must fail inside the receipt flow and
+  must never prevent application startup.
 - Keep screen orientation optional at the Play manifest boundary. A fixed
   orientation inside the scanner dependency must not reduce Vectorint's device
   availability.
@@ -251,8 +260,8 @@ Treat every tracked file as suitable for public release.
 - Core budgeting is offline-capable and must not require online sign-in, telemetry,
   analytics, advertising, tracking, automatic crash upload, or proprietary cloud
   services.
-- The Google Play-only receipt scanner may use Google Play services' documented
-  on-device processing, module delivery, and diagnostic/usage metrics. Keep the
+- The Google Play-only receipt text recognizer may use Google Play services'
+  documented on-device processing, module delivery, and diagnostic/usage metrics. Keep the
   receipt image, recognized text, and recognition result out of those metrics,
   disclose Google processing publicly, and keep Vectorint without Android's
   internet permission or any Vectorint-operated telemetry.
@@ -298,6 +307,10 @@ Treat every tracked file as suitable for public release.
 - Run host-side Android tests on an API level explicitly supported by the pinned
   Robolectric version; do not assume support merely because the app compiles
   against a newer SDK.
+- Use `testDebugUnitTest` as the supported host-side Android unit-test gate. Do not
+  substitute the aggregate `test` task while Compose's test manifest is debug-only:
+  that aggregate also invokes optimized release unit-test variants, which cannot
+  resolve the Compose test `ComponentActivity` and fail before test bodies run.
 - If Android's incremental resource merge reports `no data file for changedFile`
   after a resource is replaced or removed, preserve the diagnostic and rerun the
   unchanged source through a full clean build before changing the resource.
@@ -316,6 +329,10 @@ Treat every tracked file as suitable for public release.
 - Receipt-scanner changes also require `assemblePlayDebug`, `assemblePlayRelease`,
   and `lintPlayDebug`; keep the standard release manifest and packaged dependency
   graph free of Google Play services.
+- Receipt-capture device QA requires success, cancellation, activity recreation,
+  temporary-file cleanup, and editable-draft import checks. Treat Android camera
+  permission testing as not applicable while capture is delegated through
+  `TakePicture` and Vectorint does not request that permission.
 - Run `ktlintFormat` and `ktlintCheck` in separate Gradle invocations. Their task
   graphs do not guarantee that a combined invocation checks the formatted files.
 - Review modified, staged, and untracked content for privacy, licence, provenance,

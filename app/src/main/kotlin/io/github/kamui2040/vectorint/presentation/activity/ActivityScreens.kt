@@ -1,7 +1,6 @@
 package io.github.kamui2040.vectorint.presentation.activity
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,16 +27,19 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -65,6 +67,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import io.github.kamui2040.vectorint.R
+import io.github.kamui2040.vectorint.core.AccountId
 import io.github.kamui2040.vectorint.core.ActivityId
 import io.github.kamui2040.vectorint.core.ActivityState
 import io.github.kamui2040.vectorint.core.CategoryId
@@ -72,10 +75,15 @@ import io.github.kamui2040.vectorint.core.CustomCategory
 import io.github.kamui2040.vectorint.core.Direction
 import io.github.kamui2040.vectorint.core.PredefinedCategory
 import io.github.kamui2040.vectorint.core.Tag
+import io.github.kamui2040.vectorint.presentation.account.AccountSelector
 import io.github.kamui2040.vectorint.presentation.category.CategoryManager
 import io.github.kamui2040.vectorint.presentation.category.CategorySelector
 import io.github.kamui2040.vectorint.presentation.category.CategorySummary
 import io.github.kamui2040.vectorint.presentation.category.labelResource
+import io.github.kamui2040.vectorint.presentation.component.ActiveFilterUi
+import io.github.kamui2040.vectorint.presentation.component.CompactFilterBar
+import io.github.kamui2040.vectorint.presentation.component.FilterOptionRow
+import io.github.kamui2040.vectorint.presentation.component.FilterSheetActions
 import io.github.kamui2040.vectorint.presentation.component.InfoHeading
 import io.github.kamui2040.vectorint.presentation.tag.TagEditor
 import io.github.kamui2040.vectorint.presentation.tag.TagSummary
@@ -121,6 +129,8 @@ internal fun ActivityHistoryScreen(
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var directionFilter by rememberSaveable { mutableStateOf(ActivityDirectionFilter.ALL) }
     var statusFilter by rememberSaveable { mutableStateOf(ActivityStatusFilter.ALL) }
+    var assignmentFilter by rememberSaveable { mutableStateOf(ActivityAssignmentFilter.ALL) }
+    var showFilters by rememberSaveable { mutableStateOf(false) }
     Surface(
         modifier =
             Modifier
@@ -198,11 +208,13 @@ internal fun ActivityHistoryScreen(
                                 query = searchQuery,
                                 directionFilter = directionFilter,
                                 statusFilter = statusFilter,
+                                assignmentFilter = assignmentFilter,
                                 categoryName = categoryName,
                                 directionName = resources.getString(item.direction.labelResource()),
                                 statusName = resources.getString(item.statusLabelResource()),
                                 timingName = item.timing.searchText(resources::getString),
                                 unnamedName = resources.getString(R.string.activity_unnamed),
+                                unassignedName = resources.getString(R.string.account_unassigned),
                             )
                         }
                     item {
@@ -218,14 +230,12 @@ internal fun ActivityHistoryScreen(
                             searchQuery = searchQuery,
                             directionFilter = directionFilter,
                             statusFilter = statusFilter,
+                            assignmentFilter = assignmentFilter,
                             onSearchQueryChange = { searchQuery = it },
                             onDirectionFilterChange = { directionFilter = it },
                             onStatusFilterChange = { statusFilter = it },
-                            onClear = {
-                                searchQuery = ""
-                                directionFilter = ActivityDirectionFilter.ALL
-                                statusFilter = ActivityStatusFilter.ALL
-                            },
+                            onAssignmentFilterChange = { assignmentFilter = it },
+                            onOpenFilters = { showFilters = true },
                         )
                     }
                     if (filteredItems.isEmpty()) {
@@ -235,6 +245,7 @@ internal fun ActivityHistoryScreen(
                                     searchQuery = ""
                                     directionFilter = ActivityDirectionFilter.ALL
                                     statusFilter = ActivityStatusFilter.ALL
+                                    assignmentFilter = ActivityAssignmentFilter.ALL
                                 },
                             )
                         }
@@ -254,6 +265,26 @@ internal fun ActivityHistoryScreen(
             }
         }
     }
+    if (showFilters) {
+        ActivityFilterSheet(
+            directionFilter = directionFilter,
+            statusFilter = statusFilter,
+            assignmentFilter = assignmentFilter,
+            onDismiss = { showFilters = false },
+            onApply = { direction, status, assignment ->
+                directionFilter = direction
+                statusFilter = status
+                assignmentFilter = assignment
+                showFilters = false
+            },
+            onReset = {
+                directionFilter = ActivityDirectionFilter.ALL
+                statusFilter = ActivityStatusFilter.ALL
+                assignmentFilter = ActivityAssignmentFilter.ALL
+                showFilters = false
+            },
+        )
+    }
 }
 
 private enum class ActivityDirectionFilter {
@@ -268,17 +299,77 @@ private enum class ActivityStatusFilter {
     CONFIRMED,
 }
 
+private enum class ActivityAssignmentFilter {
+    ALL,
+    ASSIGNED,
+    UNASSIGNED,
+}
+
 @Composable
 private fun ActivityHistorySearchAndFilters(
     searchQuery: String,
     directionFilter: ActivityDirectionFilter,
     statusFilter: ActivityStatusFilter,
+    assignmentFilter: ActivityAssignmentFilter,
     onSearchQueryChange: (String) -> Unit,
     onDirectionFilterChange: (ActivityDirectionFilter) -> Unit,
     onStatusFilterChange: (ActivityStatusFilter) -> Unit,
-    onClear: () -> Unit,
+    onAssignmentFilterChange: (ActivityAssignmentFilter) -> Unit,
+    onOpenFilters: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val activeFilters =
+        buildList {
+            if (directionFilter != ActivityDirectionFilter.ALL) {
+                add(
+                    ActiveFilterUi(
+                        key = "direction",
+                        label =
+                            stringResource(
+                                if (directionFilter == ActivityDirectionFilter.EXPENSE) {
+                                    R.string.activity_expense
+                                } else {
+                                    R.string.activity_income
+                                },
+                            ),
+                        onRemove = { onDirectionFilterChange(ActivityDirectionFilter.ALL) },
+                    ),
+                )
+            }
+            if (statusFilter != ActivityStatusFilter.ALL) {
+                add(
+                    ActiveFilterUi(
+                        key = "status",
+                        label =
+                            stringResource(
+                                if (statusFilter == ActivityStatusFilter.PLANNED) {
+                                    R.string.activity_status_planned
+                                } else {
+                                    R.string.activity_status_confirmed
+                                },
+                            ),
+                        onRemove = { onStatusFilterChange(ActivityStatusFilter.ALL) },
+                    ),
+                )
+            }
+            if (assignmentFilter != ActivityAssignmentFilter.ALL) {
+                add(
+                    ActiveFilterUi(
+                        key = "assignment",
+                        label =
+                            stringResource(
+                                if (assignmentFilter == ActivityAssignmentFilter.ASSIGNED) {
+                                    R.string.account_assigned
+                                } else {
+                                    R.string.account_unassigned
+                                },
+                            ),
+                        onRemove = { onAssignmentFilterChange(ActivityAssignmentFilter.ALL) },
+                    ),
+                )
+            }
+        }
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedTextField(
             value = searchQuery,
             onValueChange = onSearchQueryChange,
@@ -306,70 +397,99 @@ private fun ActivityHistorySearchAndFilters(
                 },
             singleLine = true,
         )
-        HistoryFilterRow(
-            label = stringResource(R.string.activity_history_filter_type),
-            tagPrefix = "activity_history_direction",
-            options =
-                listOf(
-                    ActivityDirectionFilter.ALL to stringResource(R.string.activity_history_filter_all_types),
-                    ActivityDirectionFilter.EXPENSE to stringResource(R.string.activity_expense),
-                    ActivityDirectionFilter.INCOME to stringResource(R.string.activity_income),
-                ),
-            selected = directionFilter,
-            onSelected = onDirectionFilterChange,
+        CompactFilterBar(
+            activeFilters = activeFilters,
+            onOpenFilters = onOpenFilters,
         )
-        HistoryFilterRow(
-            label = stringResource(R.string.activity_history_filter_status),
-            tagPrefix = "activity_history_status",
-            options =
-                listOf(
-                    ActivityStatusFilter.ALL to stringResource(R.string.activity_history_filter_all_statuses),
-                    ActivityStatusFilter.PLANNED to stringResource(R.string.activity_status_planned),
-                    ActivityStatusFilter.CONFIRMED to stringResource(R.string.activity_status_confirmed),
-                ),
-            selected = statusFilter,
-            onSelected = onStatusFilterChange,
-        )
-        if (
-            searchQuery.isNotEmpty() ||
-            directionFilter != ActivityDirectionFilter.ALL ||
-            statusFilter != ActivityStatusFilter.ALL
-        ) {
-            TextButton(onClick = onClear) {
-                Text(stringResource(R.string.activity_history_clear_all))
-            }
-        }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun <T> HistoryFilterRow(
-    label: String,
-    tagPrefix: String,
-    options: List<Pair<T, String>>,
-    selected: T,
-    onSelected: (T) -> Unit,
+private fun ActivityFilterSheet(
+    directionFilter: ActivityDirectionFilter,
+    statusFilter: ActivityStatusFilter,
+    assignmentFilter: ActivityAssignmentFilter,
+    onDismiss: () -> Unit,
+    onApply: (ActivityDirectionFilter, ActivityStatusFilter, ActivityAssignmentFilter) -> Unit,
+    onReset: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-        )
-        Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+    var draftDirection by rememberSaveable { mutableStateOf(directionFilter) }
+    var draftStatus by rememberSaveable { mutableStateOf(statusFilter) }
+    var draftAssignment by rememberSaveable { mutableStateOf(assignmentFilter) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        modifier = Modifier.testTag("activity_filter_sheet"),
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            options.forEach { (option, optionLabel) ->
-                FilterChip(
-                    selected = selected == option,
-                    onClick = { onSelected(option) },
-                    modifier =
-                        Modifier
-                            .testTag("$tagPrefix:$option")
-                            .semantics { contentDescription = "$label: $optionLabel" },
-                    label = { Text(optionLabel) },
-                )
-            }
+            Text(
+                text = stringResource(R.string.filters),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = stringResource(R.string.activity_history_filter_type),
+                style = MaterialTheme.typography.labelLarge,
+            )
+            FilterOptionRow(
+                label = stringResource(R.string.activity_history_filter_type),
+                tagPrefix = "activity_history_direction",
+                options =
+                    listOf(
+                        ActivityDirectionFilter.ALL to stringResource(R.string.activity_history_filter_all_types),
+                        ActivityDirectionFilter.EXPENSE to stringResource(R.string.activity_expense),
+                        ActivityDirectionFilter.INCOME to stringResource(R.string.activity_income),
+                    ),
+                selected = draftDirection,
+                onSelected = { draftDirection = it },
+            )
+            Text(
+                text = stringResource(R.string.activity_history_filter_status),
+                style = MaterialTheme.typography.labelLarge,
+            )
+            FilterOptionRow(
+                label = stringResource(R.string.activity_history_filter_status),
+                tagPrefix = "activity_history_status",
+                options =
+                    listOf(
+                        ActivityStatusFilter.ALL to stringResource(R.string.activity_history_filter_all_statuses),
+                        ActivityStatusFilter.PLANNED to stringResource(R.string.activity_status_planned),
+                        ActivityStatusFilter.CONFIRMED to stringResource(R.string.activity_status_confirmed),
+                    ),
+                selected = draftStatus,
+                onSelected = { draftStatus = it },
+            )
+            Text(
+                text = stringResource(R.string.account_assignment_filter),
+                style = MaterialTheme.typography.labelLarge,
+            )
+            FilterOptionRow(
+                label = stringResource(R.string.account_assignment_filter),
+                tagPrefix = "activity_history_assignment",
+                options =
+                    listOf(
+                        ActivityAssignmentFilter.ALL to stringResource(R.string.account_assignment_all),
+                        ActivityAssignmentFilter.ASSIGNED to stringResource(R.string.account_assigned),
+                        ActivityAssignmentFilter.UNASSIGNED to stringResource(R.string.account_unassigned),
+                    ),
+                selected = draftAssignment,
+                onSelected = { draftAssignment = it },
+            )
+            FilterSheetActions(
+                onReset = {
+                    draftDirection = ActivityDirectionFilter.ALL
+                    draftStatus = ActivityStatusFilter.ALL
+                    draftAssignment = ActivityAssignmentFilter.ALL
+                    onReset()
+                },
+                onApply = { onApply(draftDirection, draftStatus, draftAssignment) },
+            )
         }
     }
 }
@@ -397,11 +517,13 @@ private fun ActivityHistoryItemUi.matchesHistoryFilters(
     query: String,
     directionFilter: ActivityDirectionFilter,
     statusFilter: ActivityStatusFilter,
+    assignmentFilter: ActivityAssignmentFilter,
     categoryName: String,
     directionName: String,
     statusName: String,
     timingName: String,
     unnamedName: String,
+    unassignedName: String,
 ): Boolean {
     val directionMatches =
         when (directionFilter) {
@@ -416,20 +538,26 @@ private fun ActivityHistoryItemUi.matchesHistoryFilters(
             ActivityStatusFilter.PLANNED -> !confirmed
             ActivityStatusFilter.CONFIRMED -> confirmed
         }
+    val assignmentMatches =
+        when (assignmentFilter) {
+            ActivityAssignmentFilter.ALL -> true
+            ActivityAssignmentFilter.ASSIGNED -> accountName != null
+            ActivityAssignmentFilter.UNASSIGNED -> accountName == null
+        }
     val trimmedQuery = query.trim()
     val searchMatches =
         trimmedQuery.isEmpty() ||
             listOf(
                 name.ifBlank { unnamedName },
                 amount,
-                accountName,
+                accountName ?: unassignedName,
                 categoryName,
                 directionName,
                 statusName,
                 timingName,
                 *tags.toTypedArray(),
             ).any { value -> value.contains(trimmedQuery, ignoreCase = true) }
-    return directionMatches && statusMatches && searchMatches
+    return directionMatches && statusMatches && assignmentMatches && searchMatches
 }
 
 private fun Direction.labelResource(): Int =
@@ -491,7 +619,11 @@ private fun ActivityHistoryCard(
                     color = directionColors.onContainer.copy(alpha = 0.78f),
                 )
                 Text(
-                    text = stringResource(R.string.account_assignment_label, item.accountName),
+                    text =
+                        stringResource(
+                            R.string.account_assignment_label,
+                            item.accountName ?: stringResource(R.string.account_unassigned),
+                        ),
                     style = MaterialTheme.typography.labelMedium,
                     color = directionColors.onContainer.copy(alpha = 0.9f),
                 )
@@ -568,6 +700,7 @@ private fun ActivityEditReadyRoute(
     var nameInput by rememberSaveable { mutableStateOf(seed.activity.name) }
     var amountInput by rememberSaveable { mutableStateOf(seed.amountInput) }
     var direction by rememberSaveable { mutableStateOf(seed.activity.direction) }
+    var accountIdValue by rememberSaveable { mutableStateOf(seed.activity.accountId?.value) }
     var categoryIdValue by rememberSaveable { mutableStateOf(seed.activity.categoryId?.value) }
     var tags by rememberTagState(seed.activity.tags)
     var issue by remember { mutableStateOf<ActivityEditIssue?>(null) }
@@ -601,6 +734,7 @@ private fun ActivityEditReadyRoute(
         nameInput = nameInput,
         amountInput = amountInput,
         direction = direction,
+        accountId = accountIdValue?.let(::AccountId),
         busy = busy,
         issue = issue,
         categoryId = categoryIdValue?.let(::CategoryId),
@@ -617,6 +751,10 @@ private fun ActivityEditReadyRoute(
         },
         onDirectionChange = {
             direction = it
+            issue = null
+        },
+        onAccountChange = {
+            accountIdValue = it.value
             issue = null
         },
         onCategoryChange = {
@@ -636,6 +774,7 @@ private fun ActivityEditReadyRoute(
                     direction = direction,
                     tags = tags,
                     categoryId = categoryIdValue?.let(::CategoryId),
+                    accountId = accountIdValue?.let(::AccountId),
                 )
             }
         },
@@ -648,6 +787,7 @@ private fun ActivityEditReadyRoute(
                     direction = direction,
                     tags = tags,
                     categoryId = categoryIdValue?.let(::CategoryId),
+                    accountId = accountIdValue?.let(::AccountId),
                 )
             }
         },
@@ -667,6 +807,7 @@ internal fun ActivityEditScreen(
     nameInput: String,
     amountInput: String,
     direction: Direction,
+    accountId: AccountId? = seed.activity.accountId,
     busy: Boolean,
     issue: ActivityEditIssue?,
     categoryId: CategoryId? = seed.activity.categoryId,
@@ -676,6 +817,7 @@ internal fun ActivityEditScreen(
     onNameChange: (String) -> Unit,
     onAmountChange: (String) -> Unit,
     onDirectionChange: (Direction) -> Unit,
+    onAccountChange: (AccountId) -> Unit = {},
     onCategoryChange: (CategoryId?) -> Unit = {},
     onTagsChange: (Set<Tag>) -> Unit = {},
     onSave: () -> Unit,
@@ -715,6 +857,12 @@ internal fun ActivityEditScreen(
             isError =
                 issue == ActivityEditIssue.InvalidAmount ||
                     issue == ActivityEditIssue.AmountMustBePositive,
+        )
+        AccountSelector(
+            accounts = seed.accounts,
+            selectedAccountId = accountId,
+            enabled = !busy,
+            onAccountChange = onAccountChange,
         )
         Text(
             text = stringResource(R.string.activity_direction),

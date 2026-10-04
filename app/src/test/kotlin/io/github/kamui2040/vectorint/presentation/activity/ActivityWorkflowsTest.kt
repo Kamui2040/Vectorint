@@ -1,5 +1,6 @@
 package io.github.kamui2040.vectorint.presentation.activity
 
+import io.github.kamui2040.vectorint.core.AccountId
 import io.github.kamui2040.vectorint.core.ActivityEntry
 import io.github.kamui2040.vectorint.core.ActivityId
 import io.github.kamui2040.vectorint.core.ActivitySource
@@ -205,6 +206,29 @@ class ActivityWorkflowsTest {
         }
 
     @Test
+    fun `unassigned activity can be reassigned from its editor`() =
+        runBlocking {
+            val original = planned("activity").copy(accountId = null)
+            val repository = FakeActivityRepository(activities = mutableListOf(original))
+            val editor = editor(repository)
+            val seed = readySeed(editor, original.id)
+            val targetAccount = seed.accounts.single()
+
+            assertEquals(null, seed.activity.accountId)
+            assertEquals(
+                ActivityMutationResult.Saved,
+                editor.save(
+                    seed = seed,
+                    nameInput = original.name,
+                    amountInput = "25.00",
+                    direction = original.direction,
+                    accountId = targetAccount.id,
+                ),
+            )
+            assertEquals(targetAccount.id, repository.activities.single().accountId)
+        }
+
+    @Test
     fun `confirmation applies edited planned expense once and a later baseline never replays it`() =
         runBlocking {
             val original = planned("activity", amount = 2_500)
@@ -399,6 +423,7 @@ private class FakeActivityRepository(
         amount: Money,
         tags: Set<Tag>,
         categoryId: CategoryId?,
+        accountId: AccountId?,
     ): ActivityEntry? {
         if (failMutations) throw IOException("synthetic update failure")
         val index = activities.indexOfFirst { it.id == activityId }
@@ -408,6 +433,7 @@ private class FakeActivityRepository(
                 name = name,
                 direction = direction,
                 amount = amount,
+                accountId = accountId,
                 categoryId = categoryId,
                 tags = tags,
             ).also { activities[index] = it }
@@ -431,6 +457,7 @@ private class FakeActivityRepository(
         tags: Set<Tag>,
         bookedAt: Instant,
         categoryId: CategoryId?,
+        accountId: AccountId?,
     ): ActivityEntry? {
         if (failMutations) throw IOException("synthetic confirmation failure")
         val index = activities.indexOfFirst { it.id == activityId }
@@ -440,6 +467,7 @@ private class FakeActivityRepository(
                 name = name,
                 direction = direction,
                 amount = amount,
+                accountId = accountId,
                 categoryId = categoryId,
                 tags = tags,
             ).confirm(bookedAt)
