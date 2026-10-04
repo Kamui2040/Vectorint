@@ -325,7 +325,10 @@ Version 0.1.0 adds recurring-item search and type filters plus an opt-in Home
 section for the next three planned entries. PR #27 merged into the current Nubia
 receipt-camera fix and adds safe account-deletion choices, explicit unassigned
 records, per-recurring-income pre-occurrence inclusion, Room schema v7, and
-backup format v9. Its Play edition captures receipts
+backup format v9. Draft PR #28 is stacked on that fix and adds responsive
+multiline typography, compact History and recurring filters, and progressive
+disclosure in the recurring editor; it remains unmerged. Its Play edition captures
+receipts
 through the installed camera into a private temporary file and sends only the
 bounded decoded image to on-device text recognition, avoiding the unsupported
 Google document scanner path on otherwise camera-capable devices. The 0.0.12 delta
