@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
@@ -11,6 +12,7 @@ import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.hasContentDescription
+import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onAllNodesWithText
@@ -19,8 +21,8 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performScrollToIndex
 import androidx.compose.ui.test.performScrollToNode
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import io.github.kamui2040.vectorint.core.ActivityEntry
 import io.github.kamui2040.vectorint.core.ActivityId
@@ -91,9 +93,9 @@ class ActivityScreensTest {
             .onNodeWithTag("activity_history_list")
             .performScrollToNode(hasText("Groceries"))
         compose.onNodeWithText("Groceries").assertIsDisplayed()
-        compose.onAllNodesWithText("Expense").assertCountEquals(2)
+        compose.onAllNodesWithText("Expense").assertCountEquals(1)
         compose.onNodeWithText("Planned for Sep 18, 2026").assertIsDisplayed()
-        compose.onAllNodesWithText("Account: Main").assertCountEquals(2)
+        compose.onAllNodesWithText("Account: Main").assertCountEquals(1)
         compose.onNodeWithText("Groceries").assertIsDisplayed()
         compose.onNodeWithText("Tags: household, shared").performScrollTo().assertIsDisplayed()
         compose
@@ -160,18 +162,25 @@ class ActivityScreensTest {
         compose.onNodeWithTag("activity_history_list").performScrollToNode(hasText("Monthly pay"))
         compose.onNodeWithText("Monthly pay").assertIsDisplayed()
 
-        compose.onNodeWithTag("activity_history_list").performScrollToIndex(2)
-        compose.onNodeWithTag("activity_history_direction:EXPENSE").performClick()
+        compose.onNodeWithTag("activity_history_list").performScrollToNode(hasTestTag("open_filters"))
+        compose.onNodeWithTag("open_filters").performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
-        compose.onNodeWithTag("activity_history_direction:EXPENSE").assertIsSelected()
+        compose.onNodeWithTag("activity_filter_sheet", useUnmergedTree = true).assertExists()
+        compose.onNodeWithTag("activity_history_direction:EXPENSE", useUnmergedTree = true).performClick()
+        compose.onNodeWithText("Apply").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("active_filter:direction").assertIsSelected()
         compose.onNodeWithTag("activity_history_list").performScrollToNode(hasText("Rent payment"))
         compose.onNodeWithText("Rent payment").assertIsDisplayed()
         compose.onNodeWithText("Monthly pay").assertDoesNotExist()
 
-        compose.onNodeWithTag("activity_history_list").performScrollToIndex(2)
-        compose.onNodeWithTag("activity_history_status:CONFIRMED").performClick()
+        compose.onNodeWithTag("activity_history_list").performScrollToNode(hasTestTag("open_filters"))
+        compose.onNodeWithTag("open_filters").performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
-        compose.onNodeWithTag("activity_history_status:CONFIRMED").assertIsSelected()
+        compose.onNodeWithTag("activity_history_status:CONFIRMED").performClick()
+        compose.onNodeWithText("Apply").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("active_filter:status").assertIsSelected()
         compose.onNodeWithTag("activity_history_list").performScrollToNode(hasText("No matching activity"))
         compose
             .onNodeWithText("No matching activity")
@@ -218,10 +227,13 @@ class ActivityScreensTest {
             }
         }
 
-        compose.onNodeWithTag("activity_history_list").performScrollToIndex(2)
-        compose.onNodeWithTag("activity_history_assignment:UNASSIGNED").performClick()
+        compose.onNodeWithTag("activity_history_list").performScrollToNode(hasTestTag("open_filters"))
+        compose.onNodeWithTag("open_filters").performClick()
         compose.waitForIdle()
-        compose.onNodeWithTag("activity_history_assignment:UNASSIGNED").assertIsSelected()
+        compose.onNodeWithTag("activity_history_assignment:UNASSIGNED").performClick()
+        compose.onNodeWithText("Apply").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("active_filter:assignment").assertIsSelected()
         compose
             .onNodeWithTag("activity_history_list")
             .performScrollToNode(hasText("Kept purchase"))
@@ -229,8 +241,11 @@ class ActivityScreensTest {
         compose.onNodeWithText("Assigned purchase").assertDoesNotExist()
         compose.onNodeWithText("Account: Unassigned").assertIsDisplayed()
 
-        compose.onNodeWithTag("activity_history_list").performScrollToIndex(2)
+        compose.onNodeWithTag("activity_history_list").performScrollToNode(hasTestTag("open_filters"))
+        compose.onNodeWithTag("open_filters").performClick()
+        compose.waitForIdle()
         compose.onNodeWithTag("activity_history_assignment:ASSIGNED").performClick()
+        compose.onNodeWithText("Apply").performClick()
         compose.waitForIdle()
         compose
             .onNodeWithTag("activity_history_list")
