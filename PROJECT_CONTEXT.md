@@ -317,10 +317,10 @@ baseline. Version 0.0.12 with Android version code 15 was uploaded to a Google
 Play tester track and awaits Google's confirmation; codes 13 and 14 were earlier
 tester candidates. Code 15 defers optional Google receipt-scanner initialization
 until the user requests a scan and treats provider initialization failures as
-unavailable, so they cannot block app startup. Version code 16 is the next tester
-candidate; it retains that fix and adds in-app update checking plus History search
-and filters. Version 0.1.0 with Android version code 18 is now the development and
-next tester candidate; code 17 was the preceding Google Play tester artifact.
+unavailable, so they cannot block app startup. Version code 16 retained that fix
+and added in-app update checking plus History search and filters. Version 0.1.0
+with Android version code 19 is now the development and
+next tester candidate; code 18 was the preceding signed Google Play tester artifact.
 Version 0.1.0 adds recurring-item search and type filters plus an opt-in Home
 section for the next three planned entries. PR #27 merged into the current Nubia
 receipt-camera fix and adds safe account-deletion choices, explicit unassigned
