@@ -1,15 +1,18 @@
 package io.github.kamui2040.vectorint.presentation.recurring
 
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.assertIsSelected
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.v2.createComposeRule
+import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
-import androidx.compose.ui.test.performScrollToIndex
+import androidx.compose.ui.test.performScrollToNode
 import androidx.compose.ui.test.performTextInput
 import io.github.kamui2040.vectorint.core.BudgetMonthAssignment
 import io.github.kamui2040.vectorint.core.CategoryIcon
@@ -79,7 +82,9 @@ class RecurringScreensTest {
             }
         }
 
-        compose.onNodeWithTag("recurring_list").performScrollToIndex(5)
+        compose
+            .onNodeWithTag("recurring_list")
+            .performScrollToNode(hasText("Every 3 months · first Sep 30, 2026"))
         compose.onNodeWithText("Every 3 months · first Sep 30, 2026").assertIsDisplayed()
         compose.onNodeWithText("Counts toward the following month").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Annual bills").performScrollTo().assertIsDisplayed()
@@ -119,7 +124,9 @@ class RecurringScreensTest {
             }
         }
 
-        compose.onNodeWithTag("recurring_list").performScrollToIndex(5)
+        compose
+            .onNodeWithTag("recurring_list")
+            .performScrollToNode(hasText("Every month · first Sep 30, 2026"))
         compose.onNodeWithText("Every month · first Sep 30, 2026").assertIsDisplayed()
     }
 
@@ -161,21 +168,25 @@ class RecurringScreensTest {
 
         compose.onNodeWithText("Search recurring items").performTextInput("salary")
         compose.waitForIdle()
-        compose.onNodeWithTag("recurring_list").performScrollToIndex(5)
+        compose.onNodeWithTag("recurring_list").performScrollToNode(hasText("Salary"))
         compose.onNodeWithText("Salary").assertIsDisplayed()
         compose.onNodeWithText("Rent").assertDoesNotExist()
-        compose.onNodeWithTag("recurring_list").performScrollToIndex(4)
-        compose.onNodeWithContentDescription("Clear search").performClick()
+        compose.onNodeWithContentDescription("Clear search").performScrollTo().performClick()
         compose.waitForIdle()
-        compose.onNodeWithTag("recurring_direction:EXPENSE").performScrollTo().performClick()
+        compose.onNodeWithTag("open_filters").performScrollTo().performClick()
         compose.waitForIdle()
-        compose.onNodeWithTag("recurring_list").performScrollToIndex(5)
+        compose.onNodeWithTag("recurring_direction:EXPENSE").performClick()
+        compose.onNodeWithText("Apply").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("recurring_list").performScrollToNode(hasText("Rent"))
         compose.onNodeWithText("Rent").assertIsDisplayed()
         compose.onNodeWithText("Salary").assertDoesNotExist()
-        compose.onNodeWithTag("recurring_list").performScrollToIndex(4)
-        compose.onNodeWithTag("recurring_direction:INCOME").performScrollTo().performClick()
+        compose.onNodeWithTag("open_filters").performScrollTo().performClick()
         compose.waitForIdle()
-        compose.onNodeWithTag("recurring_list").performScrollToIndex(5)
+        compose.onNodeWithTag("recurring_direction:INCOME").performClick()
+        compose.onNodeWithText("Apply").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("recurring_list").performScrollToNode(hasText("Salary"))
         compose.onNodeWithText("Salary").assertIsDisplayed()
         compose.onNodeWithText("Rent").assertDoesNotExist()
     }
@@ -216,19 +227,23 @@ class RecurringScreensTest {
             }
         }
 
-        compose.onNodeWithTag("recurring_list").performScrollToIndex(4)
-        compose.onNodeWithTag("recurring_assignment:UNASSIGNED").performClick()
+        compose.onNodeWithTag("open_filters").performScrollTo().performClick()
         compose.waitForIdle()
-        compose.onNodeWithTag("recurring_assignment:UNASSIGNED").assertIsSelected()
-        compose.onNodeWithTag("recurring_list").performScrollToIndex(5)
+        compose.onNodeWithTag("recurring_assignment:UNASSIGNED").performClick()
+        compose.onNodeWithText("Apply").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("active_filter:assignment").assertIsSelected()
+        compose.onNodeWithTag("recurring_list").performScrollToNode(hasText("Kept rent"))
         compose.onNodeWithText("Kept rent").assertIsDisplayed()
         compose.onNodeWithText("Assigned rent").assertDoesNotExist()
         compose.onNodeWithText("Account: Unassigned").assertIsDisplayed()
 
-        compose.onNodeWithTag("recurring_list").performScrollToIndex(4)
-        compose.onNodeWithTag("recurring_assignment:ASSIGNED").performClick()
+        compose.onNodeWithTag("open_filters").performScrollTo().performClick()
         compose.waitForIdle()
-        compose.onNodeWithTag("recurring_list").performScrollToIndex(5)
+        compose.onNodeWithTag("recurring_assignment:ASSIGNED").performClick()
+        compose.onNodeWithText("Apply").performClick()
+        compose.waitForIdle()
+        compose.onNodeWithTag("recurring_list").performScrollToNode(hasText("Assigned rent"))
         compose.onNodeWithText("Assigned rent").assertIsDisplayed()
         compose.onNodeWithText("Kept rent").assertDoesNotExist()
     }
@@ -343,13 +358,20 @@ class RecurringScreensTest {
         compose.onNodeWithText(expectedIncomeHelp).assertIsDisplayed()
         compose.onNodeWithText("Close").performClick()
         compose.onNodeWithText("First occurrence: Sep 30, 2026").performScrollTo().performClick()
-        compose.onNodeWithText("Date range").performScrollTo().performClick()
+        compose.onNodeWithText("Range").performScrollTo().performClick()
         compose.onNodeWithText("First period ends: Oct 2, 2026").performScrollTo().performClick()
         compose.onNodeWithText("Years").performScrollTo().performClick()
         compose.onNodeWithText("Following month").performScrollTo().performClick()
         compose.onNodeWithContentDescription("Require manual confirmation").performScrollTo().performClick()
-        compose.onNodeWithText("Ends on: Sep 30, 2027").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("recurring_end_date_section").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Set an end date").assertDoesNotExist()
+        compose.onNodeWithTag("recurring_end_date_section").performClick()
+        compose.onAllNodesWithText("Ends on: Sep 30, 2027").assertCountEquals(2)
+        compose.onNodeWithTag("recurring_reminders_section").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithText("Remind me on: Jun 1, 2027").assertDoesNotExist()
+        compose.onNodeWithTag("recurring_reminders_section").performClick()
         compose.onNodeWithText("Remind me on: Jun 1, 2027").performScrollTo().assertIsDisplayed()
+        compose.onNodeWithTag("recurring_organization_section").performScrollTo().assertIsDisplayed()
         compose.onNodeWithText("Save recurring item").performScrollTo().performClick()
         compose.runOnIdle {
             assertEquals(Direction.INCOME, direction.value)

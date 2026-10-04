@@ -40,13 +40,15 @@ The initial foundation is deliberately small:
 - reusable accessible info controls that keep optional explanations out of the
   main flow while leaving errors, destructive consequences, and recovery
   warnings visible;
-- a newest-first History view with search across visible entry details and
-  independent type and status filters, plus name, amount, and direction editing,
-  guarded deletion, planned-to-confirmed transitions, and optional tag metadata;
-- a recurring-item list and editor for income or expenses with a specific date,
-  date range, or anytime-within-month plan, every-N day/week/month/year
-  intervals, optional manual confirmation, optional end and reminder dates,
-  explicit budget-month assignment, and local reminder delivery;
+- a newest-first History view with persistent search, compact type/status/account
+  filters in a secondary sheet, removable active-filter chips, plus name, amount,
+  and direction editing, guarded deletion, planned-to-confirmed transitions, and
+  optional tag metadata;
+- a compact recurring-item list and progressive-disclosure editor for income or
+  expenses with a specific date, date range, or anytime-within-month plan, every-N
+  day/week/month/year intervals, optional manual confirmation, collapsible end,
+  reminder, category, and tag details, explicit budget-month assignment, and local
+  reminder delivery;
 - reusable add/remove tag controls for one-off and recurring editors, with tags
   visible in their corresponding lists;
 - optional categories on one-off activity, recurring definitions, and generated
@@ -216,6 +218,8 @@ Income and expenses use shared accounting and editor structures while their
 direction remains visually distinct: income uses the shared green semantic color
 and expenses use red in lists, editors, and month summaries. Vectorint provides
 Orbit, Nova, and Nebula Material color palettes in both light and dark appearance.
+Its Material typography defines explicit multiline line heights so wrapped copy
+remains readable across vendor fonts and larger text scales.
 
 First run asks only for one named account and its Current funds so Available now can
 provide immediate value. Additional accounts and recurring items remain optional
@@ -233,10 +237,11 @@ an existing economic event.
 
 Activity history orders entries from newest to oldest by their confirmed or
 planned timing, displays the persisted name, and keeps month-only timing imprecise
-in presentation. Search matches visible entry details, while independent filters
-narrow results by income or expense, planned or confirmed status, and assigned or
-unassigned account state without changing stored data or calculations. History
-and recurring lists show the assigned account or an explicit Unassigned state.
+in presentation. Search stays visible and matches visible entry details; type,
+status, and account-assignment filters live in one secondary sheet and active
+choices return as removable chips without changing stored data or calculations.
+History and recurring lists show the assigned account or an explicit Unassigned
+state.
 Detail editing changes name, amount, direction, account assignment, category, and
 optional tags on the current stored row. Confirmation can include
 those edits in the same database transaction, preserves the activity identity,
@@ -245,15 +250,18 @@ display metadata only and never alter the accounting result. Deletion is an
 explicit confirmed action.
 
 Recurring items use the account currency and default First occurrence to the
-creation date. The editor first asks when each occurrence happens: on a specific
-date, during a date range, or anytime within a month. It then accepts every N days,
-weeks, months, or years, an optional inclusive `Ends on`, and an explicit
-occurrence-month or following-month assignment. Automatic confirmation is the
-default, with a per-item manual-confirmation toggle. Recurring income also has a
-per-item pre-occurrence inclusion choice for Available now. `Remind me on` sits with the
-other notification choices and remains economically neutral. All displayed dates
-follow the current OS region. Reminder timing can be saved for an occurrence,
-reminder date, or end date with the same model for income and expense.
+creation date. The editor keeps name, amount, account, direction, timing, repeat
+interval, budget-month assignment, and confirmation behavior immediately visible.
+Optional end-date, reminder, category, and tag controls are collapsed by default
+behind summary rows and preserve their configured state when closed. The schedule
+supports a specific date, date range, or anytime within a month and every N days,
+weeks, months, or years. Recurring income also has a per-item pre-occurrence
+inclusion choice for Available now. `Remind me on` remains economically neutral.
+All displayed dates follow the current OS region. Reminder timing can be saved for
+an occurrence, reminder date, or end date with the same model for income and
+expense. The recurring list uses the same visible-search plus compact-filter model
+as History and keeps each item card focused on name, amount, schedule, account,
+and only configured organizational metadata.
 Vectorint delivers these reminders locally around 09:00 in the device's current
 time zone using an inexact alarm. Android notification permission is requested
 only when a reminder is enabled. Denial does not consume the delivery, so the app
@@ -317,7 +325,10 @@ Version 0.1.0 adds recurring-item search and type filters plus an opt-in Home
 section for the next three planned entries. PR #27 merged into the current Nubia
 receipt-camera fix and adds safe account-deletion choices, explicit unassigned
 records, per-recurring-income pre-occurrence inclusion, Room schema v7, and
-backup format v9. Its Play edition captures receipts
+backup format v9. Draft PR #28 is stacked on that fix and adds responsive
+multiline typography, compact History and recurring filters, and progressive
+disclosure in the recurring editor; it remains unmerged. Its Play edition captures
+receipts
 through the installed camera into a private temporary file and sends only the
 bounded decoded image to on-device text recognition, avoiding the unsupported
 Google document scanner path on otherwise camera-capable devices. The 0.0.12 delta

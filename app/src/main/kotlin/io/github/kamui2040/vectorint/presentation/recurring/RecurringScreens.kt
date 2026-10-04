@@ -1,14 +1,15 @@
 package io.github.kamui2040.vectorint.presentation.recurring
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -20,22 +21,29 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Close
+import androidx.compose.material.icons.rounded.ExpandLess
+import androidx.compose.material.icons.rounded.ExpandMore
 import androidx.compose.material.icons.rounded.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -76,6 +84,10 @@ import io.github.kamui2040.vectorint.presentation.category.CategoryManager
 import io.github.kamui2040.vectorint.presentation.category.CategorySelector
 import io.github.kamui2040.vectorint.presentation.category.CategorySummary
 import io.github.kamui2040.vectorint.presentation.category.labelResource
+import io.github.kamui2040.vectorint.presentation.component.ActiveFilterUi
+import io.github.kamui2040.vectorint.presentation.component.CompactFilterBar
+import io.github.kamui2040.vectorint.presentation.component.FilterOptionRow
+import io.github.kamui2040.vectorint.presentation.component.FilterSheetActions
 import io.github.kamui2040.vectorint.presentation.component.InfoHeading
 import io.github.kamui2040.vectorint.presentation.tag.TagEditor
 import io.github.kamui2040.vectorint.presentation.tag.TagSummary
@@ -116,6 +128,7 @@ internal fun RecurringListScreen(
     var searchQuery by rememberSaveable { mutableStateOf("") }
     var directionFilter by rememberSaveable { mutableStateOf(RecurringDirectionFilter.ALL) }
     var assignmentFilter by rememberSaveable { mutableStateOf(RecurringAssignmentFilter.ALL) }
+    var showFilters by rememberSaveable { mutableStateOf(false) }
     val resources = LocalResources.current
     BackHandler(onBack = onBack)
     Surface(
@@ -133,31 +146,29 @@ internal fun RecurringListScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             item {
-                TextButton(onClick = onBack) {
-                    Text(stringResource(R.string.entry_back))
-                }
-            }
-            item {
-                Text(
-                    text = stringResource(R.string.recurring_title),
-                    modifier = Modifier.semantics { heading() },
-                    style = MaterialTheme.typography.headlineMedium,
-                    fontWeight = FontWeight.Bold,
-                )
-            }
-            item {
-                Text(
-                    text = stringResource(R.string.recurring_explanation),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-            item {
-                Button(
-                    onClick = onAdd,
+                Row(
                     modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(stringResource(R.string.recurring_add))
+                    TextButton(onClick = onBack) {
+                        Text(stringResource(R.string.entry_back))
+                    }
+                    Text(
+                        text = stringResource(R.string.recurring_title),
+                        modifier =
+                            Modifier
+                                .weight(1f)
+                                .semantics { heading() },
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.Bold,
+                    )
+                    IconButton(onClick = onAdd) {
+                        Icon(
+                            imageVector = Icons.Rounded.Add,
+                            contentDescription = stringResource(R.string.recurring_add),
+                        )
+                    }
                 }
             }
             when (state) {
@@ -184,11 +195,15 @@ internal fun RecurringListScreen(
                     val filteredItems =
                         state.items.filter { item ->
                             val categoryName =
-                                item.categoryId
-                                    ?.let(PredefinedCategory::fromId)
-                                    ?.let { resources.getString(it.labelResource()) }
-                                    ?: state.customCategories.singleOrNull { it.id == item.categoryId }?.name
-                                    ?: resources.getString(R.string.category_other)
+                                if (item.categoryId == null) {
+                                    ""
+                                } else {
+                                    item.categoryId
+                                        .let(PredefinedCategory::fromId)
+                                        ?.let { resources.getString(it.labelResource()) }
+                                        ?: state.customCategories.singleOrNull { it.id == item.categoryId }?.name
+                                        ?: resources.getString(R.string.category_other)
+                                }
                             item.matchesRecurringFilters(
                                 query = searchQuery,
                                 directionFilter = directionFilter,
@@ -213,11 +228,7 @@ internal fun RecurringListScreen(
                             onSearchQueryChange = { searchQuery = it },
                             onDirectionFilterChange = { directionFilter = it },
                             onAssignmentFilterChange = { assignmentFilter = it },
-                            onClear = {
-                                searchQuery = ""
-                                directionFilter = RecurringDirectionFilter.ALL
-                                assignmentFilter = RecurringAssignmentFilter.ALL
-                            },
+                            onOpenFilters = { showFilters = true },
                         )
                     }
                     if (filteredItems.isEmpty()) {
@@ -246,6 +257,23 @@ internal fun RecurringListScreen(
             }
         }
     }
+    if (showFilters) {
+        RecurringFilterSheet(
+            directionFilter = directionFilter,
+            assignmentFilter = assignmentFilter,
+            onDismiss = { showFilters = false },
+            onApply = { direction, assignment ->
+                directionFilter = direction
+                assignmentFilter = assignment
+                showFilters = false
+            },
+            onReset = {
+                directionFilter = RecurringDirectionFilter.ALL
+                assignmentFilter = RecurringAssignmentFilter.ALL
+                showFilters = false
+            },
+        )
+    }
 }
 
 private enum class RecurringDirectionFilter {
@@ -268,9 +296,45 @@ private fun RecurringSearchAndFilters(
     onSearchQueryChange: (String) -> Unit,
     onDirectionFilterChange: (RecurringDirectionFilter) -> Unit,
     onAssignmentFilterChange: (RecurringAssignmentFilter) -> Unit,
-    onClear: () -> Unit,
+    onOpenFilters: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val activeFilters =
+        buildList {
+            if (directionFilter != RecurringDirectionFilter.ALL) {
+                add(
+                    ActiveFilterUi(
+                        key = "direction",
+                        label =
+                            stringResource(
+                                if (directionFilter == RecurringDirectionFilter.EXPENSE) {
+                                    R.string.activity_expense
+                                } else {
+                                    R.string.activity_income
+                                },
+                            ),
+                        onRemove = { onDirectionFilterChange(RecurringDirectionFilter.ALL) },
+                    ),
+                )
+            }
+            if (assignmentFilter != RecurringAssignmentFilter.ALL) {
+                add(
+                    ActiveFilterUi(
+                        key = "assignment",
+                        label =
+                            stringResource(
+                                if (assignmentFilter == RecurringAssignmentFilter.ASSIGNED) {
+                                    R.string.account_assigned
+                                } else {
+                                    R.string.account_unassigned
+                                },
+                            ),
+                        onRemove = { onAssignmentFilterChange(RecurringAssignmentFilter.ALL) },
+                    ),
+                )
+            }
+        }
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedTextField(
             value = searchQuery,
             onValueChange = onSearchQueryChange,
@@ -293,62 +357,79 @@ private fun RecurringSearchAndFilters(
                 },
             singleLine = true,
         )
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            val label = stringResource(R.string.activity_history_filter_type)
-            Text(text = label, style = MaterialTheme.typography.labelLarge)
-            Row(
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                listOf(
-                    RecurringDirectionFilter.ALL to stringResource(R.string.activity_history_filter_all_types),
-                    RecurringDirectionFilter.EXPENSE to stringResource(R.string.activity_expense),
-                    RecurringDirectionFilter.INCOME to stringResource(R.string.activity_income),
-                ).forEach { (option, optionLabel) ->
-                    FilterChip(
-                        selected = directionFilter == option,
-                        onClick = { onDirectionFilterChange(option) },
-                        modifier =
-                            Modifier
-                                .testTag("recurring_direction:$option")
-                                .semantics { contentDescription = "$label: $optionLabel" },
-                        label = { Text(optionLabel) },
-                    )
-                }
-            }
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            val label = stringResource(R.string.account_assignment_filter)
-            Text(text = label, style = MaterialTheme.typography.labelLarge)
-            Row(
-                modifier = Modifier.horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                listOf(
-                    RecurringAssignmentFilter.ALL to stringResource(R.string.account_assignment_all),
-                    RecurringAssignmentFilter.ASSIGNED to stringResource(R.string.account_assigned),
-                    RecurringAssignmentFilter.UNASSIGNED to stringResource(R.string.account_unassigned),
-                ).forEach { (option, optionLabel) ->
-                    FilterChip(
-                        selected = assignmentFilter == option,
-                        onClick = { onAssignmentFilterChange(option) },
-                        modifier =
-                            Modifier
-                                .testTag("recurring_assignment:$option")
-                                .semantics { contentDescription = "$label: $optionLabel" },
-                        label = { Text(optionLabel) },
-                    )
-                }
-            }
-        }
-        if (
-            searchQuery.isNotEmpty() ||
-            directionFilter != RecurringDirectionFilter.ALL ||
-            assignmentFilter != RecurringAssignmentFilter.ALL
+        CompactFilterBar(
+            activeFilters = activeFilters,
+            onOpenFilters = onOpenFilters,
+        )
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RecurringFilterSheet(
+    directionFilter: RecurringDirectionFilter,
+    assignmentFilter: RecurringAssignmentFilter,
+    onDismiss: () -> Unit,
+    onApply: (RecurringDirectionFilter, RecurringAssignmentFilter) -> Unit,
+    onReset: () -> Unit,
+) {
+    var draftDirection by rememberSaveable { mutableStateOf(directionFilter) }
+    var draftAssignment by rememberSaveable { mutableStateOf(assignmentFilter) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            TextButton(onClick = onClear) {
-                Text(stringResource(R.string.recurring_clear_all))
-            }
+            Text(
+                text = stringResource(R.string.filters),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = stringResource(R.string.activity_history_filter_type),
+                style = MaterialTheme.typography.labelLarge,
+            )
+            FilterOptionRow(
+                label = stringResource(R.string.activity_history_filter_type),
+                tagPrefix = "recurring_direction",
+                options =
+                    listOf(
+                        RecurringDirectionFilter.ALL to stringResource(R.string.activity_history_filter_all_types),
+                        RecurringDirectionFilter.EXPENSE to stringResource(R.string.activity_expense),
+                        RecurringDirectionFilter.INCOME to stringResource(R.string.activity_income),
+                    ),
+                selected = draftDirection,
+                onSelected = { draftDirection = it },
+            )
+            Text(
+                text = stringResource(R.string.account_assignment_filter),
+                style = MaterialTheme.typography.labelLarge,
+            )
+            FilterOptionRow(
+                label = stringResource(R.string.account_assignment_filter),
+                tagPrefix = "recurring_assignment",
+                options =
+                    listOf(
+                        RecurringAssignmentFilter.ALL to stringResource(R.string.account_assignment_all),
+                        RecurringAssignmentFilter.ASSIGNED to stringResource(R.string.account_assigned),
+                        RecurringAssignmentFilter.UNASSIGNED to stringResource(R.string.account_unassigned),
+                    ),
+                selected = draftAssignment,
+                onSelected = { draftAssignment = it },
+            )
+            FilterSheetActions(
+                onReset = {
+                    draftDirection = RecurringDirectionFilter.ALL
+                    draftAssignment = RecurringAssignmentFilter.ALL
+                    onReset()
+                },
+                onApply = { onApply(draftDirection, draftAssignment) },
+            )
         }
     }
 }
@@ -414,16 +495,16 @@ private fun RecurringItemCard(
     Surface(
         onClick = onClick,
         modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
+        shape = RoundedCornerShape(20.dp),
         color = directionColors.container,
     ) {
         Column(
-            modifier = Modifier.padding(20.dp),
-            verticalArrangement = Arrangement.spacedBy(6.dp),
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Text(
                 text = item.name,
-                style = MaterialTheme.typography.titleLarge,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 color = directionColors.onContainer,
             )
@@ -437,13 +518,13 @@ private fun RecurringItemCard(
                         },
                         item.amount,
                     ),
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.labelLarge,
                 color = directionColors.onContainer,
             )
             Text(
                 text = recurringScheduleLabel(item),
                 style = MaterialTheme.typography.bodyMedium,
-                color = directionColors.onContainer.copy(alpha = 0.78f),
+                color = directionColors.onContainer.copy(alpha = 0.82f),
             )
             Text(
                 text =
@@ -454,16 +535,18 @@ private fun RecurringItemCard(
                 style = MaterialTheme.typography.labelMedium,
                 color = directionColors.onContainer.copy(alpha = 0.9f),
             )
-            CategorySummary(
-                categoryId = item.categoryId,
-                customCategories = customCategories,
-                color = directionColors.onContainer.copy(alpha = 0.9f),
-            )
             if (item.schedule.countsToward == BudgetMonthAssignment.FOLLOWING_MONTH) {
                 Text(
                     text = stringResource(R.string.recurring_counts_following_month_short),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = directionColors.onContainer.copy(alpha = 0.78f),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = directionColors.onContainer.copy(alpha = 0.82f),
+                )
+            }
+            if (item.categoryId != null) {
+                CategorySummary(
+                    categoryId = item.categoryId,
+                    customCategories = customCategories,
+                    color = directionColors.onContainer.copy(alpha = 0.9f),
                 )
             }
             TagSummary(item.tags)
@@ -984,29 +1067,36 @@ internal fun RecurringItemEditorScreen(
                 title = stringResource(R.string.recurring_schedule),
                 help = stringResource(R.string.recurring_timing_help),
             )
-            TimingChoiceChip(
-                selected = timingChoice == RecurringTimingChoice.SPECIFIC_DATE,
-                label = stringResource(R.string.recurring_specific_date),
-                enabled = !saving,
-                onClick = { onTimingChoiceChange(RecurringTimingChoice.SPECIFIC_DATE) },
-            )
-            TimingChoiceChip(
-                selected = timingChoice == RecurringTimingChoice.DATE_RANGE,
-                label = stringResource(R.string.recurring_date_range),
-                enabled = !saving,
-                onClick = { onTimingChoiceChange(RecurringTimingChoice.DATE_RANGE) },
-            )
-            TimingChoiceChip(
-                selected = timingChoice == RecurringTimingChoice.ANY_TIME_IN_MONTH,
-                label = stringResource(R.string.recurring_any_time_in_month),
-                enabled = !saving,
-                onClick = { onTimingChoiceChange(RecurringTimingChoice.ANY_TIME_IN_MONTH) },
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                TimingChoiceChip(
+                    selected = timingChoice == RecurringTimingChoice.SPECIFIC_DATE,
+                    label = stringResource(R.string.recurring_specific_date_short),
+                    enabled = !saving,
+                    onClick = { onTimingChoiceChange(RecurringTimingChoice.SPECIFIC_DATE) },
+                    modifier = Modifier.weight(1f),
+                )
+                TimingChoiceChip(
+                    selected = timingChoice == RecurringTimingChoice.DATE_RANGE,
+                    label = stringResource(R.string.recurring_date_range_short),
+                    enabled = !saving,
+                    onClick = { onTimingChoiceChange(RecurringTimingChoice.DATE_RANGE) },
+                    modifier = Modifier.weight(1f),
+                )
+                TimingChoiceChip(
+                    selected = timingChoice == RecurringTimingChoice.ANY_TIME_IN_MONTH,
+                    label = stringResource(R.string.recurring_any_time_in_month_short),
+                    enabled = !saving,
+                    onClick = { onTimingChoiceChange(RecurringTimingChoice.ANY_TIME_IN_MONTH) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
             RecurringScheduleDateControls(
                 firstOccurrenceLabel = firstOccurrenceLabel,
                 timingChoice = timingChoice,
                 firstPeriodEndsOnLabel = firstPeriodEndsOnLabel,
-                endsOnLabel = endsOnLabel,
                 enabled = !saving,
                 issue = issue,
                 intervalContent = {
@@ -1021,25 +1111,30 @@ internal fun RecurringItemEditorScreen(
                 },
                 onSelectFirstOccurrence = onSelectFirstOccurrence,
                 onSelectFirstPeriodEndsOn = onSelectFirstPeriodEndsOn,
-                onSelectEndsOn = onSelectEndsOn,
-                onClearEndsOn = onClearEndsOn,
             )
             InfoHeading(
                 title = stringResource(R.string.recurring_counts_toward),
                 help = stringResource(R.string.recurring_counts_toward_help),
             )
-            TimingChoiceChip(
-                selected = countsToward == BudgetMonthAssignment.OCCURRENCE_MONTH,
-                label = stringResource(R.string.recurring_occurrence_month),
-                enabled = !saving,
-                onClick = { onCountsTowardChange(BudgetMonthAssignment.OCCURRENCE_MONTH) },
-            )
-            TimingChoiceChip(
-                selected = countsToward == BudgetMonthAssignment.FOLLOWING_MONTH,
-                label = stringResource(R.string.recurring_following_month),
-                enabled = !saving,
-                onClick = { onCountsTowardChange(BudgetMonthAssignment.FOLLOWING_MONTH) },
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                TimingChoiceChip(
+                    selected = countsToward == BudgetMonthAssignment.OCCURRENCE_MONTH,
+                    label = stringResource(R.string.recurring_occurrence_month),
+                    enabled = !saving,
+                    onClick = { onCountsTowardChange(BudgetMonthAssignment.OCCURRENCE_MONTH) },
+                    modifier = Modifier.weight(1f),
+                )
+                TimingChoiceChip(
+                    selected = countsToward == BudgetMonthAssignment.FOLLOWING_MONTH,
+                    label = stringResource(R.string.recurring_following_month),
+                    enabled = !saving,
+                    onClick = { onCountsTowardChange(BudgetMonthAssignment.FOLLOWING_MONTH) },
+                    modifier = Modifier.weight(1f),
+                )
+            }
             if (direction == Direction.INCOME) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
@@ -1069,39 +1164,91 @@ internal fun RecurringItemEditorScreen(
                 enabled = !saving,
                 onRequireManualConfirmationChange = onRequireManualConfirmationChange,
             )
-            RecurringReminderControls(
-                remindOnLabel = remindOnLabel,
-                occurrence = occurrenceReminder,
-                remind = remindReminder,
-                end = endReminder,
-                notificationsAvailable = notificationsAvailable,
-                remindDateIsSet = remindOnLabel != null,
-                endDateIsSet = endsOnLabel != null,
-                enabled = !saving,
-                issue = issue,
-                onSelectRemindOn = onSelectRemindOn,
-                onClearRemindOn = onClearRemindOn,
-                onOccurrenceEnabledChange = onOccurrenceReminderEnabledChange,
-                onOccurrenceDaysChange = onOccurrenceReminderDaysChange,
-                onRemindEnabledChange = onRemindReminderEnabledChange,
-                onRemindDaysChange = onRemindReminderDaysChange,
-                onEndEnabledChange = onEndReminderEnabledChange,
-                onEndDaysChange = onEndReminderDaysChange,
-                onOpenNotificationSettings = onOpenNotificationSettings,
-            )
-            categoryManager?.let { manager ->
-                CategorySelector(
-                    selectedCategoryId = categoryId,
+            var endDateExpanded by rememberSaveable { mutableStateOf(false) }
+            var remindersExpanded by rememberSaveable { mutableStateOf(false) }
+            var organizationExpanded by rememberSaveable { mutableStateOf(false) }
+
+            RecurringExpandableSection(
+                title = stringResource(R.string.recurring_end_date_section),
+                summary =
+                    endsOnLabel?.let { stringResource(R.string.recurring_ends_on_value, it) }
+                        ?: stringResource(R.string.recurring_no_end_date),
+                expanded = endDateExpanded,
+                onExpandedChange = { endDateExpanded = it },
+                testTag = "recurring_end_date_section",
+            ) {
+                RecurringEndDateControl(
+                    endsOnLabel = endsOnLabel,
                     enabled = !saving,
-                    manager = manager,
-                    onCategoryChange = onCategoryChange,
+                    onSelectEndsOn = onSelectEndsOn,
+                    onClearEndsOn = onClearEndsOn,
                 )
             }
-            TagEditor(
-                tags = tags,
-                enabled = !saving,
-                onTagsChange = onTagsChange,
-            )
+            RecurringExpandableSection(
+                title = stringResource(R.string.recurring_reminders),
+                summary =
+                    if (
+                        remindOnLabel != null ||
+                        occurrenceReminder.enabled ||
+                        remindReminder.enabled ||
+                        endReminder.enabled
+                    ) {
+                        stringResource(R.string.section_configured)
+                    } else {
+                        stringResource(R.string.recurring_no_reminders)
+                    },
+                expanded = remindersExpanded,
+                onExpandedChange = { remindersExpanded = it },
+                testTag = "recurring_reminders_section",
+            ) {
+                RecurringReminderControls(
+                    remindOnLabel = remindOnLabel,
+                    occurrence = occurrenceReminder,
+                    remind = remindReminder,
+                    end = endReminder,
+                    notificationsAvailable = notificationsAvailable,
+                    remindDateIsSet = remindOnLabel != null,
+                    endDateIsSet = endsOnLabel != null,
+                    enabled = !saving,
+                    issue = issue,
+                    showHeading = false,
+                    onSelectRemindOn = onSelectRemindOn,
+                    onClearRemindOn = onClearRemindOn,
+                    onOccurrenceEnabledChange = onOccurrenceReminderEnabledChange,
+                    onOccurrenceDaysChange = onOccurrenceReminderDaysChange,
+                    onRemindEnabledChange = onRemindReminderEnabledChange,
+                    onRemindDaysChange = onRemindReminderDaysChange,
+                    onEndEnabledChange = onEndReminderEnabledChange,
+                    onEndDaysChange = onEndReminderDaysChange,
+                    onOpenNotificationSettings = onOpenNotificationSettings,
+                )
+            }
+            RecurringExpandableSection(
+                title = stringResource(R.string.recurring_organization_section),
+                summary =
+                    if (categoryId != null || tags.isNotEmpty()) {
+                        stringResource(R.string.section_configured)
+                    } else {
+                        stringResource(R.string.recurring_organization_none)
+                    },
+                expanded = organizationExpanded,
+                onExpandedChange = { organizationExpanded = it },
+                testTag = "recurring_organization_section",
+            ) {
+                categoryManager?.let { manager ->
+                    CategorySelector(
+                        selectedCategoryId = categoryId,
+                        enabled = !saving,
+                        manager = manager,
+                        onCategoryChange = onCategoryChange,
+                    )
+                }
+                TagEditor(
+                    tags = tags,
+                    enabled = !saving,
+                    onTagsChange = onTagsChange,
+                )
+            }
             RecurringIssueMessage(issue)
             Button(
                 onClick = onSave,
@@ -1128,6 +1275,81 @@ internal fun RecurringItemEditorScreen(
 }
 
 @Composable
+private fun RecurringExpandableSection(
+    title: String,
+    summary: String,
+    expanded: Boolean,
+    onExpandedChange: (Boolean) -> Unit,
+    testTag: String,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = MaterialTheme.colorScheme.surfaceContainer,
+    ) {
+        Column {
+            Surface(
+                onClick = { onExpandedChange(!expanded) },
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .heightIn(min = 56.dp)
+                        .testTag(testTag),
+                color = MaterialTheme.colorScheme.surfaceContainer,
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.spacedBy(2.dp),
+                    ) {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                        )
+                        Text(
+                            text = summary,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Icon(
+                        imageVector =
+                            if (expanded) {
+                                Icons.Rounded.ExpandLess
+                            } else {
+                                Icons.Rounded.ExpandMore
+                            },
+                        contentDescription =
+                            stringResource(
+                                if (expanded) {
+                                    R.string.section_collapse
+                                } else {
+                                    R.string.section_expand
+                                },
+                                title,
+                            ),
+                    )
+                }
+            }
+            if (expanded) {
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    content = content,
+                )
+            }
+        }
+    }
+}
+
+@Composable
 private fun RepeatIntervalControls(
     repeatEveryInput: String,
     repeatUnit: RecurrenceUnit,
@@ -1142,7 +1364,12 @@ private fun RepeatIntervalControls(
         modifier = Modifier.fillMaxWidth(),
         enabled = enabled,
         label = { Text(stringResource(R.string.recurring_repeat_every)) },
-        supportingText = { Text(stringResource(R.string.recurring_repeat_every_help)) },
+        supportingText =
+            if (isError) {
+                { Text(stringResource(R.string.recurring_repeat_every_help)) }
+            } else {
+                null
+            },
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
         singleLine = true,
         isError = isError,
@@ -1153,11 +1380,6 @@ private fun RepeatIntervalControls(
     ) {
         RepeatUnitChip(RecurrenceUnit.DAYS, repeatUnit, enabled, onRepeatUnitChange, Modifier.weight(1f))
         RepeatUnitChip(RecurrenceUnit.WEEKS, repeatUnit, enabled, onRepeatUnitChange, Modifier.weight(1f))
-    }
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
         RepeatUnitChip(RecurrenceUnit.MONTHS, repeatUnit, enabled, onRepeatUnitChange, Modifier.weight(1f))
         RepeatUnitChip(RecurrenceUnit.YEARS, repeatUnit, enabled, onRepeatUnitChange, Modifier.weight(1f))
     }
@@ -1186,12 +1408,13 @@ private fun TimingChoiceChip(
     label: String,
     enabled: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     FilterChip(
         selected = selected,
         onClick = onClick,
         label = { Text(label) },
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier,
         enabled = enabled,
     )
 }

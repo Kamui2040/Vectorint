@@ -1,7 +1,6 @@
 package io.github.kamui2040.vectorint.presentation.activity
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -28,16 +27,19 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
@@ -78,6 +80,10 @@ import io.github.kamui2040.vectorint.presentation.category.CategoryManager
 import io.github.kamui2040.vectorint.presentation.category.CategorySelector
 import io.github.kamui2040.vectorint.presentation.category.CategorySummary
 import io.github.kamui2040.vectorint.presentation.category.labelResource
+import io.github.kamui2040.vectorint.presentation.component.ActiveFilterUi
+import io.github.kamui2040.vectorint.presentation.component.CompactFilterBar
+import io.github.kamui2040.vectorint.presentation.component.FilterOptionRow
+import io.github.kamui2040.vectorint.presentation.component.FilterSheetActions
 import io.github.kamui2040.vectorint.presentation.component.InfoHeading
 import io.github.kamui2040.vectorint.presentation.tag.TagEditor
 import io.github.kamui2040.vectorint.presentation.tag.TagSummary
@@ -124,6 +130,7 @@ internal fun ActivityHistoryScreen(
     var directionFilter by rememberSaveable { mutableStateOf(ActivityDirectionFilter.ALL) }
     var statusFilter by rememberSaveable { mutableStateOf(ActivityStatusFilter.ALL) }
     var assignmentFilter by rememberSaveable { mutableStateOf(ActivityAssignmentFilter.ALL) }
+    var showFilters by rememberSaveable { mutableStateOf(false) }
     Surface(
         modifier =
             Modifier
@@ -228,12 +235,7 @@ internal fun ActivityHistoryScreen(
                             onDirectionFilterChange = { directionFilter = it },
                             onStatusFilterChange = { statusFilter = it },
                             onAssignmentFilterChange = { assignmentFilter = it },
-                            onClear = {
-                                searchQuery = ""
-                                directionFilter = ActivityDirectionFilter.ALL
-                                statusFilter = ActivityStatusFilter.ALL
-                                assignmentFilter = ActivityAssignmentFilter.ALL
-                            },
+                            onOpenFilters = { showFilters = true },
                         )
                     }
                     if (filteredItems.isEmpty()) {
@@ -262,6 +264,26 @@ internal fun ActivityHistoryScreen(
                 }
             }
         }
+    }
+    if (showFilters) {
+        ActivityFilterSheet(
+            directionFilter = directionFilter,
+            statusFilter = statusFilter,
+            assignmentFilter = assignmentFilter,
+            onDismiss = { showFilters = false },
+            onApply = { direction, status, assignment ->
+                directionFilter = direction
+                statusFilter = status
+                assignmentFilter = assignment
+                showFilters = false
+            },
+            onReset = {
+                directionFilter = ActivityDirectionFilter.ALL
+                statusFilter = ActivityStatusFilter.ALL
+                assignmentFilter = ActivityAssignmentFilter.ALL
+                showFilters = false
+            },
+        )
     }
 }
 
@@ -293,9 +315,61 @@ private fun ActivityHistorySearchAndFilters(
     onDirectionFilterChange: (ActivityDirectionFilter) -> Unit,
     onStatusFilterChange: (ActivityStatusFilter) -> Unit,
     onAssignmentFilterChange: (ActivityAssignmentFilter) -> Unit,
-    onClear: () -> Unit,
+    onOpenFilters: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+    val activeFilters =
+        buildList {
+            if (directionFilter != ActivityDirectionFilter.ALL) {
+                add(
+                    ActiveFilterUi(
+                        key = "direction",
+                        label =
+                            stringResource(
+                                if (directionFilter == ActivityDirectionFilter.EXPENSE) {
+                                    R.string.activity_expense
+                                } else {
+                                    R.string.activity_income
+                                },
+                            ),
+                        onRemove = { onDirectionFilterChange(ActivityDirectionFilter.ALL) },
+                    ),
+                )
+            }
+            if (statusFilter != ActivityStatusFilter.ALL) {
+                add(
+                    ActiveFilterUi(
+                        key = "status",
+                        label =
+                            stringResource(
+                                if (statusFilter == ActivityStatusFilter.PLANNED) {
+                                    R.string.activity_status_planned
+                                } else {
+                                    R.string.activity_status_confirmed
+                                },
+                            ),
+                        onRemove = { onStatusFilterChange(ActivityStatusFilter.ALL) },
+                    ),
+                )
+            }
+            if (assignmentFilter != ActivityAssignmentFilter.ALL) {
+                add(
+                    ActiveFilterUi(
+                        key = "assignment",
+                        label =
+                            stringResource(
+                                if (assignmentFilter == ActivityAssignmentFilter.ASSIGNED) {
+                                    R.string.account_assigned
+                                } else {
+                                    R.string.account_unassigned
+                                },
+                            ),
+                        onRemove = { onAssignmentFilterChange(ActivityAssignmentFilter.ALL) },
+                    ),
+                )
+            }
+        }
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         OutlinedTextField(
             value = searchQuery,
             onValueChange = onSearchQueryChange,
@@ -323,83 +397,99 @@ private fun ActivityHistorySearchAndFilters(
                 },
             singleLine = true,
         )
-        HistoryFilterRow(
-            label = stringResource(R.string.activity_history_filter_type),
-            tagPrefix = "activity_history_direction",
-            options =
-                listOf(
-                    ActivityDirectionFilter.ALL to stringResource(R.string.activity_history_filter_all_types),
-                    ActivityDirectionFilter.EXPENSE to stringResource(R.string.activity_expense),
-                    ActivityDirectionFilter.INCOME to stringResource(R.string.activity_income),
-                ),
-            selected = directionFilter,
-            onSelected = onDirectionFilterChange,
+        CompactFilterBar(
+            activeFilters = activeFilters,
+            onOpenFilters = onOpenFilters,
         )
-        HistoryFilterRow(
-            label = stringResource(R.string.activity_history_filter_status),
-            tagPrefix = "activity_history_status",
-            options =
-                listOf(
-                    ActivityStatusFilter.ALL to stringResource(R.string.activity_history_filter_all_statuses),
-                    ActivityStatusFilter.PLANNED to stringResource(R.string.activity_status_planned),
-                    ActivityStatusFilter.CONFIRMED to stringResource(R.string.activity_status_confirmed),
-                ),
-            selected = statusFilter,
-            onSelected = onStatusFilterChange,
-        )
-        HistoryFilterRow(
-            label = stringResource(R.string.account_assignment_filter),
-            tagPrefix = "activity_history_assignment",
-            options =
-                listOf(
-                    ActivityAssignmentFilter.ALL to stringResource(R.string.account_assignment_all),
-                    ActivityAssignmentFilter.ASSIGNED to stringResource(R.string.account_assigned),
-                    ActivityAssignmentFilter.UNASSIGNED to stringResource(R.string.account_unassigned),
-                ),
-            selected = assignmentFilter,
-            onSelected = onAssignmentFilterChange,
-        )
-        if (
-            searchQuery.isNotEmpty() ||
-            directionFilter != ActivityDirectionFilter.ALL ||
-            statusFilter != ActivityStatusFilter.ALL ||
-            assignmentFilter != ActivityAssignmentFilter.ALL
-        ) {
-            TextButton(onClick = onClear) {
-                Text(stringResource(R.string.activity_history_clear_all))
-            }
-        }
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun <T> HistoryFilterRow(
-    label: String,
-    tagPrefix: String,
-    options: List<Pair<T, String>>,
-    selected: T,
-    onSelected: (T) -> Unit,
+private fun ActivityFilterSheet(
+    directionFilter: ActivityDirectionFilter,
+    statusFilter: ActivityStatusFilter,
+    assignmentFilter: ActivityAssignmentFilter,
+    onDismiss: () -> Unit,
+    onApply: (ActivityDirectionFilter, ActivityStatusFilter, ActivityAssignmentFilter) -> Unit,
+    onReset: () -> Unit,
 ) {
-    Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelLarge,
-        )
-        Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+    var draftDirection by rememberSaveable { mutableStateOf(directionFilter) }
+    var draftStatus by rememberSaveable { mutableStateOf(statusFilter) }
+    var draftAssignment by rememberSaveable { mutableStateOf(assignmentFilter) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        modifier = Modifier.testTag("activity_filter_sheet"),
+    ) {
+        Column(
+            modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            options.forEach { (option, optionLabel) ->
-                FilterChip(
-                    selected = selected == option,
-                    onClick = { onSelected(option) },
-                    modifier =
-                        Modifier
-                            .testTag("$tagPrefix:$option")
-                            .semantics { contentDescription = "$label: $optionLabel" },
-                    label = { Text(optionLabel) },
-                )
-            }
+            Text(
+                text = stringResource(R.string.filters),
+                style = MaterialTheme.typography.titleLarge,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = stringResource(R.string.activity_history_filter_type),
+                style = MaterialTheme.typography.labelLarge,
+            )
+            FilterOptionRow(
+                label = stringResource(R.string.activity_history_filter_type),
+                tagPrefix = "activity_history_direction",
+                options =
+                    listOf(
+                        ActivityDirectionFilter.ALL to stringResource(R.string.activity_history_filter_all_types),
+                        ActivityDirectionFilter.EXPENSE to stringResource(R.string.activity_expense),
+                        ActivityDirectionFilter.INCOME to stringResource(R.string.activity_income),
+                    ),
+                selected = draftDirection,
+                onSelected = { draftDirection = it },
+            )
+            Text(
+                text = stringResource(R.string.activity_history_filter_status),
+                style = MaterialTheme.typography.labelLarge,
+            )
+            FilterOptionRow(
+                label = stringResource(R.string.activity_history_filter_status),
+                tagPrefix = "activity_history_status",
+                options =
+                    listOf(
+                        ActivityStatusFilter.ALL to stringResource(R.string.activity_history_filter_all_statuses),
+                        ActivityStatusFilter.PLANNED to stringResource(R.string.activity_status_planned),
+                        ActivityStatusFilter.CONFIRMED to stringResource(R.string.activity_status_confirmed),
+                    ),
+                selected = draftStatus,
+                onSelected = { draftStatus = it },
+            )
+            Text(
+                text = stringResource(R.string.account_assignment_filter),
+                style = MaterialTheme.typography.labelLarge,
+            )
+            FilterOptionRow(
+                label = stringResource(R.string.account_assignment_filter),
+                tagPrefix = "activity_history_assignment",
+                options =
+                    listOf(
+                        ActivityAssignmentFilter.ALL to stringResource(R.string.account_assignment_all),
+                        ActivityAssignmentFilter.ASSIGNED to stringResource(R.string.account_assigned),
+                        ActivityAssignmentFilter.UNASSIGNED to stringResource(R.string.account_unassigned),
+                    ),
+                selected = draftAssignment,
+                onSelected = { draftAssignment = it },
+            )
+            FilterSheetActions(
+                onReset = {
+                    draftDirection = ActivityDirectionFilter.ALL
+                    draftStatus = ActivityStatusFilter.ALL
+                    draftAssignment = ActivityAssignmentFilter.ALL
+                    onReset()
+                },
+                onApply = { onApply(draftDirection, draftStatus, draftAssignment) },
+            )
         }
     }
 }
